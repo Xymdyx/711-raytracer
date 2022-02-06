@@ -1,8 +1,9 @@
-﻿using System;
+﻿using namespace System;
 
-public class RayTracer-Main
+
+public class RayTracerMain
 {
-	public int main()
+	static int Main( string [] args )
 	{
 		//camera lookat(position, center, up): [ 0.0, 2.0, -7.2], [0, -1.5, 0], [0, 1, 0]
 		//camera perspective projection(vertical fov, aspect ratio, near, far)): [radians(90.0), 1.0, 1.0, 300.0]

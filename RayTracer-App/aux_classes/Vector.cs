@@ -20,7 +20,7 @@ public class Vector
     public double v2 { get => this._v2; set => this._v2 = value; }
     public double v3 { get => this._v3; set => this._v3 = value; }
 
-    // default constructor
+// default constructor
     public Vector()
     {
         this.v1 = 1;
@@ -28,7 +28,7 @@ public class Vector
         this.v3 = 1;
     }
 
-    // constructor
+// constructor
     public Vector(double v1, double v2, double v3)
     {
         this.v1 = v1;
@@ -38,7 +38,7 @@ public class Vector
         this.normalize();
     }
 
-    //operator overloads + and -
+//operator overloads + and -
     public static Vector operator +(Vector vec1) => new Vector( (vec1.v1), (vec1.v2), (vec1.v3) );
     public static Vector operator -(Vector vec1) => new Vector(-(vec1.v1), -(vec1.v2), -(vec1.v3));
 
@@ -46,7 +46,7 @@ public class Vector
     public static Vector operator -(Vector vec1, Vector vec2) => new Vector(vec1.v1 - vec2.v1, vec1.v2 - vec2.v2, vec1.v3 - vec2.v3);
 
 
-    // self-operations
+// self-operations
     public Vector scale(double k)
     {
         return new Vector(k * this.v1, k * this.v2, k * this.v3);
@@ -68,7 +68,7 @@ public class Vector
         return;
     }
 
-    //operators with other vecs
+//operators with other vecs
 
     /*
      * return dot product scalar value
