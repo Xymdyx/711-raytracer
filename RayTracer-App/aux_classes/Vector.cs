@@ -8,7 +8,7 @@ using System;
 
 public class Vector
 {
-
+    private static Vector ZERO_VEC = new Vector( 0, 0, 0 );
 
     // fields
     private double _v1;
@@ -45,8 +45,27 @@ public class Vector
     public static Vector operator +(Vector vec1, Vector vec2) => new Vector(vec1.v1 + vec2.v1, vec1.v2 + vec2.v2, vec1.v3 + vec2.v3);
     public static Vector operator -(Vector vec1, Vector vec2) => new Vector(vec1.v1 - vec2.v1, vec1.v2 - vec2.v2, vec1.v3 - vec2.v3);
 
+    public static bool operator ==( Vector lhs, Vector rhs ) 
+    {
+        if (lhs is null)
+        {
+            if (rhs is null)
+            {
+                // null == null = true.
+                return true;
+            }
 
-// self-operations
+            // Only the left side is null.
+            return false;
+        }
+        // Equals handles the case of null on right side.
+        return lhs.Equals( rhs );
+    }
+
+    public static bool operator !=( Vector lhs, Vector rhs ) => !(lhs == rhs);
+
+
+    // self-operations
     public Vector scale(double k)
     {
         return new Vector(k * this.v1, k * this.v2, k * this.v3);
@@ -118,9 +137,23 @@ public class Vector
         return vec2 - projectOnto(vec2);
     }
 
+    //used to determine if two vectors are equal
+    public bool Equals( Vector v)
+	{
+        if (v is null) return false;
+
+        return ( (v.v1 == this.v1) && (v.v2 == this.v2) && (v.v3 == this.v3) );
+	}
+
+    public bool isZeroVector()
+	{
+        return ((0 == this.v1) && (0 == this.v2) && (0 == this.v3));
+    }
+
     //TOSTRING METHOD
     public override string ToString()
     {
         return $"Vector (u1, u2, u3) = ({this.v1}, {this.v2} , {this.v3})\n";
     }
+
 }

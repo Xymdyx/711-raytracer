@@ -31,9 +31,18 @@ public class Point
         this._z = z;
     }
 
- //METHODS
+//operator overloads + and -
+    public static Point operator +( Point p1 ) => new Point( (p1.x), (p1.y), (p1.z) );
+    public static Point operator -( Point p1 ) => new Point( -(p1.x), -(p1.y), -(p1.z) );
 
-//TODO FIGURE OUT HOW TO DO THIS
+    public static Point operator +( Point p1, Vector v1 ) => new Point( p1.x + v1.v1, p1.y + v1.v2, p1.z + v1.v3 );
+    public static Point operator -( Point p1, Vector v1 ) => new Point( p1.x - v1.v1, p1.y - v1.v2, p1.z - v1.v3 );
+
+    public static Vector operator -( Point p1, Point p2 ) => new Vector( p1.x - p2.x, p1.y - p2.y, p1.z - p2.z );
+
+
+//METHODS
+    //TODO FIGURE OUT HOW TO DO THIS
     public void transform( double x, double y, double z)
     {
         this._x += x;

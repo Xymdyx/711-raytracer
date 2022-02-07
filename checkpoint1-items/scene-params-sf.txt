@@ -2,6 +2,8 @@ Csci-711 checkpoint 1 params:
 
 name: Sam Ford
 
+throwaway site: https://people.rit.edu/stf8464/weekly-assign-2/assn5-transformation.html
+
 all arrays in usual [x,y,z] order
 
 camera lookat (position, center, up): [ 0.0, 2.0, -7.2], [0, -1.5, 0], [0, 1, 0]
