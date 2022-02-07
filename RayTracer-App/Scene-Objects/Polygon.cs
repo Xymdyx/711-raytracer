@@ -24,7 +24,7 @@ namespace RayTracer_App.Scene_Objects
 		public Polygon( List<Point> vertices ) 
 		{
 			this._vertices = vertices;
-			this._normal = new Vector(); //TODO calculate normal
+			this._normal = new Vector(0,1,0); //TODO calculate normal
 		}
 
 //METHODS.. TODO mplement intersection for polygon

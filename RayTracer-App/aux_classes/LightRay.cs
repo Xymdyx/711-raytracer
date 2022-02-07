@@ -12,7 +12,7 @@ public class LightRay
 	private Vector _direction;
 	private Point _origin;
 
-	public Vector directtion { get => this._direction; set => this._direction = value; }
+	public Vector direction { get => this._direction; set => this._direction = value; }
 	public Point origin { get => this._origin; set => this._origin = value; }
 
 	public LightRay( Vector direction, Point origin)

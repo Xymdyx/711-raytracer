@@ -36,9 +36,9 @@ public class Point
 //TODO FIGURE OUT HOW TO DO THIS
     public void transform( double x, double y, double z)
     {
-        this._x = x;
-        this._y = y;
-        this._z = z;
+        this._x += x;
+        this._y += y;
+        this._z =+ z;
 
         return;
     }

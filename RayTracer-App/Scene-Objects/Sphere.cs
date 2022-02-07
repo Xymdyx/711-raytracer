@@ -28,7 +28,43 @@ namespace RayTracer_App.Scene_Objects
 		//TODO use light-ray intersection formula that involves quadratic formula
 		public override double intersect( LightRay ray )
 		{
-			return 1.0;
+			Vector rayDir = ray.direction;
+			Point rayPt = ray.origin;
+			double w1 = 1.0; // the distance where the ray and sphere intersect
+			double w2 = -1.0;
+
+			// A = dx^2 + dy^2 + dz^2
+			double A = Math.Pow(rayDir.getLen(),2); 
+
+			//may need to swap subtraction.. B = 2( dx(x0- xc) + dy(yo-yc) + dz( zo-zc))
+			double B = 2 * ( rayDir.v1 * (rayPt.x - center.x) + rayDir.v2 * (rayPt.y - center.y)
+							+ rayDir.v3 * (rayPt.z - center.z ) ); 
+
+			// C = (xo- xc)^2 + (yo - yc)^2 + (zo -zc)^2
+			double C = Math.Pow( (rayPt.x - center.x), 2 ) + Math.Pow( (rayPt.y - center.y), 2 )
+								+ Math.Pow( (rayPt.z - center.z), 2 );
+
+			//apply quadratic formula since our ray vector is normalized
+			double rootTerm = Math.Pow( B, 2 ) - (4 * C);
+
+			if (rootTerm < 0)
+			{
+				return int.MinValue; // no real intersection
+			}
+
+			else if (rootTerm == 0) //one real root, both results are equivalent
+			{
+				w1 = (-B + Math.Sqrt( rootTerm )) / 2;
+				return w1;
+			}
+
+			else					//we want the least positive w here...	
+			{
+				w1 = (-B + Math.Sqrt( rootTerm )) / 2;
+				w2 = (-B - Math.Sqrt( rootTerm )) / 2;
+				return Math.Min( w1, w2 );
+			}
+			// TODO caller function computes the point of intersection with returned w....page 27 in notes
 		}
 
 		public override Color illuminate()
