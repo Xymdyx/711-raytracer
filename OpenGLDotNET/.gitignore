@@ -1,0 +1,19 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/OpenGLDotNet.VC.db
+/OpenGLDotNet.VC.VC.opendb
+*.suo
+*.user
+*.sdf
+*.exp
+*.iobj
+*.ipdb
+*.pdb
+/bin/debug/
+/debug/
+/release/
+obj/
+.git/
+.vs/

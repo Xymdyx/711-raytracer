@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RayTracer-App", "RayTracer-App\RayTracer-App.csproj", "{EB4DEF68-C925-4BCF-B6A7-1D88D79559A9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RayTracer-App", "RayTracer-App\RayTracer-App.csproj", "{EB4DEF68-C925-4BCF-B6A7-1D88D79559A9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Assembler", "..\..\..\Desktop\CSCLasses\GI\OpenGLDotNet-master\Assembler.vcxproj", "{2264A801-DD54-4621-B983-2861E77ED3D4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenGLDotNet", "..\..\..\Desktop\CSCLasses\GI\OpenGLDotNet-master\OpenGLDotNet.csproj", "{51991C31-1314-4726-9544-D37E228F5D60}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +31,22 @@ Global
 		{EB4DEF68-C925-4BCF-B6A7-1D88D79559A9}.Release|x64.Build.0 = Release|Any CPU
 		{EB4DEF68-C925-4BCF-B6A7-1D88D79559A9}.Release|x86.ActiveCfg = Release|Any CPU
 		{EB4DEF68-C925-4BCF-B6A7-1D88D79559A9}.Release|x86.Build.0 = Release|Any CPU
+		{2264A801-DD54-4621-B983-2861E77ED3D4}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{2264A801-DD54-4621-B983-2861E77ED3D4}.Debug|x64.ActiveCfg = Debug|Win32
+		{2264A801-DD54-4621-B983-2861E77ED3D4}.Debug|x86.ActiveCfg = Debug|Win32
+		{2264A801-DD54-4621-B983-2861E77ED3D4}.Debug|x86.Build.0 = Debug|Win32
+		{2264A801-DD54-4621-B983-2861E77ED3D4}.Release|Any CPU.ActiveCfg = Release|Win32
+		{2264A801-DD54-4621-B983-2861E77ED3D4}.Release|x64.ActiveCfg = Release|Win32
+		{2264A801-DD54-4621-B983-2861E77ED3D4}.Release|x86.ActiveCfg = Release|Win32
+		{2264A801-DD54-4621-B983-2861E77ED3D4}.Release|x86.Build.0 = Release|Win32
+		{51991C31-1314-4726-9544-D37E228F5D60}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{51991C31-1314-4726-9544-D37E228F5D60}.Debug|x64.ActiveCfg = Debug|x86
+		{51991C31-1314-4726-9544-D37E228F5D60}.Debug|x86.ActiveCfg = Debug|x86
+		{51991C31-1314-4726-9544-D37E228F5D60}.Debug|x86.Build.0 = Debug|x86
+		{51991C31-1314-4726-9544-D37E228F5D60}.Release|Any CPU.ActiveCfg = Release|x86
+		{51991C31-1314-4726-9544-D37E228F5D60}.Release|x64.ActiveCfg = Release|x86
+		{51991C31-1314-4726-9544-D37E228F5D60}.Release|x86.ActiveCfg = Release|x86
+		{51991C31-1314-4726-9544-D37E228F5D60}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
