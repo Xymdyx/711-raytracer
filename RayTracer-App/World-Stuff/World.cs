@@ -58,7 +58,7 @@ namespace RayTracer_App.World
 
 			Color currColor = null;
 			double bestW = Double.MaxValue;
-			double currW = 0.0;
+			double currW = Double.MaxValue;
 
 			foreach (SceneObject obj in objects)
 			{

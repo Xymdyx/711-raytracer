@@ -26,16 +26,16 @@ public class Vector
         this.v1 = 1;
         this.v2 = 1;
         this.v3 = 1;
+        this.normalize();
     }
 
 // constructor
-    public Vector(double v1, double v2, double v3)
+    public Vector(double v1, double v2, double v3, bool normalize = true)
     {
         this.v1 = v1;
         this.v2 = v2;
         this.v3 = v3;
-
-        this.normalize();
+        if( normalize ) this.normalize();
     }
 
 //operator overloads + and -
@@ -80,10 +80,12 @@ public class Vector
     public void normalize()
     {
         double magn = getLen();
-        this.v1 /= magn;
-        this.v2 /= magn;
-        this.v3 /= magn;
-
+        if (magn != 0)
+        { 
+            this.v1 /= magn;
+            this.v2 /= magn;
+            this.v3 /= magn;
+        }
         return;
     }
 
@@ -116,12 +118,12 @@ public class Vector
      * return the perpendicular vector betwn this vector and vec2
      * vec2: the vector on the RHS of tthe Cross product (order matters)
      */
-    public Vector crossProduct(Vector vec2) //fixed issue w second term...
+    public Vector crossProduct(Vector vec2, bool normalize = true) //fixed issue w second term...
     {
         return new Vector((this.v2 * vec2.v3) - (this.v3 * vec2.v2),
                        (this.v3 * vec2.v1) - ( this.v1 * vec2.v3) ,
-                       (this.v1 * vec2.v2) - (this.v2 * vec2.v1)
-                     );
+                       (this.v1 * vec2.v2) - (this.v2 * vec2.v1),
+                     normalize );
     }
 
     /*

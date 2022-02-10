@@ -83,4 +83,10 @@ public class Point
         this.z = hmgMat.M31/ hmgMat.M41;
     }
 
+    public bool isOrigin()
+    {
+        return (this.x == 0 && this.y == 0 && this.z == 0);
+    }
+
+
 }

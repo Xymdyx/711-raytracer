@@ -20,20 +20,20 @@ public class RayTracerMain
 	public static void doRayTracing() 
 	{
 		// drawPixels in the RGB array with glDrawPixels();... put this in main
-		imageWidth = 1500;
-		imageHeight = 1500;
+		imageWidth = 1920;
+		imageHeight = 1080;
 
 		//initialize objects
 		//List<Point> triVerts = new List<Point> { new Point( 1, 0, 0 ), new Point( 1, 1, 0 ), new Point( 0, 1, 0 ) };
 		//Polygon triangle = new Polygon( triVerts );
-		Sphere sphere = new Sphere( new Point( 0, 0, 0.0) , 1.0 );
+		Sphere sphere = new Sphere( new Point( 0, 0, 5.0) , 1.0 );
 
 		World world = new World();
 		//world.add( triangle );
 		world.add( sphere );
 
 		// initialize camera and render world
-		Camera cam = new Camera( new Vector( 0, 1, 0 ), new Point( 0, 0.0, 5.0 ), new Point( 0, 0, 0.0 ) );
+		Camera cam = new Camera( new Vector( 0, 1, 0 ), new Point( 0, 0.0, 0.0 ), new Point( 0, 0, 5.0 ) );
 
 		//List<float[]> pixColors = cam.render( world, imageHeight, imageWidth );
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
@@ -44,8 +44,6 @@ public class RayTracerMain
 			fixed (byte* colArrPtr = pixColors) { colsPtr = new IntPtr( (void*)colArrPtr ); }
 		}
 
-		//colsHandle = GCHandle.Alloc( pixColors );
-		//colsPtr = GCHandle.ToIntPtr( colsHandle );
 		return;
 
 	}
@@ -55,7 +53,7 @@ public class RayTracerMain
 		GL.ClearColor( 0, 0, 0, 1 );
 		GL.Clear( GL.GL_COLOR_BUFFER_BIT );
 
-		GL.PixelStoref( GL.GL_UNPACK_ALIGNMENT, 1);
+		GL.PixelStorei( GL.GL_UNPACK_ALIGNMENT, 1);
 		GL.GetBooleanv( GL.GL_CURRENT_RASTER_POSITION_VALID, valid );
 
 		GL.GetFloatv( GL.GL_CURRENT_RASTER_POSITION, rat );

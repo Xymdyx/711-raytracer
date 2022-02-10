@@ -44,8 +44,8 @@ namespace RayTracer_App.Camera
 //METHODS
 //helper methods for facilitating needed components to define camera coords matrix
 		private Vector calculateN() { return eyePoint - lookAt; }
-		private Vector calculateU() { return up.crossProduct( calculateN() ); }
-		private Vector calculateV() { return calculateN().crossProduct( calculateU() ); }
+		private Vector calculateU(Vector n) { return up.crossProduct( n ); }
+		private Vector calculateV(Vector n, Vector u) { return n.crossProduct( u, false ); } //try not normalizing this
 
 		private Matrix4d makeProjMat( double fov, double aspect, double zNear, double zFar)
 		{
@@ -61,15 +61,25 @@ namespace RayTracer_App.Camera
 
 		private void makeCamMat()
 		{
-			Vector N = calculateN();
-			Vector U = calculateU();
-			Vector V = calculateV();
-			Vector eyeVec = -eyePoint.toVec();
+			//use identity if world origin
 			Matrix4d camCoordMat = new Matrix4d
-				( U.v1, V.v1, N.v1, 0,
-				U.v2, V.v2, N.v2, 0,
-				U.v3, V.v3, N.v3, 0,
-				eyeVec.dotProduct( U ), eyeVec.dotProduct( V ), eyeVec.dotProduct( N ), 1 ); //sans the projection...
+				( 1, 0, 0, 0,
+				0, 1, 0, 0,
+				0, 0, 1, 0,
+				0, 0, 0, 1 );
+
+			if (!eyePoint.isOrigin())
+			{
+				Vector N = calculateN();
+				Vector U = calculateU( N );
+				Vector V = calculateV( N, U );
+				Vector eyeVec = -eyePoint.toVec();
+				camCoordMat = new Matrix4d
+					( U.v1, V.v1, N.v1, 0,
+					U.v2, V.v2, N.v2, 0,
+					U.v3, V.v3, N.v3, 0,
+					eyeVec.dotProduct( U ), eyeVec.dotProduct( V ), eyeVec.dotProduct( N ), 1 ); //sans the projection...
+			}
 
 			Matrix4d persp = makeProjMat( 90, 1.0, 1.0, 50 );
 			this.camTransformMat = camCoordMat;
@@ -81,9 +91,13 @@ namespace RayTracer_App.Camera
 //tried list of float[] and float[]...
 		public byte[] render( World.World world, int imageHeight, int imageWidth )
 		{
-			double focalLen = .25; //1 / Math.Tan( (90 / 2) * (Math.PI / 180) ); //distance from camera to film plane along N...
-			double fpHeight = 1.0;
-			double fpWidth = 1.0;
+			// this converts everything to camera coords
+			makeCamMat();
+			world.transformAll( camTransformMat );
+
+			double focalLen = 2.0; //1 / Math.Tan( (90 / 2) * (Math.PI / 180) ); //distance from camera to film plane center along N...
+			double fpHeight = 2; //smaller the more accurate somewhat checks out
+			double fpWidth = 2;
 
 			// for re-defining the film-plane width at some poitn
 
@@ -107,22 +121,23 @@ namespace RayTracer_App.Camera
 				else pixColors[add] = bgArr[2]; //blue
 			}
 
-			makeCamMat();
-			world.transformAll( camTransformMat );
 
 			//fpHeight - (pixHeight / 2) for y originally
-			Point fpPoint = new Point( (-fpWidth / 2) + pixWidth / 2, (pixHeight / 2), focalLen);
+			//Point fpPoint = new Point( (-fpWidth / 2) + pixWidth / 2, (pixHeight / 2), focalLen);
+
+			Point fpPoint = new Point ( (-fpWidth / 2) + (pixWidth / 2), (-fpHeight / 2) + (pixHeight / 2), focalLen);
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;
 			byte[] hitColorArr = null;
 
-			// this converts everything to camera coords
 			// for x =- 0; x < x pixels; x+= pixelwidth
 			//	for y = -; y < y-pixels; y+= pixelHeight
 			//		world.spawnRay()... see what it hits
 			//		whatever it hits... rgbs.add( rgb float triplet)
+			int hits = 0;
 			for ( int y = 0; y < imageHeight; y++) // positive x ->, positive y V
 			{
+
 				for ( int x = 0; x < imageWidth; x++)
 				{
 					fire.direction = fpPoint - this.eyePoint;
@@ -135,12 +150,16 @@ namespace RayTracer_App.Camera
 						pixColors[pos] = hitColorArr[0]; //try 0-1.0 floats instead of 255
 						pixColors[pos + 1] = hitColorArr[1]; //try 0-1.0 floats instead of 255
 						pixColors[pos + 2] = hitColorArr[2]; //try 0-1.0 floats instead of 255
+						hits++;
 					}
 
 					fpPoint.x += pixWidth;
 				}
+				//reset x to default position
+				fpPoint.x = (-fpWidth / 2) + (pixWidth / 2);
 				fpPoint.y += pixHeight;
 			}
+			Console.WriteLine( $" There are {hits} non-background colors/ {imageHeight * imageWidth} colors total" );
 			return pixColors ;
 		}
 
