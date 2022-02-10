@@ -1,10 +1,12 @@
-﻿using System;
+﻿//Use a Right-Handed Coordinate system and column-major matrices
+using System;
 using System.Collections.Generic;
 using System.Text;
+using OpenGLDotNet.Math;
 
 using RayTracer_App.Scene_Objects;
 
-namespace RayTracer_App.World_Stuff
+namespace RayTracer_App.World
 {
 	public class World
 	{
@@ -33,28 +35,43 @@ namespace RayTracer_App.World_Stuff
 		}
 
 		//transform stub
-		public void transform( SceneObject obj )
+		public void transform( SceneObject obj, Matrix4d camViewMat )
 		{
-			_objects.Find( item => item.Equals( obj ) ).transform();
+			_objects.Find( item => item.Equals( obj ) ).transform( camViewMat );
 			return;
 		}
 
 		//transformAll stub
-		public void transformAll()
+		public void transformAll( Matrix4d camViewMat)
 		{
 			 foreach (SceneObject obj in objects)
 			{
-				obj.transform();
+				obj.transform( camViewMat ); //converts all objects to camera space
 			}
 
 			return;
 		}
 		
 		//TODO implement spawnRay
-		public void spawnRay( Vector ray )
+		public Color spawnRay( LightRay ray )
 		{
-			return;
+
+			Color currColor = null;
+			double bestW = Double.MaxValue;
+			double currW = 0.0;
+
+			foreach (SceneObject obj in objects)
+			{
+				currW = obj.intersect( ray );
+
+				if ( (currW != Double.MinValue && currW != Double.NaN) &&
+					(currW < bestW) && (currW > 0 ) )
+				{
+					bestW = currW;
+					currColor = obj.illuminate();
+				} 
+			}
+			return currColor;
 		}
-		//snap( this )
 	}
 }

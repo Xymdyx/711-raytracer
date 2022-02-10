@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using OpenGLDotNet.Math;
 
 namespace RayTracer_App.Scene_Objects
 {
@@ -28,7 +29,7 @@ namespace RayTracer_App.Scene_Objects
 		}
 
 
-		public virtual void transform(){ return; }
+		public virtual void transform( Matrix4d camViewMat ){ return; }
 
 		public virtual Color illuminate()
 		{

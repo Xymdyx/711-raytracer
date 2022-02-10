@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using OpenGLDotNet.Math;
 
 namespace RayTracer_App.Scene_Objects
 {
@@ -17,7 +18,7 @@ namespace RayTracer_App.Scene_Objects
 		public Polygon()
 		{
 			this._vertices = new List<Point> { new Point( 1, 0, 0 ), new Point( 0, 1, 0 ), new Point( -1, 0, 0 ) };
-			this.normal = new Point();
+			this.normal = new Vector();
 		}
 
 // parameter constructor
@@ -33,7 +34,7 @@ namespace RayTracer_App.Scene_Objects
 		public override double intersect( LightRay ray )
 		{
 			//HACK... put triangle case in here
-			double w = double.MinValue;
+			double w = Double.MinValue;
 
 			if (this.vertices.Count == 3)
 			{
@@ -52,9 +53,9 @@ namespace RayTracer_App.Scene_Objects
 				double v = Q.dotProduct( ray.direction ) / denom;
 
 				// where is our point?
-				if (P.isZeroVector() || e1.isZeroVector()) w = double.MinValue;  // ray is parallel to triangle
-				else if (w < 0) w = double.MaxValue; // intersection behind origin
-				else if ((u < 0) || (v < 0) || (u + v > 1)) w = double.NaN; //outside of triangle
+				if (P.isZeroVector() || e1.isZeroVector()) w = Double.MinValue;  // ray is parallel to triangle
+				else if (w < 0) w = Double.MaxValue; // intersection behind origin
+				else if ((u < 0) || (v < 0) || (u + v > 1)) w = Double.NaN; //outside of triangle
 				else
 				{
 					Vector normal = e1.crossProduct( e2 );
@@ -64,13 +65,24 @@ namespace RayTracer_App.Scene_Objects
 
 			}
 
-			else { } //implement polygon-ray intersection if time permist
 			return w;
 		}
 
 		public override Color illuminate()
 		{
-			return new Color( 0.302, 0.480, 0.320 ); //return the floor color
+			return new Color( 0.0, 0.940, 0.0 ); //return the floor color
+		}
+
+		public override void transform( Matrix4d camViewMat )
+		{
+			//TODO set up my polygon in camera coordinates before rendering the world
+			// use post-multiply since I am using column-major... Vnew = B*A*Vold
+			foreach (Point vertex in vertices)
+			{
+				Matrix4d ptHmg = vertex.toHmgCoords(); // 4x4 with only 1st column having x, y, z, w...Rest is 0s.
+				Matrix4d newVertMat = camViewMat * ptHmg; // we postMultiply since we are is LHS
+				vertex.fromHmgCoords( newVertMat ); // [x y z w] => (x/w, y/w, z/w) CP form.. DONE -- MATRIX-MULTI works
+			}
 		}
 	}
 }

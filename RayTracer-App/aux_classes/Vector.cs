@@ -87,7 +87,9 @@ public class Vector
         return;
     }
 
-//operators with other vecs
+    //operators with points
+
+    //operators with other vecs
 
     /*
      * return dot product scalar value
@@ -98,6 +100,7 @@ public class Vector
 
         return ((this.v1 * vec2.v1) + (this.v2 * vec2.v2) + (this.v3 * vec2.v3));
     }
+
 
     /* 
      * return the cosine between this vector and vec2 in degrees
@@ -113,10 +116,10 @@ public class Vector
      * return the perpendicular vector betwn this vector and vec2
      * vec2: the vector on the RHS of tthe Cross product (order matters)
      */
-    public Vector crossProduct(Vector vec2)
+    public Vector crossProduct(Vector vec2) //fixed issue w second term...
     {
         return new Vector((this.v2 * vec2.v3) - (this.v3 * vec2.v2),
-                       (this.v1 * vec2.v3) - (this.v3 * vec2.v1),
+                       (this.v3 * vec2.v1) - ( this.v1 * vec2.v3) ,
                        (this.v1 * vec2.v2) - (this.v2 * vec2.v1)
                      );
     }
@@ -138,12 +141,21 @@ public class Vector
     }
 
     //used to determine if two vectors are equal
-    public bool Equals( Vector v)
+    public override bool Equals( Object obj )
 	{
-        if (v is null) return false;
+        if ( (obj == null) || !(this.GetType().Equals( obj.GetType())) )
+            return false;
 
+        Vector v = (Vector) obj;
         return ( (v.v1 == this.v1) && (v.v2 == this.v2) && (v.v3 == this.v3) );
 	}
+
+    //TODO... may cause problems
+    public override int GetHashCode()
+    {
+        int hash = (int) v1 >> 2 + (int) v2 >> 2 + (int) v3 >> 2;
+        return hash;
+    }
 
     public bool isZeroVector()
 	{
@@ -155,5 +167,19 @@ public class Vector
     {
         return $"Vector (u1, u2, u3) = ({this.v1}, {this.v2} , {this.v3})\n";
     }
+/*Console.WriteLine( "Creating vector" );
 
+Vector tVec = new Vector( 5.0, 6.0, 7.0 );
+Vector fVec = new Vector( 5.9, 6.8, 2.1 );
+Vector cpVec = tVec.crossProduct( fVec );
+double dpVal = tVec.dotProduct( fVec );
+
+Console.WriteLine(tVec );
+Console.WriteLine(fVec );
+Console.WriteLine( $" The dot product of {tVec} and {fVec} gives dot product {dpVal}" );
+Console.WriteLine( $" The cross product of {tVec} x {fVec} gives dot product {cpVec}" );
+
+Console.WriteLine( $"Adding both vecs: {tVec + fVec}" );
+Console.WriteLine( $"Subtracting fVec from tVec: {tVec - fVec}" );
+Console.WriteLine( $"Subtracting tVec from fVec: {fVec - tVec}" );*/
 }

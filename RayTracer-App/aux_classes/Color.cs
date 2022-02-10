@@ -6,6 +6,7 @@ desc: class that represents a RGB color as percents
 
 
 using System;
+using OpenGLDotNet;
 
 public class Color
 {
@@ -23,9 +24,9 @@ public class Color
     //default constructor.. THE BACKGROUND COLOR
     public Color() 
     {
-        this._r = 0.0198;
-        this._g = 0.0465;
-        this._b = 0.220;
+        this._r = 1;
+        this._g = 1;
+        this._b = 1;
     }
 
     public Color( double r, double g, double b)
@@ -35,8 +36,31 @@ public class Color
         this._b = b;
     }
 
-    public int[] asIntArray()
+    public int[] asIntArr()
     {
         return  new int[] { (int) (_r * COLOR_MAX), (int)(_g * COLOR_MAX), (int)(_b * COLOR_MAX) } ;
     }
+
+    public float[] asFloat255Arr()
+    {
+        return new float[] { (float)(_r * COLOR_MAX), (float)(_g * COLOR_MAX), (float)(_b * COLOR_MAX) };
+    }
+
+    public float[] asFloat1Arr()
+    {
+        return new float[] { (float)(_r ), (float)(_g ), (float)(_b ) };
+    }
+
+    public uint[] asUintArr() 
+    {
+        return new uint[] { (uint)(_r * COLOR_MAX), (uint)(_g * COLOR_MAX), (uint)(_b * COLOR_MAX) };
+    }
+
+    public override bool Equals( object obj )
+	{
+		if( obj == null || obj.GetType() != this.GetType()) return false;
+
+        Color c = (Color) obj;
+        return (c.r == this.r && c.g == this.g && c.b == this.b);
+	}
 }

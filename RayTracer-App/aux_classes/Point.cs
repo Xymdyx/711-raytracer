@@ -5,6 +5,7 @@ desc: class that represents a 3d point
 */
 
 using System;
+using OpenGLDotNet.Math;
 
 public class Point
 {
@@ -60,4 +61,26 @@ public class Point
                         + Math.Pow( (p2.y - this._y), 2 )
                         + Math.Pow( (p2.z - this._z), 2 ) );
     }
+
+    public Vector toVec()
+	{
+        return new Vector( this.x, this.y, this.z );
+	}
+
+    public Matrix4d toHmgCoords()
+    {
+        return new Matrix4d
+            ( this.x, 0, 0, 0,
+             this.y, 0, 0, 0,
+             this.z, 0, 0, 0,
+             1, 0, 0, 0 );
+    }
+    public void fromHmgCoords( Matrix4d hmgMat )
+    {
+        //convert from col-major hmg mat back to a new Point
+        this.x = hmgMat.M11 / hmgMat.M41;
+        this.y = hmgMat.M21 / hmgMat.M41;
+        this.z = hmgMat.M31/ hmgMat.M41;
+    }
+
 }
