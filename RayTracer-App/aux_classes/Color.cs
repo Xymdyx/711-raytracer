@@ -24,9 +24,9 @@ public class Color
     //default constructor.. THE BACKGROUND COLOR
     public Color() 
     {
-        this._r = 1;
+        this._r = 0;
         this._g = 1;
-        this._b = 1;
+        this._b = 0;
     }
 
     public Color( double r, double g, double b)
@@ -54,6 +54,11 @@ public class Color
     public uint[] asUintArr() 
     {
         return new uint[] { (uint)(_r * COLOR_MAX), (uint)(_g * COLOR_MAX), (uint)(_b * COLOR_MAX) };
+    }
+
+    public byte[] asByteArr()
+    {
+        return new byte[] { (byte)(_r * COLOR_MAX), (byte)(_g * COLOR_MAX), (byte)(_b * COLOR_MAX) };
     }
 
     public override bool Equals( object obj )

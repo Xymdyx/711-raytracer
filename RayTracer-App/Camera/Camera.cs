@@ -79,7 +79,7 @@ namespace RayTracer_App.Camera
 
 //TODO render method
 //tried list of float[] and float[]...
-		public uint[] render( World.World world, int imageHeight, int imageWidth )
+		public byte[] render( World.World world, int imageHeight, int imageWidth )
 		{
 			double focalLen = .25; //1 / Math.Tan( (90 / 2) * (Math.PI / 180) ); //distance from camera to film plane along N...
 			double fpHeight = 1.0;
@@ -93,8 +93,8 @@ namespace RayTracer_App.Camera
 
 			//initialize default background color at all pixels to begin with
 			Color bgColor = new Color();
-			uint[] bgArr = bgColor.asUintArr();
-			uint[] pixColors = new uint[imageHeight * imageWidth * 3];
+			byte[] bgArr = bgColor.asByteArr();
+			byte[] pixColors = new byte[imageHeight * imageWidth * 3];
 
 
 			int modIdx = 0;
@@ -114,7 +114,7 @@ namespace RayTracer_App.Camera
 			Point fpPoint = new Point( (-fpWidth / 2) + pixWidth / 2, (pixHeight / 2), focalLen);
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;
-			uint[] hitColorArr = null;
+			byte[] hitColorArr = null;
 
 			// this converts everything to camera coords
 			// for x =- 0; x < x pixels; x+= pixelwidth
@@ -130,7 +130,7 @@ namespace RayTracer_App.Camera
 
 					if (hitColor != null)
 					{
-						hitColorArr = hitColor.asUintArr();
+						hitColorArr = hitColor.asByteArr();
 						int pos = (x + y * imageWidth) * 3;
 						pixColors[pos] = hitColorArr[0]; //try 0-1.0 floats instead of 255
 						pixColors[pos + 1] = hitColorArr[1]; //try 0-1.0 floats instead of 255

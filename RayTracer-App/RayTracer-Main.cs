@@ -20,45 +20,46 @@ public class RayTracerMain
 	public static void doRayTracing() 
 	{
 		// drawPixels in the RGB array with glDrawPixels();... put this in main
-		imageWidth = 500;
-		imageHeight = 500;
+		imageWidth = 1500;
+		imageHeight = 1500;
 
 		//initialize objects
 		//List<Point> triVerts = new List<Point> { new Point( 1, 0, 0 ), new Point( 1, 1, 0 ), new Point( 0, 1, 0 ) };
 		//Polygon triangle = new Polygon( triVerts );
-		Sphere sphere = new Sphere( new Point( 0, 0, 0) , 1.0 );
+		Sphere sphere = new Sphere( new Point( 0, 0, 0.0) , 1.0 );
 
 		World world = new World();
 		//world.add( triangle );
 		world.add( sphere );
 
 		// initialize camera and render world
-		Camera cam = new Camera( new Vector( 0, 1, 0 ), new Point( 0, 0.0, 3.0 ), new Point( 0, 0, 0 ) );
+		Camera cam = new Camera( new Vector( 0, 1, 0 ), new Point( 0, 0.0, 5.0 ), new Point( 0, 0, 0.0 ) );
 
 		//List<float[]> pixColors = cam.render( world, imageHeight, imageWidth );
-		// ditto with floats from 0-1 and 0-255
-		uint[] pixColors = cam.render( world, imageHeight, imageWidth );
+		// ditto with floats from 0-1 and 0-255, uint, now try byte
+		byte[] pixColors = cam.render( world, imageHeight, imageWidth );
 
 		unsafe
 		{
-			fixed (uint* colArrPtr = pixColors) { colsPtr = new IntPtr( (void*)colArrPtr ); }
+			fixed (byte* colArrPtr = pixColors) { colsPtr = new IntPtr( (void*)colArrPtr ); }
 		}
 
 		//colsHandle = GCHandle.Alloc( pixColors );
 		//colsPtr = GCHandle.ToIntPtr( colsHandle );
 		return;
+
 	}
 	public static void display()
 	{
 		//put in display function
-		GL.ClearColor( 255, 0, 0, 1 );
+		GL.ClearColor( 0, 0, 0, 1 );
 		GL.Clear( GL.GL_COLOR_BUFFER_BIT );
 
-		//GL.PixelStoref( GL.GL_UNPACK_ALIGNMENT, GL.GL_INT );
-		//GL.GetBooleanv( GL.GL_CURRENT_RASTER_POSITION_VALID, valid );
+		GL.PixelStoref( GL.GL_UNPACK_ALIGNMENT, 1);
+		GL.GetBooleanv( GL.GL_CURRENT_RASTER_POSITION_VALID, valid );
 
-		//GL.GetFloatv( GL.GL_CURRENT_RASTER_POSITION, rat );
-		//Console.WriteLine( $" {rat[0]} , {rat[1]}, {rat[2]} " ); //print out default { 0,0,0}"
+		GL.GetFloatv( GL.GL_CURRENT_RASTER_POSITION, rat );
+		Console.WriteLine( $" {rat[0]} , {rat[1]}, {rat[2]} is valid: {valid[0]}" ); //print out default { 0,0,0}"
 		GL.DrawPixels( imageWidth, imageHeight, GL.GL_RGB, GL.GL_UNSIGNED_BYTE, colsPtr );
 
 		FG.SwapBuffers();
@@ -83,10 +84,11 @@ public class RayTracerMain
 		//begin OpenGl
 		int[] argc = new int[1]; argc[0] = 0; string[] argv = null;
 		FG.Init( argc, argv );
-		FG.InitDisplayMode( GLUT.GLUT_RGB | GLUT.GLUT_DOUBLE );
-		FG.InitWindowSize( imageWidth, imageHeight );
+		FG.InitDisplayMode( GLUT.GLUT_RGB | GLUT.GLUT_SINGLE | GLUT.GLUT_DEPTH);
+		FG.InitWindowSize( 1920, 1080 );
 		FG.InitWindowPosition( 0, 0 );
 		FG.CreateWindow( "RayTracing CheckPoint 2" );
+		GL.Init( true );			//I forgot to call this...
 		GL.GetBooleanv( GL.GL_CURRENT_RASTER_POSITION_VALID, valid );
 
 		FG.DisplayFunc( display ); //white screen without this

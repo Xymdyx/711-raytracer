@@ -72,7 +72,7 @@ namespace RayTracer_App.Scene_Objects
 
 		public override Color illuminate()
 		{
-			return new Color( 1.0, 0.0, 0.0 ); //return the sphere color
+			return new Color( 0.0, 0.0, 1.0 ); //return the sphere color
 		}
 
 		public override void transform( Matrix4d camViewMat )
