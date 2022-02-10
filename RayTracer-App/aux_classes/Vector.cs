@@ -43,7 +43,7 @@ public class Vector
     public static Vector operator -(Vector vec1) => new Vector(-(vec1.v1), -(vec1.v2), -(vec1.v3));
 
     public static Vector operator +(Vector vec1, Vector vec2) => new Vector(vec1.v1 + vec2.v1, vec1.v2 + vec2.v2, vec1.v3 + vec2.v3);
-    public static Vector operator -(Vector vec1, Vector vec2) => new Vector(vec1.v1 - vec2.v1, vec1.v2 - vec2.v2, vec1.v3 - vec2.v3);
+    public static Vector operator -(Vector vec1, Vector vec2) => vec1 + -vec2;
 
     public static bool operator ==( Vector lhs, Vector rhs ) 
     {

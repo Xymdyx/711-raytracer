@@ -81,7 +81,7 @@ namespace RayTracer_App.Camera
 					eyeVec.dotProduct( U ), eyeVec.dotProduct( V ), eyeVec.dotProduct( N ), 1 ); //sans the projection...
 			}
 
-			Matrix4d persp = makeProjMat( 90, 1.0, 1.0, 50 );
+			//Matrix4d persp = makeProjMat( 90, 1.0, 1.0, 50 );
 			this.camTransformMat = camCoordMat;
 			
 		}
@@ -95,9 +95,9 @@ namespace RayTracer_App.Camera
 			makeCamMat();
 			world.transformAll( camTransformMat );
 
-			double focalLen = 2.0; //1 / Math.Tan( (90 / 2) * (Math.PI / 180) ); //distance from camera to film plane center along N...
-			double fpHeight = 10; //smaller the more accurate somewhat checks out
-			double fpWidth = 10;
+			double focalLen = 3.0; //1 / Math.Tan( (90 / 2) * (Math.PI / 180) ); //distance from camera to film plane center along N...
+			double fpHeight = 7.5; //smaller the more accurate somewhat checks out
+			double fpWidth = 7.5;
 
 			// for re-defining the film-plane width at some poitn
 

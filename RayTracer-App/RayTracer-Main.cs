@@ -24,18 +24,28 @@ public class RayTracerMain
 		imageHeight = 1080;
 
 		//initialize objects
-		List<Point> triVerts = new List<Point> { new Point( 0, 0, 5.0 ), new Point( 0, 1, 5.0 ), new Point( -1, 0, 5.0 ) }; //this must be fixed, goofs up in direction of 3nd point
-		Polygon triangle = new Polygon( triVerts );
-		Sphere sphere = new Sphere( new Point( 0, 0, 5.0) , 2.0 );
+		double s1Depth = 5.0;
+		double s2Depth = 6.5;
+		double floorDept = 40.0;
+		List<Point> triVerts1 = new List<Point> { new Point( -50, 2, floorDept ), new Point( -50, -50, floorDept ), new Point( 50, 2, floorDept ) }; //this must be fixed, goofs up in direction of 3nd point
+		//List<Point> triVerts2 = new List<Point> { new Point( 3, -1, floorDept ), new Point( 3, 0, floorDept ), new Point( 2, -1, floorDept ) }; //this must be fixed, goofs up in direction of 3nd point
+		List<Point> triVerts2 = new List<Point> { new Point( -50, -50, floorDept ), new Point( 50, -50, floorDept ), new Point( 50, 2, floorDept ) } ; //this must be fixed, goofs up in direction of 3nd point
+
+		Polygon triangle1 = new Polygon( triVerts1 );
+		Polygon triangle2 = new Polygon( triVerts2 );
+
+		Sphere sphere1 = new Sphere( new Point( 0, 1.5, s1Depth) ,2.5 );
+		Sphere sphere2 = new Sphere( new Point( 3.5, 1.75, s2Depth ), 2.0 );
 
 		World world = new World();
-		world.add( triangle );
-		//world.add( sphere );
+		world.add( triangle1 );
+		world.add( triangle2 );
+		world.add( sphere1 );
+		world.add( sphere2 );
 
 		// initialize camera and render world
 		Camera cam = new Camera( new Vector( 0, 1, 0 ), new Point( 0, 0.0, 0.0 ), new Point( 0, 0, 5.0 ) );
 
-		//List<float[]> pixColors = cam.render( world, imageHeight, imageWidth );
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
 		byte[] pixColors = cam.render( world, imageHeight, imageWidth );
 

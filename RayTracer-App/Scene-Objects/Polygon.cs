@@ -12,7 +12,7 @@ namespace RayTracer_App.Scene_Objects
 
 
 		public List<Point> vertices { get => this._vertices; set => this._vertices = value; } 
-		public Vector normal { get => this._normal = normal; set => this._normal = value; }
+		public Vector normal { get => this._normal; set => this._normal = value; }
 
 // default constructor for a plain triangle
 		public Polygon()
@@ -34,40 +34,45 @@ namespace RayTracer_App.Scene_Objects
 		public override double intersect( LightRay ray )
 		{
 			//HACK... put triangle case in here
-			double w = Double.MinValue;
+			double w = Double.MaxValue;
 
 			if (this.vertices.Count == 3)
 			{
 				//do triangle intersection formula with barycentric coordinates
 
 				//use (w,u,v) = (1/(P . e1)) * ( Q . e2, P . T, Q. D)
-				Vector e1 = vertices[1] - vertices[0];
+				Vector e1 = vertices[1] - vertices[0]; // cross, dot, and normalize good
 				Vector e2 = vertices[2] - vertices[0]; //this may be the issue
+				Vector P = ray.direction.crossProduct( e2, false );
 
-				Vector T = ray.origin - vertices[0];
-				Vector Q = T.crossProduct( e1 );
 
-				Vector P = ray.direction.crossProduct( e2 );
 				double denom = P.dotProduct( e1 );
 
-				w = Q.dotProduct( e2 ) / denom;
-				double u = P.dotProduct( T ) / denom;
-				double v = Q.dotProduct( ray.direction ) / denom;
+				if (( denom >= 0 && denom <= 1e-8) || denom == Double.NaN) return Double.MaxValue;  // ray is parallel to triangle
+
+				double denomScale = 1 / denom;
+
+				Vector T = ray.origin - vertices[0];
+				double u = P.dotProduct( T ) * denomScale;
+
+				if (u < 0 || u > 1) return Double.MaxValue;
+
+				Vector Q = T.crossProduct( e1, false );
+				double v = Q.dotProduct( ray.direction ) * denomScale;
+
+				if (v < 0 || u + v > 1) return Double.MaxValue;
+				
+				w = Q.dotProduct( e2 ) * denomScale;
 
 				// where is our point?
-				if ( (denom >= 0 && denom <= 1e-8)  || denom == Double.NaN) return Double.MinValue;  // ray is parallel to triangle
-				else if (w < 0) return Double.MaxValue; // intersection behind origin
-				else if ((u < 0) || (v < 0) || (u + v > 1)) return Double.NaN; //outside of triangle
-				else
-				{
-					Vector normal = e1.crossProduct( e2 );
-					//u,v are barycentric boordsinates of intersection point
-					return w; //w is distance along ray of intersection point
-				}
+				if (w < 0 || w == Double.NaN) return Double.MaxValue; // intersection behind origin
 
+				Vector normal = e1.crossProduct( e2, false );
+				//u,v are barycentric boordsinates of intersection point
+				return w; //w is distance along ray of intersection point
 			}
 
-			return  Double.MaxValue;
+			return w;
 		}
 
 		public override Color illuminate()
