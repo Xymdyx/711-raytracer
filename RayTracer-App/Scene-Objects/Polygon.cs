@@ -42,9 +42,11 @@ namespace RayTracer_App.Scene_Objects
 
 				//use (w,u,v) = (1/(P . e1)) * ( Q . e2, P . T, Q. D)
 				Vector e1 = vertices[1] - vertices[0];
-				Vector e2 = vertices[2] - vertices[0];
+				Vector e2 = vertices[2] - vertices[0]; //this may be the issue
+
 				Vector T = ray.origin - vertices[0];
 				Vector Q = T.crossProduct( e1 );
+
 				Vector P = ray.direction.crossProduct( e2 );
 				double denom = P.dotProduct( e1 );
 
@@ -53,9 +55,9 @@ namespace RayTracer_App.Scene_Objects
 				double v = Q.dotProduct( ray.direction ) / denom;
 
 				// where is our point?
-				if (P.isZeroVector() || e1.isZeroVector()) w = Double.MinValue;  // ray is parallel to triangle
-				else if (w < 0) w = Double.MaxValue; // intersection behind origin
-				else if ((u < 0) || (v < 0) || (u + v > 1)) w = Double.NaN; //outside of triangle
+				if ( (denom >= 0 && denom <= 1e-8)  || denom == Double.NaN) return Double.MinValue;  // ray is parallel to triangle
+				else if (w < 0) return Double.MaxValue; // intersection behind origin
+				else if ((u < 0) || (v < 0) || (u + v > 1)) return Double.NaN; //outside of triangle
 				else
 				{
 					Vector normal = e1.crossProduct( e2 );
@@ -65,7 +67,7 @@ namespace RayTracer_App.Scene_Objects
 
 			}
 
-			return w;
+			return  Double.MaxValue;
 		}
 
 		public override Color illuminate()

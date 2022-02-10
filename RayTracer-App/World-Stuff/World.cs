@@ -64,8 +64,8 @@ namespace RayTracer_App.World
 			{
 				currW = obj.intersect( ray );
 
-				if ( (currW != Double.MinValue && currW != Double.NaN) &&
-					(currW < bestW) && (currW > 0 ) )
+				if ( (currW != Double.MinValue) && (currW != Double.NaN) &&
+					(currW != Double.MaxValue) && (currW < bestW) && (currW > 0 ) )
 				{
 					bestW = currW;
 					currColor = obj.illuminate();

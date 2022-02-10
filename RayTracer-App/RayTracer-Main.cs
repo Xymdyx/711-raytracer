@@ -24,13 +24,13 @@ public class RayTracerMain
 		imageHeight = 1080;
 
 		//initialize objects
-		//List<Point> triVerts = new List<Point> { new Point( 1, 0, 0 ), new Point( 1, 1, 0 ), new Point( 0, 1, 0 ) };
-		//Polygon triangle = new Polygon( triVerts );
-		Sphere sphere = new Sphere( new Point( 0, 0, 5.0) , 1.0 );
+		List<Point> triVerts = new List<Point> { new Point( 0, 0, 5.0 ), new Point( 0, 1, 5.0 ), new Point( -1, 0, 5.0 ) }; //this must be fixed, goofs up in direction of 3nd point
+		Polygon triangle = new Polygon( triVerts );
+		Sphere sphere = new Sphere( new Point( 0, 0, 5.0) , 2.0 );
 
 		World world = new World();
-		//world.add( triangle );
-		world.add( sphere );
+		world.add( triangle );
+		//world.add( sphere );
 
 		// initialize camera and render world
 		Camera cam = new Camera( new Vector( 0, 1, 0 ), new Point( 0, 0.0, 0.0 ), new Point( 0, 0, 5.0 ) );

@@ -96,8 +96,8 @@ namespace RayTracer_App.Camera
 			world.transformAll( camTransformMat );
 
 			double focalLen = 2.0; //1 / Math.Tan( (90 / 2) * (Math.PI / 180) ); //distance from camera to film plane center along N...
-			double fpHeight = 2; //smaller the more accurate somewhat checks out
-			double fpWidth = 2;
+			double fpHeight = 10; //smaller the more accurate somewhat checks out
+			double fpWidth = 10;
 
 			// for re-defining the film-plane width at some poitn
 
