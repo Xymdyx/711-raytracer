@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Numerics;
 using System.Collections.Generic;
 using System.Text;
 using OpenGLDotNet.Math; // for Matrix4d
 using RayTracer_App.World;
+
+//MATRIX 4D -> MATRIX4X4
 
 namespace RayTracer_App.Camera
 {
@@ -15,13 +18,13 @@ namespace RayTracer_App.Camera
 		//lookat
 		private Point _lookAt;
 		//cameraTransform
-		private Matrix4d _camTransformMat;
+		private Matrix4x4 _camTransformMat;
 
 
 		public Vector up { get => this._up; set => this._up = value; } 
 		public Point eyePoint { get => this._eyePoint; set => this._eyePoint = value; }
 		public Point lookAt { get => this._lookAt; set => this._lookAt = value; }
-		public Matrix4d camTransformMat { get => this._camTransformMat; set => this._camTransformMat = value; }
+		public Matrix4x4 camTransformMat { get => this._camTransformMat; set => this._camTransformMat = value; }
 
 
 
@@ -47,12 +50,12 @@ namespace RayTracer_App.Camera
 		private Vector calculateU(Vector n) { return up.crossProduct( n ); }
 		private Vector calculateV(Vector n, Vector u) { return n.crossProduct( u, false ); } //try not normalizing this
 
-		private Matrix4d makeProjMat( double fov, double aspect, double zNear, double zFar)
+		private Matrix4x4 makeProjMat( float fov, float aspect, float zNear, float zFar)
 		{
-			double f = Math.Tan( 2 / (fov * (Math.PI / 180) ));
-			double zDivisor = (zNear - zFar);
+			float f = (float) Math.Tan( 2 / (fov * (Math.PI / 180) ));
+			float zDivisor = (zNear - zFar);
 
-			return new Matrix4d
+			return new Matrix4x4
 			((f/aspect), 0, 0, 0,
 			 0, f, 0, 0,
 			 0, 0, ( (zFar + zNear) / (zDivisor)), ((2* zFar * zNear) / (zDivisor)),
@@ -62,7 +65,7 @@ namespace RayTracer_App.Camera
 		private void makeCamMat()
 		{
 			//use identity if world origin
-			Matrix4d camCoordMat = new Matrix4d
+			Matrix4x4 camCoordMat = new Matrix4x4
 				( 1, 0, 0, 0,
 				0, 1, 0, 0,
 				0, 0, 1, 0,
@@ -74,7 +77,7 @@ namespace RayTracer_App.Camera
 				Vector U = calculateU( N );
 				Vector V = calculateV( N, U );
 				Vector eyeVec = -eyePoint.toVec();
-				camCoordMat = new Matrix4d
+				camCoordMat = new Matrix4x4
 					( U.v1, V.v1, N.v1, 0,
 					U.v2, V.v2, N.v2, 0,
 					U.v3, V.v3, N.v3, 0,
@@ -95,15 +98,15 @@ namespace RayTracer_App.Camera
 			makeCamMat();
 			world.transformAll( camTransformMat );
 
-			double focalLen = 3.0; //1 / Math.Tan( (90 / 2) * (Math.PI / 180) ); //distance from camera to film plane center along N...
-			double fpHeight = 7.5; //smaller the more accurate somewhat checks out
-			double fpWidth = 7.5;
+			float focalLen = 0.1f; //distance from camera to film plane center along N...
+			float fpHeight = 1.0f; //smaller the more zoomed in
+			float fpWidth = fpHeight;
 
 			// for re-defining the film-plane width at some poitn
 
 			//pixel info
-			double pixHeight = fpHeight / imageHeight;
-			double pixWidth = fpWidth / imageWidth;
+			float pixHeight = fpHeight / imageHeight;
+			float pixWidth = fpWidth / imageWidth;
 
 			//initialize default background color at all pixels to begin with
 			Color bgColor = new Color();

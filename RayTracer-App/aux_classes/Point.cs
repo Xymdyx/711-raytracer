@@ -6,16 +6,18 @@ desc: class that represents a 3d point
 
 using System;
 using OpenGLDotNet.Math;
+using System.Numerics;
 
+//double -> float and Matrix4d -> System.Numerics Matrix4x4
 public class Point
 {
-    private double _x;
-    private double _y;
-    private double _z;
+    private float _x;
+    private float _y;
+    private float _z;
 
-    public double x { get => this._x; set => this._x = value; }
-    public double y { get => this._y; set => this._y = value; }
-    public double z { get => this._z; set => this._z = value; }
+    public float x { get => this._x; set => this._x = value; }
+    public float y { get => this._y; set => this._y = value; }
+    public float z { get => this._z; set => this._z = value; }
 
 //DEFAULT CONSTRUCTOR
     public Point()
@@ -25,7 +27,7 @@ public class Point
         this._z = 0;
     }
 //FULL CONSTRUCTOR
-    public Point( double x, double y, double z )
+    public Point( float x, float y, float z )
     {
         this._x = x;
         this._y = y;
@@ -44,7 +46,7 @@ public class Point
 
 //METHODS
     //TODO FIGURE OUT HOW TO DO THIS
-    public void transform( double x, double y, double z)
+    public void transform( float x, float y, float z)
     {
         this._x += x;
         this._y += y;
@@ -54,10 +56,10 @@ public class Point
     }
 
 //calculate distance
-    public double distance( Point p2)
+    public float distance( Point p2)
     {
 
-        return Math.Sqrt( Math.Pow( (p2.x - this._x), 2 )
+        return (float) Math.Sqrt( Math.Pow( (p2.x - this._x), 2 )
                         + Math.Pow( (p2.y - this._y), 2 )
                         + Math.Pow( (p2.z - this._z), 2 ) );
     }
@@ -67,15 +69,16 @@ public class Point
         return new Vector( this.x, this.y, this.z );
 	}
 
-    public Matrix4d toHmgCoords()
+    // from Matrix4d in OpenGLDotNet to Matrix4x4 in System.numerics
+    public Matrix4x4 toHmgCoords()
     {
-        return new Matrix4d
+        return new Matrix4x4
             ( this.x, 0, 0, 0,
              this.y, 0, 0, 0,
              this.z, 0, 0, 0,
              1, 0, 0, 0 );
     }
-    public void fromHmgCoords( Matrix4d hmgMat )
+    public void fromHmgCoords( Matrix4x4 hmgMat )
     {
         //convert from col-major hmg mat back to a new Point
         this.x = hmgMat.M11 / hmgMat.M41;

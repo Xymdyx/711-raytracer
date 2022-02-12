@@ -1,10 +1,13 @@
 ﻿//Use a Right-Handed Coordinate system and column-major matrices
 using System;
+using System.Numerics;
 using System.Collections.Generic;
 using System.Text;
 using OpenGLDotNet.Math;
 
 using RayTracer_App.Scene_Objects;
+
+//MATRIX 4D -> MATRIX4X4
 
 namespace RayTracer_App.World
 {
@@ -35,14 +38,14 @@ namespace RayTracer_App.World
 		}
 
 		//transform stub
-		public void transform( SceneObject obj, Matrix4d camViewMat )
+		public void transform( SceneObject obj, Matrix4x4 camViewMat )
 		{
 			_objects.Find( item => item.Equals( obj ) ).transform( camViewMat );
 			return;
 		}
 
 		//transformAll stub
-		public void transformAll( Matrix4d camViewMat)
+		public void transformAll( Matrix4x4 camViewMat)
 		{
 			 foreach (SceneObject obj in objects)
 			{
@@ -57,15 +60,15 @@ namespace RayTracer_App.World
 		{
 
 			Color currColor = null;
-			double bestW = Double.MaxValue;
-			double currW = Double.MaxValue;
+			float bestW = float.MaxValue;
+			float currW = float.MaxValue;
 
 			foreach (SceneObject obj in objects)
 			{
 				currW = obj.intersect( ray );
 
-				if ( (currW != Double.MinValue) && (currW != Double.NaN) &&
-					(currW != Double.MaxValue) && (currW < bestW) && (currW > 0 ) )
+				if ( (currW != float.MinValue) && (currW != float.NaN) &&
+					(currW != float.MaxValue) && (currW < bestW) && (currW > 0 ) )
 				{
 					bestW = currW;
 					currColor = obj.illuminate();

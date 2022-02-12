@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Numerics;
 using System.Collections.Generic;
 using System.Text;
 using OpenGLDotNet.Math;
+
+//MATRIX 4D -> MATRIX4X4
 
 namespace RayTracer_App.Scene_Objects
 {
@@ -23,13 +26,13 @@ namespace RayTracer_App.Scene_Objects
 
 
 		//return distance along ray where it intersects an object....
-		public virtual double intersect( LightRay ray )
+		public virtual float intersect( LightRay ray )
 		{
-			return 0.0;
+			return 0.0f;
 		}
 
 
-		public virtual void transform( Matrix4d camViewMat ){ return; }
+		public virtual void transform( Matrix4x4 camViewMat ){ return; }
 
 		public virtual Color illuminate()
 		{

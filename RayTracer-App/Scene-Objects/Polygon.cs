@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 using OpenGLDotNet.Math;
+using System.Numerics; //for Matrix4x4 float
 
+//MATRIX 4D -> MATRIX4X4
 namespace RayTracer_App.Scene_Objects
 {
 	public class Polygon : SceneObject
@@ -31,10 +33,10 @@ namespace RayTracer_App.Scene_Objects
 
 		//METHODS.. TODO mplement intersection for polygon
 		//use barycentric coordinates formula to get intersection
-		public override double intersect( LightRay ray )
+		public override float intersect( LightRay ray )
 		{
 			//HACK... put triangle case in here
-			double w = Double.MaxValue;
+			float w = float.MaxValue;
 
 			if (this.vertices.Count == 3)
 			{
@@ -46,26 +48,26 @@ namespace RayTracer_App.Scene_Objects
 				Vector P = ray.direction.crossProduct( e2, false );
 
 
-				double denom = P.dotProduct( e1 );
+				float denom = P.dotProduct( e1 );
 
-				if (( denom >= 0 && denom <= 1e-8) || denom == Double.NaN) return Double.MaxValue;  // ray is parallel to triangle
+				if (( denom >= 0 && denom <= 1e-8) || denom == float.NaN) return float.MaxValue;  // ray is parallel to triangle
 
-				double denomScale = 1 / denom;
+				float denomScale = 1 / denom;
 
 				Vector T = ray.origin - vertices[0];
-				double u = P.dotProduct( T ) * denomScale;
+				float u = P.dotProduct( T ) * denomScale;
 
-				if (u < 0 || u > 1) return Double.MaxValue;
+				if (u < 0 || u > 1) return float.MaxValue;
 
 				Vector Q = T.crossProduct( e1, false );
-				double v = Q.dotProduct( ray.direction ) * denomScale;
+				float v = Q.dotProduct( ray.direction ) * denomScale;
 
-				if (v < 0 || u + v > 1) return Double.MaxValue;
+				if (v < 0 || u + v > 1) return float.MaxValue;
 				
 				w = Q.dotProduct( e2 ) * denomScale;
 
 				// where is our point?
-				if (w < 0 || w == Double.NaN) return Double.MaxValue; // intersection behind origin
+				if (w < 0 || w == float.NaN) return float.MaxValue; // intersection behind origin
 
 				Vector normal = e1.crossProduct( e2, false );
 				//u,v are barycentric boordsinates of intersection point
@@ -77,17 +79,17 @@ namespace RayTracer_App.Scene_Objects
 
 		public override Color illuminate()
 		{
-			return new Color( 1.0, 0.0, 0.0 ); //return the floor color
+			return new Color( 1.0f, 0.0f, 0.0f ); //return the floor color
 		}
 
-		public override void transform( Matrix4d camViewMat )
+		public override void transform( Matrix4x4 camViewMat )
 		{
 			//TODO set up my polygon in camera coordinates before rendering the world
 			// use post-multiply since I am using column-major... Vnew = B*A*Vold
 			foreach (Point vertex in vertices)
 			{
-				Matrix4d ptHmg = vertex.toHmgCoords(); // 4x4 with only 1st column having x, y, z, w...Rest is 0s.
-				Matrix4d newVertMat = camViewMat * ptHmg; // we postMultiply since we are is LHS
+				Matrix4x4 ptHmg = vertex.toHmgCoords(); // 4x4 with only 1st column having x, y, z, w...Rest is 0s.
+				Matrix4x4 newVertMat = camViewMat * ptHmg; // we postMultiply since we are is LHS
 				vertex.fromHmgCoords( newVertMat ); // [x y z w] => (x/w, y/w, z/w) CP form.. DONE -- MATRIX-MULTI works
 			}
 		}

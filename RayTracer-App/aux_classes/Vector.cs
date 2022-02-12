@@ -5,20 +5,20 @@ desc: class that represents a 3d vector
 */
 
 using System;
-
+//CONVERTED DOUBLE -> FLOAT!
 public class Vector
 {
     private static Vector ZERO_VEC = new Vector( 0, 0, 0 );
 
     // fields
-    private double _v1;
-    private double _v2;
-    private double _v3;
+    private float _v1;
+    private float _v2;
+    private float _v3;
 
     //properties
-    public double v1 { get => this._v1; set => this._v1 = value; }
-    public double v2 { get => this._v2; set => this._v2 = value; }
-    public double v3 { get => this._v3; set => this._v3 = value; }
+    public float v1 { get => this._v1; set => this._v1 = value; }
+    public float v2 { get => this._v2; set => this._v2 = value; }
+    public float v3 { get => this._v3; set => this._v3 = value; }
 
 // default constructor
     public Vector()
@@ -30,7 +30,7 @@ public class Vector
     }
 
 // constructor
-    public Vector(double v1, double v2, double v3, bool normalize = true)
+    public Vector(float v1, float v2, float v3, bool normalize = true)
     {
         this.v1 = v1;
         this.v2 = v2;
@@ -66,20 +66,20 @@ public class Vector
 
 
     // self-operations
-    public Vector scale(double k)
+    public Vector scale(float k)
     {
         return new Vector(k * this.v1, k * this.v2, k * this.v3);
     }
 
-    public double getLen()
+    public float getLen()
     {
-        return Math.Sqrt(Math.Pow(this.v1, 2) + Math.Pow(this.v2, 2) + Math.Pow(this.v3, 2));
+        return (float) Math.Sqrt(Math.Pow(this.v1, 2) + Math.Pow(this.v2, 2) + Math.Pow(this.v3, 2));
     }
 
     // normalize this vector to have 1 length
     public void normalize()
     {
-        double magn = getLen();
+        float magn = getLen();
         if (magn != 0)
         { 
             this.v1 /= magn;
@@ -97,7 +97,7 @@ public class Vector
      * return dot product scalar value
      *  vec2:  the vector on the RHS of tthe dot product (commutative)
      */
-    public double dotProduct( Vector vec2 )
+    public float dotProduct( Vector vec2 )
     {
 
         return ((this.v1 * vec2.v1) + (this.v2 * vec2.v2) + (this.v3 * vec2.v3));
@@ -108,9 +108,9 @@ public class Vector
      * return the cosine between this vector and vec2 in degrees
      * vec2: the vector on the RHS of tthe operation
      */
-    public double cosineBetween(Vector vec2)
+    public float cosineBetween(Vector vec2)
     {
-        return Math.Acos(this.dotProduct(vec2) /(this.getLen() * vec2.getLen()) * (180 / Math.PI));
+        return (float) Math.Acos(this.dotProduct(vec2) /(this.getLen() * vec2.getLen()) * (180 / Math.PI));
     }
 
 
@@ -131,7 +131,7 @@ public class Vector
      */
     public Vector projectOnto(Vector vec2)
     {
-        return this.scale(dotProduct(vec2) / Math.Pow(this.getLen(), 2));
+        return this.scale( (float) (dotProduct(vec2) / Math.Pow(this.getLen(), 2)) );
     }
 
     /*
@@ -169,12 +169,13 @@ public class Vector
     {
         return $"Vector (u1, u2, u3) = ({this.v1}, {this.v2} , {this.v3})\n";
     }
+
 /*Console.WriteLine( "Creating vector" );
 
 Vector tVec = new Vector( 5.0, 6.0, 7.0 );
 Vector fVec = new Vector( 5.9, 6.8, 2.1 );
 Vector cpVec = tVec.crossProduct( fVec );
-double dpVal = tVec.dotProduct( fVec );
+float dpVal = tVec.dotProduct( fVec );
 
 Console.WriteLine(tVec );
 Console.WriteLine(fVec );

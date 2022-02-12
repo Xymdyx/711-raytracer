@@ -6,7 +6,11 @@ using RayTracer_App.World;
 using RayTracer_App.Camera;
 using RayTracer_App.Scene_Objects;
 using System.Collections.Generic;
+using System.Numerics;
 
+//DOUBLE -> FLOAT
+
+//https://matrix.reshish.com/multiplication.php 
 public class RayTracerMain
 {
 	static int imageWidth;
@@ -24,27 +28,28 @@ public class RayTracerMain
 		imageHeight = 1080;
 
 		//initialize objects
-		double s1Depth = 5.0;
-		double s2Depth = 6.5;
-		double floorDept = 40.0;
-		List<Point> triVerts1 = new List<Point> { new Point( -50, 2, floorDept ), new Point( -50, -50, floorDept ), new Point( 50, 2, floorDept ) }; //this must be fixed, goofs up in direction of 3nd point
-		//List<Point> triVerts2 = new List<Point> { new Point( 3, -1, floorDept ), new Point( 3, 0, floorDept ), new Point( 2, -1, floorDept ) }; //this must be fixed, goofs up in direction of 3nd point
-		List<Point> triVerts2 = new List<Point> { new Point( -50, -50, floorDept ), new Point( 50, -50, floorDept ), new Point( 50, 2, floorDept ) } ; //this must be fixed, goofs up in direction of 3nd point
+		float s1Depth = 5.0f;
+		float s2Depth = 6.5f;
+		float floorDept = -.5f;
+		//list triangles in opposite of how I want to connect them... idx % 3
+		List<Point> triVerts1 = new List<Point> { new Point( -1, floorDept, 0 ), new Point( 0, floorDept, 0), new Point( -1, floorDept, 1 ) };
+		//List<Point> triVerts2 = new List<Point> { new Point( 3, -1, floorDept ), new Point( 3, 0, floorDept ), new Point( 2, -1, floorDept )};
+		List<Point> triVerts2 = new List<Point> { new Point( 2, -3, floorDept ), new Point( 2, -2, floorDept ), new Point( 1, -3, floorDept ) };
 
 		Polygon triangle1 = new Polygon( triVerts1 );
 		Polygon triangle2 = new Polygon( triVerts2 );
 
-		Sphere sphere1 = new Sphere( new Point( 0, 1.5, s1Depth) ,2.5 );
-		Sphere sphere2 = new Sphere( new Point( 3.5, 1.75, s2Depth ), 2.0 );
+		Sphere sphere1 = new Sphere( new Point( 0, 1.5f, s1Depth) ,2.5f );
+		Sphere sphere2 = new Sphere( new Point( 3.5f, 1.75f, s2Depth ), 2.0f );
 
 		World world = new World();
 		world.add( triangle1 );
-		world.add( triangle2 );
+		//world.add( triangle2 );
 		world.add( sphere1 );
 		world.add( sphere2 );
 
 		// initialize camera and render world
-		Camera cam = new Camera( new Vector( 0, 1, 0 ), new Point( 0, 0.0, 0.0 ), new Point( 0, 0, 5.0 ) );
+		Camera cam = new Camera( new Vector( 0f, 1f, 0f ), new Point( 0f, 0f, 0f ), new Point( 0f, 0f, 5.0f ) );
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
 		byte[] pixColors = cam.render( world, imageHeight, imageWidth );
@@ -76,6 +81,8 @@ public class RayTracerMain
 
 	static int Main( string [] args )
 	{
+		//TODO CONVERT FROM MATRIX4D -> MATRIX4X4
+
 		//	//camera lookat(position, center, up): [ 0.0, 2.0, -7.2], [0, -1.5, 0], [0, 1, 0]
 		//	//camera perspective projection(vertical fov, aspect ratio, near, far)): [radians(90.0), 1.0, 1.0, 300.0]
 
@@ -92,15 +99,29 @@ public class RayTracerMain
 		//begin OpenGl
 		int[] argc = new int[1]; argc[0] = 0; string[] argv = null;
 		FG.Init( argc, argv );
-		FG.InitDisplayMode( GLUT.GLUT_RGB | GLUT.GLUT_SINGLE | GLUT.GLUT_DEPTH);
+		FG.InitDisplayMode( GLUT.GLUT_RGB | GLUT.GLUT_SINGLE | GLUT.GLUT_DEPTH );
 		FG.InitWindowSize( 1920, 1080 );
 		FG.InitWindowPosition( 0, 0 );
 		FG.CreateWindow( "RayTracing CheckPoint 2" );
-		GL.Init( true );			//I forgot to call this...
+		GL.Init( true );            //I forgot to call this...
 		GL.GetBooleanv( GL.GL_CURRENT_RASTER_POSITION_VALID, valid );
 
 		FG.DisplayFunc( display ); //white screen without this
 		FG.MainLoop(); //end
+		/*		Matrix4x4 mat1= new Matrix4x4(
+					1, 2, 3, 4,
+					5, 6, 7, 8,
+					9, 10, 11, 12
+					, 13, 14, 15, 16 );
+				Matrix4x4 mat2 = new Matrix4x4(
+					17, 18, 19, 20,
+					21, 22, 23, 24,
+					25, 26, 27, 28,
+					29, 30, 31, 32 );
+				Console.WriteLine( $"Test of {mat1} and {mat2} addition:\n {mat1 + mat2}\n " );
+				Console.WriteLine( $"Test of {mat1} and {mat2} subtraction:\n {mat1 - mat2} \n" );
+				Console.WriteLine( $"Test of {mat1} and {mat2} multiplication:\n {mat1 * mat2} \n" );*/
+
 		return 0;
 	}
 }
