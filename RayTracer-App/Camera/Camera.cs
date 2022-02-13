@@ -44,11 +44,18 @@ namespace RayTracer_App.Camera
 			this._lookAt = lookAt;
 		}
 
-//METHODS
-//helper methods for facilitating needed components to define camera coords matrix
-		private Vector calculateN() { return eyePoint - lookAt; }
-		private Vector calculateU(Vector n) { return up.crossProduct( n ); }
-		private Vector calculateV(Vector n, Vector u) { return n.crossProduct( u, false ); } //try not normalizing this
+		//METHODS
+		//helper methods for facilitating needed components to define camera coords matrix
+		//http://www.songho.ca/opengl/gl_camera.html
+
+		//gives the forward = pos - target
+		private Vector calculateN() { return lookAt - eyePoint; } //reversing these got me different perspectives but are they correct?
+
+		//gives the left = norm(cross(up, forward))
+		private Vector calculateU(Vector forward) { return up.crossProduct( forward ); }
+
+		//gives the y-axis (up-axis) = cross( forward, left)
+		private Vector calculateV(Vector forward, Vector left) { return forward.crossProduct( left , false); } //should be normalized now... 
 
 		private Matrix4x4 makeProjMat( float fov, float aspect, float zNear, float zFar)
 		{
@@ -62,7 +69,7 @@ namespace RayTracer_App.Camera
 			 0, 0, -1, 0);
 		}
 
-		private void makeCamMat()
+		private void makeCamMat() //TODO FIZX THIS TO CONFORM WITH RHS
 		{
 			//use identity if world origin
 			Matrix4x4 camCoordMat = new Matrix4x4
@@ -70,21 +77,26 @@ namespace RayTracer_App.Camera
 				0, 1, 0, 0,
 				0, 0, 1, 0,
 				0, 0, 0, 1 );
+			//https://www.geertarien.com/blog/2017/07/30/breakdown-of-the-lookAt-function-in-OpenGL/... from LHS in notes to RHS TODO
 
-			if (!eyePoint.isOrigin())
-			{
-				Vector N = calculateN();
-				Vector U = calculateU( N );
-				Vector V = calculateV( N, U );
-				Vector eyeVec = -eyePoint.toVec();
-				camCoordMat = new Matrix4x4
-					( U.v1, V.v1, N.v1, 0,
-					U.v2, V.v2, N.v2, 0,
-					U.v3, V.v3, N.v3, 0,
-					eyeVec.dotProduct( U ), eyeVec.dotProduct( V ), eyeVec.dotProduct( N ), 1 ); //sans the projection...
-			}
+			Vector zAxis = calculateN(); // camera direction
+			Vector xAxis = calculateU( zAxis );
+			Vector yAxis = calculateV( zAxis, xAxis );
+			Vector eyeVec = -eyePoint.toVec();
+				
+			camCoordMat = new Matrix4x4
+				( xAxis.v1, yAxis.v1, zAxis.v1, 0,
+					xAxis.v2, yAxis.v2, zAxis.v2, 0,
+					xAxis.v3, yAxis.v3, zAxis.v3, 0,
+					eyeVec.dotProduct( xAxis), eyeVec.dotProduct( yAxis), eyeVec.dotProduct( zAxis), 1);
+			/* lhs
+			 * camCoordMat = new Matrix4x4
+				( U.v1, V.v1, N.v1, 0,
+				U.v2, V.v2, N.v2, 0,
+				U.v3, V.v3, N.v3, 0,
+				eyeVec.dotProduct( U ), eyeVec.dotProduct( V ), eyeVec.dotProduct( N ), 1 ); //sans the projection...*/
+			//}
 
-			//Matrix4d persp = makeProjMat( 90, 1.0, 1.0, 50 );
 			this.camTransformMat = camCoordMat;
 			
 		}
@@ -92,14 +104,13 @@ namespace RayTracer_App.Camera
 
 //TODO render method
 //tried list of float[] and float[]...
-		public byte[] render( World.World world, int imageHeight, int imageWidth )
+		public byte[] render( World.World world, int imageHeight, int imageWidth, float focalLen )
 		{
 			// this converts everything to camera coords
 			makeCamMat();
 			world.transformAll( camTransformMat );
 
-			float focalLen = 0.1f; //distance from camera to film plane center along N...
-			float fpHeight = 1.0f; //smaller the more zoomed in
+			float fpHeight = 20.0f; //smaller the more zoomed in
 			float fpWidth = fpHeight;
 
 			// for re-defining the film-plane width at some poitn

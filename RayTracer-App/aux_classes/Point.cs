@@ -45,15 +45,6 @@ public class Point
 
 
 //METHODS
-    //TODO FIGURE OUT HOW TO DO THIS
-    public void transform( float x, float y, float z)
-    {
-        this._x += x;
-        this._y += y;
-        this._z =+ z;
-
-        return;
-    }
 
 //calculate distance
     public float distance( Point p2)
@@ -66,7 +57,7 @@ public class Point
 
     public Vector toVec()
 	{
-        return new Vector( this.x, this.y, this.z );
+        return new Vector( this.x, this.y, this.z, false );
 	}
 
     // from Matrix4d in OpenGLDotNet to Matrix4x4 in System.numerics
@@ -89,6 +80,20 @@ public class Point
     public bool isOrigin()
     {
         return (this.x == 0 && this.y == 0 && this.z == 0);
+    }
+
+    //TODO FIGURE OUT HOW TO DO THIS
+    public void translate( float x, float y, float z )
+    {
+        Matrix4x4 ptMat = this.toHmgCoords( );
+        Matrix4x4 tranMat = new Matrix4x4
+            ( 1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            x, y, z, 1 );
+        Matrix4x4 result = tranMat;
+
+        return;
     }
 
 

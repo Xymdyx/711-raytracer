@@ -5,6 +5,7 @@ using System.Text;
 using OpenGLDotNet.Math;
 
 //MATRIX 4D -> MATRIX4X4
+//TODO ADD TRANSFORMATIONS SUCH AS SCALING, ROTATING, TRANSLATE
 
 namespace RayTracer_App.Scene_Objects
 {
@@ -30,7 +31,6 @@ namespace RayTracer_App.Scene_Objects
 		{
 			return 0.0f;
 		}
-
 
 		public virtual void transform( Matrix4x4 camViewMat ){ return; }
 

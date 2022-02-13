@@ -20,21 +20,23 @@ public class RayTracerMain
 	static bool[] valid = new bool[1];
 	static float[] rat = new float[4];
 
-
+	//OPENGL DRAW CCW order matters
 	public static void doRayTracing() 
 	{
 		// drawPixels in the RGB array with glDrawPixels();... put this in main
 		imageWidth = 1920;
 		imageHeight = 1080;
+		float focalLen = .5f; //distance from camera to film plane center along N... the higher, the further away it is
+
 
 		//initialize objects
 		float s1Depth = 5.0f;
 		float s2Depth = 6.5f;
-		float floorDept = -.5f;
-		//list triangles in opposite of how I want to connect them... idx % 3
-		List<Point> triVerts1 = new List<Point> { new Point( -1, floorDept, 0 ), new Point( 0, floorDept, 0), new Point( -1, floorDept, 1 ) };
-		//List<Point> triVerts2 = new List<Point> { new Point( 3, -1, floorDept ), new Point( 3, 0, floorDept ), new Point( 2, -1, floorDept )};
-		List<Point> triVerts2 = new List<Point> { new Point( 2, -3, floorDept ), new Point( 2, -2, floorDept ), new Point( 1, -3, floorDept ) };
+		float floorDept = 8.5f;
+
+		//list triangles in CCW ORDER!
+		List<Point> triVerts1 = new List<Point> { new Point( 0, 0, floorDept ), new Point( 0, 1, floorDept ), new Point( -1, 0, floorDept ) }; //ccw from point that forms the right angle
+		List<Point> triVerts2 = new List<Point> {  new Point( -1, -1, floorDept ), new Point( -1, -2, floorDept ), new Point( 0, -1, floorDept )  }; //ccw manner.... positive is up, down is negative
 
 		Polygon triangle1 = new Polygon( triVerts1 );
 		Polygon triangle2 = new Polygon( triVerts2 );
@@ -44,15 +46,15 @@ public class RayTracerMain
 
 		World world = new World();
 		world.add( triangle1 );
-		//world.add( triangle2 );
+		world.add( triangle2 );
 		world.add( sphere1 );
 		world.add( sphere2 );
 
 		// initialize camera and render world
-		Camera cam = new Camera( new Vector( 0f, 1f, 0f ), new Point( 0f, 0f, 0f ), new Point( 0f, 0f, 5.0f ) );
+		Camera cam = new Camera( new Vector( 0f, 1f, 0f ), new Point( 4f, 1f, 5f ), new Point( 0f, 2.0f, 5.0f ) );
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
-		byte[] pixColors = cam.render( world, imageHeight, imageWidth );
+		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen );
 
 		unsafe
 		{
@@ -81,8 +83,6 @@ public class RayTracerMain
 
 	static int Main( string [] args )
 	{
-		//TODO CONVERT FROM MATRIX4D -> MATRIX4X4
-
 		//	//camera lookat(position, center, up): [ 0.0, 2.0, -7.2], [0, -1.5, 0], [0, 1, 0]
 		//	//camera perspective projection(vertical fov, aspect ratio, near, far)): [radians(90.0), 1.0, 1.0, 300.0]
 
