@@ -23,35 +23,36 @@ public class RayTracerMain
 	//OPENGL DRAW CCW order matters
 	public static void doRayTracing() 
 	{
-		// drawPixels in the RGB array with glDrawPixels();... put this in main
-		imageWidth = 1920;
-		imageHeight = 1080;
-		float focalLen = .5f; //distance from camera to film plane center along N... the higher, the further away it is
-
-
 		//initialize objects
 		float s1Depth = 5.0f;
 		float s2Depth = 6.5f;
-		float floorDept = 8.5f;
+		float floorDept = 7.5f;
+		float floorHeight = .1f;
 
-		//list triangles in CCW ORDER!
-		List<Point> triVerts1 = new List<Point> { new Point( 0, 0, floorDept ), new Point( 0, 1, floorDept ), new Point( -1, 0, floorDept ) }; //ccw from point that forms the right angle
-		List<Point> triVerts2 = new List<Point> {  new Point( -1, -1, floorDept ), new Point( -1, -2, floorDept ), new Point( 0, -1, floorDept )  }; //ccw manner.... positive is up, down is negative
+		//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
+		List<Point> triVerts1 = new List<Point> { new Point( -5, 0, floorDept ), new Point( 5, 0, floorDept ), new Point( -5, 10, floorDept ) }; //ccw from point that forms the right angle
+		//List<Point> triVerts2 = new List<Point> {  new Point( -1, -1, floorDept ), new Point( -1, -2, floorDept ), new Point( 0, -1, floorDept )  }; //ccw manner.... positive is up, down is negative
+		//List<Point> triVerts1 = new List<Point> { new Point( 0, floorHeight, 1 ), new Point( 0 ,floorHeight, 0 ), new Point( 1 ,floorHeight, 0) }; //ccw from point that forms the right angle
 
 		Polygon triangle1 = new Polygon( triVerts1 );
-		Polygon triangle2 = new Polygon( triVerts2 );
+		//Polygon triangle2 = new Polygon( triVerts2 );
 
-		Sphere sphere1 = new Sphere( new Point( 0, 1.5f, s1Depth) ,2.5f );
+		Sphere sphere1 = new Sphere( new Point( 0, 1.5f, s1Depth) , 2.5f );
 		Sphere sphere2 = new Sphere( new Point( 3.5f, 1.75f, s2Depth ), 2.0f );
 
 		World world = new World();
 		world.add( triangle1 );
-		world.add( triangle2 );
+		//world.add( triangle2 );
 		world.add( sphere1 );
 		world.add( sphere2 );
 
 		// initialize camera and render world
-		Camera cam = new Camera( new Vector( 0f, 1f, 0f ), new Point( 4f, 1f, 5f ), new Point( 0f, 2.0f, 5.0f ) );
+		// drawPixels in the RGB array with glDrawPixels();... put this in main
+		imageWidth = 1920;
+		imageHeight = 1080;
+		float focalLen = 2.5f; //distance from camera to film plane center along N... the higher, the more zoomed in
+
+		Camera cam = new Camera( new Vector( 0f, 1f, 0f ), new Point( 0f, 0f, 0f ), new Point( 0f, 0f, 5.0f ) ); //-z = backing up...
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
 		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen );
@@ -68,7 +69,7 @@ public class RayTracerMain
 	{
 		//put in display function
 		GL.ClearColor( 0, 0, 0, 1 );
-		GL.Clear( GL.GL_COLOR_BUFFER_BIT );
+		GL.Clear( GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT );
 
 		GL.PixelStorei( GL.GL_UNPACK_ALIGNMENT, 1);
 		GL.GetBooleanv( GL.GL_CURRENT_RASTER_POSITION_VALID, valid );
@@ -104,6 +105,13 @@ public class RayTracerMain
 		FG.InitWindowPosition( 0, 0 );
 		FG.CreateWindow( "RayTracing CheckPoint 2" );
 		GL.Init( true );            //I forgot to call this...
+		
+		//fixed pixels being at a higher depth being in front of those with lower depth
+		GL.Enable( GL.GL_DEPTH_TEST );
+		GL.DepthFunc( GL.GL_LEQUAL );
+		GL.FrontFace( GL.GL_CCW );
+		GL.CullFace( GL.GL_BACK );
+
 		GL.GetBooleanv( GL.GL_CURRENT_RASTER_POSITION_VALID, valid );
 
 		FG.DisplayFunc( display ); //white screen without this

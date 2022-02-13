@@ -34,7 +34,7 @@ public class Point
         this._z = z;
     }
 
-//operator overloads + and -
+//operator overloads + and -... All of these normalize, use methods for non-normalized
     public static Point operator +( Point p1 ) => new Point( (p1.x), (p1.y), (p1.z) );
     public static Point operator -( Point p1 ) => new Point( -(p1.x), -(p1.y), -(p1.z) );
 
@@ -96,5 +96,10 @@ public class Point
         return;
     }
 
+    // subtract two points to get vector sans normalizing. For Moller-Trumbone ray-triangle
+    public Vector ptSub( Point p2)
+    {
+        return new Vector( this.x - p2.x, this.y - p2.y, this.z - p2.z, false );
+    }
 
 }

@@ -41,20 +41,22 @@ namespace RayTracer_App.Scene_Objects
 			if (this.vertices.Count == 3)
 			{
 				//do triangle intersection formula with barycentric coordinates
-
+				// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+				// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
+				// try not normalizing anything - 2/13
 				//use (w,u,v) = (1/(P . e1)) * ( Q . e2, P . T, Q. D)
-				Vector e1 = vertices[1] - vertices[0]; // cross, dot, and normalize good
-				Vector e2 = vertices[2] - vertices[0]; //this may be the issue
+
+				Vector e1 = vertices[1].ptSub( vertices[0] ); // cross, dot, and normalize good
+				Vector e2 = vertices[2].ptSub( vertices[0] ); //this may be the issue
+
 				Vector P = ray.direction.crossProduct( e2, false );
-
-
 				float denom = P.dotProduct( e1 );
 
-				if (( denom >= 0 && denom <= 1e-8) || denom == float.NaN) return float.MaxValue;  // ray is parallel to triangle
+				if (( denom >= -1e-8 && denom <= 1e-8) || denom == float.NaN) return float.MaxValue;  // ray is parallel to triangle
 
 				float denomScale = 1 / denom;
 
-				Vector T = ray.origin - vertices[0];
+				Vector T = ray.origin.ptSub( vertices[0] );
 				float u = P.dotProduct( T ) * denomScale;
 
 				if (u < 0 || u > 1) return float.MaxValue;
@@ -84,12 +86,12 @@ namespace RayTracer_App.Scene_Objects
 
 		public override void transform( Matrix4x4 camViewMat )
 		{
-			//TODO set up my polygon in camera coordinates before rendering the world
+			//VERIFIED - 2/13	
 			// use post-multiply since I am using column-major... Vnew = B*A*Vold
 			foreach (Point vertex in vertices)
 			{
 				Matrix4x4 ptHmg = vertex.toHmgCoords(); // 4x4 with only 1st column having x, y, z, w...Rest is 0s.
-				Matrix4x4 newVertMat = camViewMat * ptHmg; // we postMultiply since we are is LHS
+				Matrix4x4 newVertMat = camViewMat * ptHmg; // we postMultiply since we are is RHS
 				vertex.fromHmgCoords( newVertMat ); // [x y z w] => (x/w, y/w, z/w) CP form.. DONE -- MATRIX-MULTI works
 			}
 		}

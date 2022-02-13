@@ -38,7 +38,7 @@ namespace RayTracer_App.Scene_Objects
 			float w1 = 1.0f; // the distance where the ray and sphere intersect
 			float w2 = -1.0f;
 
-			// A = dx^2 + dy^2 + dz^2
+			// A = dx^2 + dy^2 + dz^2.. should be A
 			float A = (float) Math.Pow(rayDir.getLen(),2);
 
 			//TROED SWAPPING
