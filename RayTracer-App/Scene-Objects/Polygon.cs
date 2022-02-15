@@ -72,6 +72,7 @@ namespace RayTracer_App.Scene_Objects
 				if (w < 0 || w == float.NaN) return float.MaxValue; // intersection behind origin
 
 				Vector normal = e1.crossProduct( e2, false );
+				// intersection = ray.origin + (ray.direction * w)
 				//u,v are barycentric boordsinates of intersection point
 				return w; //w is distance along ray of intersection point
 			}

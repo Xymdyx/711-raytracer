@@ -24,25 +24,24 @@ public class RayTracerMain
 	public static void doRayTracing() 
 	{
 		//initialize objects
-		float s1Depth = 5.0f;
+		float s1Depth = 5.0f; //+z into the scene... am I in LHS?
 		float s2Depth = 6.5f;
 		float floorDept = 7.5f;
-		float floorHeight = .1f;
+		float floorHeight = 1.0f;
 
 		//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
-		List<Point> triVerts1 = new List<Point> { new Point( -5, 0, floorDept ), new Point( 5, 0, floorDept ), new Point( -5, 10, floorDept ) }; //ccw from point that forms the right angle
+		
+		//List<Point> triVerts1 = new List<Point> { new Point( -5, 0, floorDept ), new Point( 5, 0, floorDept ), new Point( -5, 10, floorDept ) }; //ccw from point that forms the right angle
 		//List<Point> triVerts2 = new List<Point> {  new Point( -1, -1, floorDept ), new Point( -1, -2, floorDept ), new Point( 0, -1, floorDept )  }; //ccw manner.... positive is up, down is negative
-		//List<Point> triVerts1 = new List<Point> { new Point( 0, floorHeight, 1 ), new Point( 0 ,floorHeight, 0 ), new Point( 1 ,floorHeight, 0) }; //ccw from point that forms the right angle
 
-		Polygon triangle1 = new Polygon( triVerts1 );
+		//Polygon triangle1 = new Polygon( triVerts1 );
 		//Polygon triangle2 = new Polygon( triVerts2 );
 
 		Sphere sphere1 = new Sphere( new Point( 0, 1.5f, s1Depth) , 2.5f );
-		Sphere sphere2 = new Sphere( new Point( 3.5f, 1.75f, s2Depth ), 2.0f );
+		Sphere sphere2 = new Sphere( new Point( 3.5f, 1.75f, s2Depth ), 2.5f );
 
 		World world = new World();
-		world.add( triangle1 );
-		//world.add( triangle2 );
+		//world.add( triangle1 );
 		world.add( sphere1 );
 		world.add( sphere2 );
 
@@ -50,14 +49,17 @@ public class RayTracerMain
 		// drawPixels in the RGB array with glDrawPixels();... put this in main
 		imageWidth = 1920;
 		imageHeight = 1080;
-		float focalLen = 2.5f; //distance from camera to film plane center along N... the higher, the more zoomed in
+		float focalLen = .1f; //distance from camera to film plane center along N...
 
-		Camera cam = new Camera( new Vector( 0f, 1f, 0f ), new Point( 0f, 0f, 0f ), new Point( 0f, 0f, 5.0f ) ); //-z = backing up...
+		Vector up = new Vector( 0f, 1f, 0f );
+		Point eyePos = new Point( 0f, 0f, 0f );
+		Point lookAt = new Point( 0f, 0f, 5.0f );
+		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
 		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen );
 
-		unsafe
+		unsafe //this is how to work with pointers in C#
 		{
 			fixed (byte* colArrPtr = pixColors) { colsPtr = new IntPtr( (void*)colArrPtr ); }
 		}
@@ -95,6 +97,7 @@ public class RayTracerMain
 
 		//	//floor - cube size:[25, 2.5, 60]
 		//	//floor - cube location:[ -2.0, -6.5, -0.5]
+
 		doRayTracing();
 
 		//begin OpenGl
@@ -116,20 +119,20 @@ public class RayTracerMain
 
 		FG.DisplayFunc( display ); //white screen without this
 		FG.MainLoop(); //end
-		/*		Matrix4x4 mat1= new Matrix4x4(
-					1, 2, 3, 4,
-					5, 6, 7, 8,
-					9, 10, 11, 12
-					, 13, 14, 15, 16 );
-				Matrix4x4 mat2 = new Matrix4x4(
-					17, 18, 19, 20,
-					21, 22, 23, 24,
-					25, 26, 27, 28,
-					29, 30, 31, 32 );
-				Console.WriteLine( $"Test of {mat1} and {mat2} addition:\n {mat1 + mat2}\n " );
-				Console.WriteLine( $"Test of {mat1} and {mat2} subtraction:\n {mat1 - mat2} \n" );
-				Console.WriteLine( $"Test of {mat1} and {mat2} multiplication:\n {mat1 * mat2} \n" );*/
-
 		return 0;
 	}
 }
+
+/*		Matrix4x4 mat1= new Matrix4x4(
+			1, 2, 3, 4,
+			5, 6, 7, 8,
+			9, 10, 11, 12
+			, 13, 14, 15, 16 );
+		Matrix4x4 mat2 = new Matrix4x4(
+			17, 18, 19, 20,
+			21, 22, 23, 24,
+			25, 26, 27, 28,
+			29, 30, 31, 32 );
+		Console.WriteLine( $"Test of {mat1} and {mat2} addition:\n {mat1 + mat2}\n " );
+		Console.WriteLine( $"Test of {mat1} and {mat2} subtraction:\n {mat1 - mat2} \n" );
+		Console.WriteLine( $"Test of {mat1} and {mat2} multiplication:\n {mat1 * mat2} \n" );*/

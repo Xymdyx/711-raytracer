@@ -87,9 +87,9 @@ namespace RayTracer_App.Camera
 				
 			camCoordMat = new Matrix4x4
 				( xAxis.v1, yAxis.v1, zAxis.v1, 0,
-					xAxis.v2, yAxis.v2, zAxis.v2, 0,
-					xAxis.v3, yAxis.v3, zAxis.v3, 0,
-					-(eyeVec.dotProduct( xAxis)), -(eyeVec.dotProduct( yAxis)), -(eyeVec.dotProduct( zAxis)), 1);
+				xAxis.v2, yAxis.v2, zAxis.v2, 0,
+				xAxis.v3, yAxis.v3, zAxis.v3, 0,
+				-(eyeVec.dotProduct( xAxis)), -(eyeVec.dotProduct( yAxis)), -(eyeVec.dotProduct( zAxis)), 1);
 			/* lhs
 			 * camCoordMat = new Matrix4x4
 				( U.v1, V.v1, N.v1, 0,
@@ -150,6 +150,7 @@ namespace RayTracer_App.Camera
 			//		world.spawnRay()... see what it hits
 			//		whatever it hits... rgbs.add( rgb float triplet)
 			int hits = 0;
+			//start from bottomright -> top-right
 			for ( int y = 0; y < imageHeight; y++) // positive x ->, positive y V
 			{
 
