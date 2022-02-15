@@ -31,11 +31,9 @@ namespace RayTracer_App.Scene_Objects
 		}
 
 
-		//METHODS.. TODO mplement intersection for polygon
 		//use barycentric coordinates formula to get intersection
 		public override float intersect( LightRay ray )
 		{
-			//HACK... put triangle case in here
 			float w = float.MaxValue;
 
 			if (this.vertices.Count == 3)

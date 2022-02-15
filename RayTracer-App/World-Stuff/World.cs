@@ -55,7 +55,6 @@ namespace RayTracer_App.World
 			return;
 		}
 		
-		//TODO implement spawnRay
 		public Color spawnRay( LightRay ray )
 		{
 

@@ -103,7 +103,6 @@ namespace RayTracer_App.Camera
 		}
 
 
-//TODO render method
 //tried list of float[] and float[]...
 		public byte[] render( World.World world, int imageHeight, int imageWidth, float focalLen )
 		{

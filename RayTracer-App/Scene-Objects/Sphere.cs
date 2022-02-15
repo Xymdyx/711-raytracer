@@ -29,7 +29,6 @@ namespace RayTracer_App.Scene_Objects
 		}
 
 
-		//TODO use light-ray intersection formula that involves quadratic formula
 		public override float intersect( LightRay ray )
 		{
 			float kEpsilon = 1e-6f;
