@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Numerics;
-using System.Collections.Generic;
-using System.Text;
-using OpenGLDotNet.Math; // for Matrix4d
 using RayTracer_App.World;
 
 //MATRIX 4D -> MATRIX4X4
@@ -44,59 +41,41 @@ namespace RayTracer_App.Camera
 			this._lookAt = lookAt;
 		}
 
-		//METHODS
-		//helper methods for facilitating needed components to define camera coords matrix
+//METHODS
 		//http://www.songho.ca/opengl/gl_camera.html
 		// https://github.com/sgorsten/linalg/issues/29 ... sanity checks that I am doing this correctly
 
-		//gives the forward = pos - target
-		private Vector calculateN() { return lookAt - eyePoint; } //reversing these got me different perspectives but are they correct?
+		//gives the forward = target - camPos
+		private Vector calculateN() { return lookAt - eyePoint; } 
 
 		//gives the left = norm(cross(up, forward))
-		private Vector calculateU(Vector forward) { return up.crossProduct( forward ); }
+		private Vector calculateU(Vector forward) { return this.up.crossProduct( forward ); }
 
 		//gives the y-axis (up-axis) = cross( forward, left)
-		private Vector calculateV(Vector forward, Vector left) { return forward.crossProduct( left , false); } //should be normalized now... 
-
-		private Matrix4x4 makeProjMat( float fov, float aspect, float zNear, float zFar)
-		{
-			float f = (float) Math.Tan( 2 / (fov * (Math.PI / 180) ));
-			float zDivisor = (zNear - zFar);
-
-			return new Matrix4x4
-			((f/aspect), 0, 0, 0,
-			 0, f, 0, 0,
-			 0, 0, ( (zFar + zNear) / (zDivisor)), ((2* zFar * zNear) / (zDivisor)),
-			 0, 0, -1, 0);
-		}
+		private Vector calculateV(Vector forward, Vector left) { return forward.crossProduct( left ); } //should be normalized now... 
 
 		private void makeCamMat() //TODO FIZX THIS TO CONFORM WITH RHS
 		{
 			//use identity if world origin
-			Matrix4x4 camCoordMat = new Matrix4x4
-				( 1, 0, 0, 0,
-				0, 1, 0, 0,
-				0, 0, 1, 0,
-				0, 0, 0, 1 );
-			//https://www.geertarien.com/blog/2017/07/30/breakdown-of-the-lookAt-function-in-OpenGL/... from LHS in notes to RHS TODO
+			Matrix4x4 camCoordMat = Matrix4x4.Identity; //row major
+		
+			//https://www.geertarien.com/blog/2017/07/30/breakdown-of-the-lookAt-function-in-OpenGL/... from LHS i
 
-			Vector zAxis = calculateN(); // camera direction
+			Vector zAxis = calculateN(); // camera FORWARD direction
 			Vector xAxis = calculateU( zAxis );
 			Vector yAxis = calculateV( zAxis, xAxis );
 			Vector eyeVec = eyePoint.toVec();
-				
+
+			/*	camCoordMat = new Matrix4x4( xAxis.v1, yAxis.v1, zAxis.v1, 0,
+							xAxis.v2, yAxis.v2, zAxis.v2, 0,
+							xAxis.v3, yAxis.v3, zAxis.v3, 0,
+		-(eyeVec.dotProduct( xAxis)), -(eyeVec.dotProduct( yAxis)), -(eyeVec.dotProduct( zAxis)), 1);*/
+
 			camCoordMat = new Matrix4x4
-				( xAxis.v1, yAxis.v1, zAxis.v1, 0,
-				xAxis.v2, yAxis.v2, zAxis.v2, 0,
-				xAxis.v3, yAxis.v3, zAxis.v3, 0,
-				-(eyeVec.dotProduct( xAxis)), -(eyeVec.dotProduct( yAxis)), -(eyeVec.dotProduct( zAxis)), 1);
-			/* lhs
-			 * camCoordMat = new Matrix4x4
-				( U.v1, V.v1, N.v1, 0,
-				U.v2, V.v2, N.v2, 0,
-				U.v3, V.v3, N.v3, 0,
-				eyeVec.dotProduct( U ), eyeVec.dotProduct( V ), eyeVec.dotProduct( N ), 1 ); //sans the projection...*/
-			//}
+							( xAxis.v1, xAxis.v2, xAxis.v3,	-(eyeVec.dotProduct( xAxis )),
+							yAxis.v1, yAxis.v2, yAxis.v3, -(eyeVec.dotProduct( yAxis )),
+							zAxis.v1, zAxis.v2, zAxis.v3, -(eyeVec.dotProduct( zAxis )),
+							0, 0, 0, 1 );
 
 			this.camTransformMat = camCoordMat;
 			
@@ -110,10 +89,8 @@ namespace RayTracer_App.Camera
 			makeCamMat();
 			world.transformAll( camTransformMat );
 
-			float fpHeight = 10.0f; //smaller the more zoomed in
+			float fpHeight = 5.0f; //smaller the more zoomed in
 			float fpWidth = fpHeight;
-
-			// for re-defining the film-plane width at some poitn
 
 			//pixel info
 			float pixHeight = fpHeight / imageHeight;
@@ -135,11 +112,8 @@ namespace RayTracer_App.Camera
 				else pixColors[add] = bgArr[2]; //blue
 			}
 
-
-			//fpHeight - (pixHeight / 2) for y originally
-			//Point fpPoint = new Point( (-fpWidth / 2) + pixWidth / 2, (pixHeight / 2), focalLen);
-
-			Point fpPoint = new Point ( (-fpWidth / 2) + (pixWidth / 2), (-fpHeight / 2) + (pixHeight / 2), focalLen);
+			// originally had (-fpHeight/2 + pixHeight/2.. was positive y upward...
+			Point fpPoint = new Point ( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen); //gldrawPixels starts drawing lower-left corner at raster positions
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;
 			byte[] hitColorArr = null;
@@ -148,8 +122,8 @@ namespace RayTracer_App.Camera
 			//	for y = -; y < y-pixels; y+= pixelHeight
 			//		world.spawnRay()... see what it hits
 			//		whatever it hits... rgbs.add( rgb float triplet)
+			//start from bottom-left -> top-right
 			int hits = 0;
-			//start from bottomright -> top-right
 			for ( int y = 0; y < imageHeight; y++) // positive x ->, positive y V
 			{
 
@@ -172,7 +146,7 @@ namespace RayTracer_App.Camera
 				}
 				//reset x to default position
 				fpPoint.x = (-fpWidth / 2) + (pixWidth / 2);
-				fpPoint.y += pixHeight;
+				fpPoint.y -= pixHeight;
 			}
 			Console.WriteLine( $" There are {hits} non-background colors/ {imageHeight * imageWidth} colors total" );
 			return pixColors ;

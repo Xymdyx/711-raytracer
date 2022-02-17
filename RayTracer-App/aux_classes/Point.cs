@@ -5,10 +5,10 @@ desc: class that represents a 3d point
 */
 
 using System;
-using OpenGLDotNet.Math;
 using System.Numerics;
 
 //double -> float and Matrix4d -> System.Numerics Matrix4x4
+//TODO REVIEW 
 public class Point
 {
     private float _x;
@@ -61,20 +61,17 @@ public class Point
 	}
 
     // from Matrix4d in OpenGLDotNet to Matrix4x4 in System.numerics
-    public Matrix4x4 toHmgCoords()
+    // https://github.com/microsoft/referencesource/blob/master/System.Numerics/System/Numerics/Vector3.cs
+    public Vector4 toHmgCoords()
     {
-        return new Matrix4x4
-            ( this.x, 0, 0, 0,
-             this.y, 0, 0, 0,
-             this.z, 0, 0, 0,
-             1, 0, 0, 0 );
+        return new Vector4( this.x, this.y, this.z, 1 );
     }
-    public void fromHmgCoords( Matrix4x4 hmgMat )
+    public void fromHmgCoords( Vector4 hmgMat )
     {
-        //convert from col-major hmg mat back to a new Point
-        this.x = hmgMat.M11 / hmgMat.M41;
-        this.y = hmgMat.M21 / hmgMat.M41;
-        this.z = hmgMat.M31/ hmgMat.M41;
+        //convert from row-major hmg mat back to a new Point
+        this.x = hmgMat.X / hmgMat.W;
+        this.y = hmgMat.Y / hmgMat.W;
+        this.z = hmgMat.Z/ hmgMat.W;
     }
 
     public bool isOrigin()
@@ -85,7 +82,7 @@ public class Point
     //TODO FIGURE OUT HOW TO DO THIS
     public void translate( float x, float y, float z )
     {
-        Matrix4x4 ptMat = this.toHmgCoords( );
+        Vector4 ptMat = this.toHmgCoords( );
         Matrix4x4 tranMat = new Matrix4x4
             ( 1, 0, 0, 0,
             0, 1, 0, 0,

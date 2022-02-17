@@ -44,34 +44,64 @@ namespace RayTracer_App.Scene_Objects
 				// try not normalizing anything - 2/13
 				//use (w,u,v) = (1/(P . e1)) * ( Q . e2, P . T, Q. D)
 
-				Vector e1 = vertices[1].ptSub( vertices[0] ); // cross, dot, and normalize good
-				Vector e2 = vertices[2].ptSub( vertices[0] ); //this may be the issue
 
-				Vector P = ray.direction.crossProduct( e2, false );
-				float denom = P.dotProduct( e1 );
+/*NORMALIZED VECS
+*				Vector e1 = vertices[1] - vertices[0]; // cross, dot, and normalize good
+Vector e2 = vertices[2] - vertices[0]; //this may be the issue
 
-				if (( denom >= -1e-8 && denom <= 1e-8) || denom == float.NaN) return float.MaxValue;  // ray is parallel to triangle
+Vector P = ray.direction.crossProduct( e2 );
+float denom = P.dotProduct( e1 );
 
-				float denomScale = 1 / denom;
+if (( denom >= -1e-8 && denom <= 1e-8) || denom == float.NaN) return float.MaxValue;  // ray is parallel to triangle
 
-				Vector T = ray.origin.ptSub( vertices[0] );
-				float u = P.dotProduct( T ) * denomScale;
+float denomScale = 1 / denom;
 
-				if (u < 0 || u > 1) return float.MaxValue;
+Vector T = ray.origin - vertices[0];
+float u = P.dotProduct( T ) * denomScale;
 
-				Vector Q = T.crossProduct( e1, false );
-				float v = Q.dotProduct( ray.direction ) * denomScale;
+if (u < 0 || u > 1) return float.MaxValue;
 
-				if (v < 0 || u + v > 1) return float.MaxValue;
-				
-				w = Q.dotProduct( e2 ) * denomScale;
+Vector Q = T.crossProduct( e1 );
+float v = Q.dotProduct( ray.direction ) * denomScale;
 
-				// where is our point?
-				if (w < 0 || w == float.NaN) return float.MaxValue; // intersection behind origin
+if (v < 0 || u + v > 1) return float.MaxValue;
 
-				Vector normal = e1.crossProduct( e2, false );
-				// intersection = ray.origin + (ray.direction * w)
-				//u,v are barycentric boordsinates of intersection point
+w = Q.dotProduct( e2 ) * denomScale;
+
+// where is our point?
+if (w < 0 || w == float.NaN) return float.MaxValue; // intersection behind origin
+
+								Vector normal = e1.crossProduct( e2 );*/
+
+						// intersection = ray.origin + (ray.direction * w)
+						//u,v are barycentric boordsinates of intersection point
+						Vector e1 = vertices[1].ptSub( vertices[0] ); // cross, dot, and normalize good
+						Vector e2 = vertices[2].ptSub( vertices[0] ); //this may be the issue
+
+						Vector P = ray.direction.crossProduct( e2, false );
+						float denom = P.dotProduct( e1 );
+
+						if ((denom >= -1e-8 && denom <= 1e-8) || denom == float.NaN) return float.MaxValue;  // ray is parallel to triangle
+
+						float denomScale = 1 / denom;
+
+						Vector T = ray.origin.ptSub( vertices[0] );
+						float u = P.dotProduct( T ) * denomScale;
+
+						if (u < 0 || u > 1) return float.MaxValue;
+
+						Vector Q = T.crossProduct( e1, false );
+						float v = Q.dotProduct( ray.direction ) * denomScale;
+
+						if (v < 0 || u + v > 1) return float.MaxValue;
+
+						w = Q.dotProduct( e2 ) * denomScale;
+
+						// where is our point?
+						if (w < 0 || w == float.NaN) return float.MaxValue; // intersection behind origin
+
+						Vector normal = e1.crossProduct( e2, false );
+
 				return w; //w is distance along ray of intersection point
 			}
 
@@ -86,12 +116,12 @@ namespace RayTracer_App.Scene_Objects
 		public override void transform( Matrix4x4 camViewMat )
 		{
 			//VERIFIED - 2/13	
-			// use post-multiply since I am using column-major... Vnew = B*A*Vold
+			// use pre-multiply
 			foreach (Point vertex in vertices)
 			{
-				Matrix4x4 ptHmg = vertex.toHmgCoords(); // 4x4 with only 1st column having x, y, z, w...Rest is 0s.
-				Matrix4x4 newVertMat = camViewMat * ptHmg; // we postMultiply since we are is RHS
-				vertex.fromHmgCoords( newVertMat ); // [x y z w] => (x/w, y/w, z/w) CP form.. DONE -- MATRIX-MULTI works
+				Vector4 ptHmg = vertex.toHmgCoords(); // MS Vec4 class listed in row-major order
+				Vector4 newVertVec = Vector4.Transform( ptHmg, camViewMat ); // we postMultiply since we are is LHS
+				vertex.fromHmgCoords( newVertVec ); // [x y z w] => (x/w, y/w, z/w) CP form.. DONE -- MATRIX-MULTI works
 			}
 		}
 	}
