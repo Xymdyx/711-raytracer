@@ -24,27 +24,29 @@ public class RayTracerMain
 	public static void doRayTracing() 
 	{
 		//initialize objects
-		float s1Depth = 7.0f; //+z into the scene... I am IN LHS
-		float s2Depth = s1Depth + .5f;
+		float focalLen = 1f; //distance from camera to film plane center along N...
+
+		float s1Depth = 3.0f; //+z into the scene... I am IN LHS
+		float s2Depth = s1Depth + 1.5f;
 		float sphereRad = 1.5f;
 
-		float floorDept = 8.0f;
-		float floorHeight = 1.0f;
+		float floorDept = 3.0f;
+		float floorHeight = 5.5f;
 
 		//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
-		
-		List<Point> triVerts1 = new List<Point> { new Point( -1, 0, floorDept ), new Point( 1, 0, floorDept ), new Point( -1, 1, floorDept ) }; //ccw from point that forms the right angle
-		List<Point> triVerts2 = new List<Point> {  new Point( 0, 1, floorDept ), new Point( .5f ,1, floorDept ), new Point( 0, 1.5f, floorDept )  }; //ccw manner.... positive is up, down is negative
+		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
+		List<Point> triVerts1 = new List<Point> {  new Point( 20f, floorHeight, 12f ), new Point( -6f, floorHeight, 12f ), new Point( 2f, floorHeight, 3f ), }; //ccw from point that forms the right angle
+		List<Point> triVerts2 = new List<Point> {  new Point( -6f, floorHeight, 3f), new Point( -6f, floorHeight, 12f ), new Point( 2f, floorHeight, 3f ) }; //ccw manner.... positive is up, down is negative
 
 		Polygon triangle1 = new Polygon( triVerts1 );
 		Polygon triangle2 = new Polygon( triVerts2 );
 
 		Sphere sphere1 = new Sphere( new Point( 0, 0f, s1Depth) , sphereRad );
-		Sphere sphere2 = new Sphere( new Point( 3.5f, -2.25f, s2Depth ), sphereRad );
+		Sphere sphere2 = new Sphere( new Point( 2.00f, .25f, s2Depth ), sphereRad - .15f );
 
 		World world = new World();
-		//world.add( triangle1 );
-		//world.add( triangle2 );
+		world.add( triangle1 );
+		world.add( triangle2 );
 		world.add( sphere1 );
 		world.add( sphere2 );
 
@@ -52,11 +54,10 @@ public class RayTracerMain
 		// drawPixels in the RGB array with glDrawPixels();... put this in main
 		imageWidth = 1600;
 		imageHeight = imageWidth;
-		float focalLen = 1f; //distance from camera to film plane center along N...
 
 		Vector up = new Vector( 0f, 1f, 0f );
-		Point eyePos = new Point( 0f, 10f, -10f);
-		Point lookAt = new Point( 0f, 0f, s1Depth ); // this is indeed translating the spheres in a direction...
+		Point eyePos = new Point( 0f, 0f, 0f);
+		Point lookAt = new Point( 0f, 0.0f, s1Depth ); // lookAt gives odd results when looking at objects at different angles.
 		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
@@ -75,6 +76,7 @@ public class RayTracerMain
 		//put in display function
 		GL.ClearColor( 0, 0, 0, 1 );
 		GL.Clear( GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT );
+		GL.RasterPos2i( -1, -1 );
 
 		GL.PixelStorei( GL.GL_UNPACK_ALIGNMENT, 1);
 		GL.GetBooleanv( GL.GL_CURRENT_RASTER_POSITION_VALID, valid );

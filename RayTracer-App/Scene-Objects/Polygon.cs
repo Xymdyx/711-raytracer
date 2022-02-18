@@ -45,43 +45,45 @@ namespace RayTracer_App.Scene_Objects
 				//use (w,u,v) = (1/(P . e1)) * ( Q . e2, P . T, Q. D)
 
 
-/*NORMALIZED VECS
-*				Vector e1 = vertices[1] - vertices[0]; // cross, dot, and normalize good
-Vector e2 = vertices[2] - vertices[0]; //this may be the issue
+				/*NORMALIZED VECS
+				*				Vector e1 = vertices[1] - vertices[0]; // cross, dot, and normalize good
+				Vector e2 = vertices[2] - vertices[0]; //this may be the issue
 
-Vector P = ray.direction.crossProduct( e2 );
-float denom = P.dotProduct( e1 );
+				Vector P = ray.direction.crossProduct( e2 );
+				float denom = P.dotProduct( e1 );
 
-if (( denom >= -1e-8 && denom <= 1e-8) || denom == float.NaN) return float.MaxValue;  // ray is parallel to triangle
+				if (( denom >= -1e-8 && denom <= 1e-8) || denom == float.NaN) return float.MaxValue;  // ray is parallel to triangle
 
-float denomScale = 1 / denom;
+				float denomScale = 1 / denom;
 
-Vector T = ray.origin - vertices[0];
-float u = P.dotProduct( T ) * denomScale;
+				Vector T = ray.origin - vertices[0];
+				float u = P.dotProduct( T ) * denomScale;
 
-if (u < 0 || u > 1) return float.MaxValue;
+				if (u < 0 || u > 1) return float.MaxValue;
 
-Vector Q = T.crossProduct( e1 );
-float v = Q.dotProduct( ray.direction ) * denomScale;
+				Vector Q = T.crossProduct( e1 );
+				float v = Q.dotProduct( ray.direction ) * denomScale;
 
-if (v < 0 || u + v > 1) return float.MaxValue;
+				if (v < 0 || u + v > 1) return float.MaxValue;
 
-w = Q.dotProduct( e2 ) * denomScale;
+				w = Q.dotProduct( e2 ) * denomScale;
 
-// where is our point?
-if (w < 0 || w == float.NaN) return float.MaxValue; // intersection behind origin
+				// where is our point?
+				if (w < 0 || w == float.NaN) return float.MaxValue; // intersection behind origin
 
-								Vector normal = e1.crossProduct( e2 );*/
+												Vector normal = e1.crossProduct( e2 );*/
 
-						// intersection = ray.origin + (ray.direction * w)
-						//u,v are barycentric boordsinates of intersection point
+				// intersection = ray.origin + (ray.direction * w)
+				//u,v are barycentric boordsinates of intersection point
+						float kEpsilon = 1e-6f;
+
 						Vector e1 = vertices[1].ptSub( vertices[0] ); // cross, dot, and normalize good
 						Vector e2 = vertices[2].ptSub( vertices[0] ); //this may be the issue
 
 						Vector P = ray.direction.crossProduct( e2, false );
 						float denom = P.dotProduct( e1 );
 
-						if ((denom >= -1e-8 && denom <= 1e-8) || denom == float.NaN) return float.MaxValue;  // ray is parallel to triangle
+						if ((denom >= 0 && denom <= kEpsilon) || denom == float.NaN ) return float.MaxValue;  // ray is parallel to triangle
 
 						float denomScale = 1 / denom;
 
@@ -95,7 +97,7 @@ if (w < 0 || w == float.NaN) return float.MaxValue; // intersection behind origi
 
 						if (v < 0 || u + v > 1) return float.MaxValue;
 
-						w = Q.dotProduct( e2 ) * denomScale;
+						w = Q.dotProduct( e2 ) * denomScale; //point along ray where we intersect
 
 						// where is our point?
 						if (w < 0 || w == float.NaN) return float.MaxValue; // intersection behind origin

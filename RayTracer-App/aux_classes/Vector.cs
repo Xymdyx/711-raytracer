@@ -122,8 +122,7 @@ public class Vector
     {
         return new Vector((this.v2 * vec2.v3) - (this.v3 * vec2.v2),
                        (this.v3 * vec2.v1) - ( this.v1 * vec2.v3) ,
-                       (this.v1 * vec2.v2) - (this.v2 * vec2.v1),
-                     normalize );
+                       (this.v1 * vec2.v2) - (this.v2 * vec2.v1) , normalize);
     }
 
     /*

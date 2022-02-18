@@ -64,7 +64,7 @@ public class Point
     // https://github.com/microsoft/referencesource/blob/master/System.Numerics/System/Numerics/Vector3.cs
     public Vector4 toHmgCoords()
     {
-        return new Vector4( this.x, this.y, this.z, 1 );
+        return new Vector4( this.x, this.y, this.z, 1f );
     }
     public void fromHmgCoords( Vector4 hmgMat )
     {

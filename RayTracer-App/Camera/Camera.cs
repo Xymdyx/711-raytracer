@@ -54,7 +54,7 @@ namespace RayTracer_App.Camera
 		//gives the y-axis (up-axis) = cross( forward, left)
 		private Vector calculateV(Vector forward, Vector left) { return forward.crossProduct( left ); } //should be normalized now... 
 
-		private void makeCamMat() //TODO FIZX THIS TO CONFORM WITH RHS
+		private void makeCamMat() //TODO FIZX THIS TO CONFORM WITH LHS
 		{
 			//use identity if world origin
 			Matrix4x4 camCoordMat = Matrix4x4.Identity; //row major
@@ -148,6 +148,7 @@ namespace RayTracer_App.Camera
 				fpPoint.x = (-fpWidth / 2) + (pixWidth / 2);
 				fpPoint.y -= pixHeight;
 			}
+
 			Console.WriteLine( $" There are {hits} non-background colors/ {imageHeight * imageWidth} colors total" );
 			return pixColors ;
 		}
