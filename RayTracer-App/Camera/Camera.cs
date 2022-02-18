@@ -45,6 +45,8 @@ namespace RayTracer_App.Camera
 		//http://www.songho.ca/opengl/gl_camera.html
 		// https://github.com/sgorsten/linalg/issues/29 ... sanity checks that I am doing this correctly
 
+		//TODO DOUBLE-CHECK WHAT HAPPENS IN THE CAMERA AND VERYIFY MS 4X4MATRIX
+
 		//gives the forward = target - camPos
 		private Vector calculateN() { return lookAt - eyePoint; } 
 

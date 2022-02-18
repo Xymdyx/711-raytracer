@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Numerics;
-using System.Collections.Generic;
-using System.Text;
-using OpenGLDotNet.Math;
+
 
 //MATRIX 4D -> MATRIX4X4
 //TODO ADD TRANSFORMATIONS SUCH AS SCALING, ROTATING, TRANSLATE

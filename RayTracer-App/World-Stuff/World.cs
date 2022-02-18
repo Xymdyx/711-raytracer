@@ -1,9 +1,7 @@
-﻿//Use a Right-Handed Coordinate system and column-major matrices
+﻿//USING LHS W ROW-MAJOR
 using System;
 using System.Numerics;
 using System.Collections.Generic;
-using System.Text;
-using OpenGLDotNet.Math;
 
 using RayTracer_App.Scene_Objects;
 

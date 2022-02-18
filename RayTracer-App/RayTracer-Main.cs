@@ -58,6 +58,7 @@ public class RayTracerMain
 		imageWidth = 1600;
 		imageHeight = imageWidth;
 
+		//DEBUG CAMERA
 		Vector up = new Vector( 0f, 1f, 0f );
 		Point eyePos = new Point( 0f, 0f, 0f);
 		Point lookAt = new Point( 0f, 0.0f, s1Depth ); // lookAt gives odd results when looking at objects at different angles.
