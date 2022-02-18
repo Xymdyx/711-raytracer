@@ -119,11 +119,43 @@ namespace RayTracer_App.Scene_Objects
 		{
 			//VERIFIED - 2/13	
 			// use pre-multiply
+			//this.scale( 2f, 1.35f, 1f );
 			foreach (Point vertex in vertices)
 			{
-				Vector4 ptHmg = vertex.toHmgCoords(); // MS Vec4 class listed in row-major order
+				Vector4 ptHmg = vertex.toHmgCoords();
 				Vector4 newVertVec = Vector4.Transform( ptHmg, camViewMat ); // we postMultiply since we are is LHS
 				vertex.fromHmgCoords( newVertVec ); // [x y z w] => (x/w, y/w, z/w) CP form.. DONE -- MATRIX-MULTI works
+			}
+		}
+
+		// scaling all three has no visible effect
+		public void scale( float x, float y, float z )
+		{
+			foreach(Point vertex in vertices)
+			{
+				Vector4 ptHmg = vertex.toHmgCoords();
+				Matrix4x4 scale = new Matrix4x4
+					( x, 0 , 0, 0,
+					 0, y, 0, 0,
+					 0, 0, z, 0,
+					 0, 0, 0, 1);
+				Vector4 newScaledVec = Vector4.Transform( ptHmg, scale );
+				vertex.fromHmgCoords( newScaledVec );
+			}
+		}
+
+		public void translate( float x, float y, float z )
+		{
+			foreach (Point vertex in vertices)
+			{
+				Vector4 ptHmg = vertex.toHmgCoords();
+				Matrix4x4 scale = new Matrix4x4
+					( 1, 0, 0, 0,
+					 0, 1, 0, 0,
+					 0, 0, 1, 0,
+					 x, y, z, 1 );
+				Vector4 newTransVec = Vector4.Transform( ptHmg, scale );
+				vertex.fromHmgCoords( newTransVec );
 			}
 		}
 	}

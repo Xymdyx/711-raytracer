@@ -26,8 +26,8 @@ public class RayTracerMain
 		//initialize objects
 		float focalLen = 1f; //distance from camera to film plane center along N...
 
-		float s1Depth = 3.0f; //+z into the scene... I am IN LHS
-		float s2Depth = s1Depth + 1.5f;
+		float s1Depth = 2.5f; //+z into the scene... I am IN LHS
+		float s2Depth = s1Depth + 1.75f;
 		float sphereRad = 1.5f;
 
 		float floorDept = 3.0f;
@@ -35,14 +35,17 @@ public class RayTracerMain
 
 		//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
 		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
-		List<Point> triVerts1 = new List<Point> {  new Point( 20f, floorHeight, 12f ), new Point( -6f, floorHeight, 12f ), new Point( 2f, floorHeight, 3f ), }; //ccw from point that forms the right angle
-		List<Point> triVerts2 = new List<Point> {  new Point( -6f, floorHeight, 3f), new Point( -6f, floorHeight, 12f ), new Point( 2f, floorHeight, 3f ) }; //ccw manner.... positive is up, down is negative
+		//		List<Point> triVerts1 = new List<Point> {  new Point( 20f, floorHeight, 12f ), new Point( -6f, floorHeight, 12f ), new Point( 2f, floorHeight, 3f ), }; //ccw from point that forms the right angle
+		//List<Point> triVerts2 = new List<Point> { new Point( 15.5f, floorHeight, 2.5f ), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f ) }; //ccw manner.... positive is up, down is negative
+
+		List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f ), }; //ccw from point that forms the right angle
+		List<Point> triVerts2 = new List<Point> {  new Point( 70.5f, floorHeight, 6.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f )}; //ccw manner.... positive is up, down is negative
 
 		Polygon triangle1 = new Polygon( triVerts1 );
 		Polygon triangle2 = new Polygon( triVerts2 );
 
-		Sphere sphere1 = new Sphere( new Point( 0, 0f, s1Depth) , sphereRad );
-		Sphere sphere2 = new Sphere( new Point( 2.00f, .25f, s2Depth ), sphereRad - .15f );
+		Sphere sphere1 = new Sphere( new Point( 0, .5f, s1Depth) , sphereRad );
+		Sphere sphere2 = new Sphere( new Point( 2.5f, 1.5f, s2Depth ), sphereRad ); //setting the point elsewhere gives translating whole sphere
 
 		World world = new World();
 		world.add( triangle1 );

@@ -87,5 +87,30 @@ namespace RayTracer_App.Scene_Objects
 			center.fromHmgCoords( newVertVec ); // [x y z w] => (x/w, y/w, z/w) CP form
 			return;
 		}
+
+
+		public void scale( float x, float y, float z )
+		{
+			Vector4 ptHmg = center.toHmgCoords();
+			Matrix4x4 scale = new Matrix4x4
+				( x, 0, 0, 0,
+					0, y, 0, 0,
+					0, 0, z, 0,
+					0, 0, 0, 1 );
+			Vector4 newScaledVec = Vector4.Transform( ptHmg, scale );
+			center.fromHmgCoords( newScaledVec );
+		}
+
+		public void translate( float x, float y, float z )
+		{
+			Vector4 ptHmg = center.toHmgCoords();
+			Matrix4x4 scale = new Matrix4x4
+				( 1, 0, 0, 0,
+					0, 1, 0, 0,
+					0, 0, 1, 0,
+					x, y, z, 1 );
+			Vector4 newTransVec = Vector4.Transform( ptHmg, scale );
+			center.fromHmgCoords( newTransVec );
+		}
 	}
 }
