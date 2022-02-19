@@ -20,7 +20,7 @@ public class RayTracerMain
 	static bool[] valid = new bool[1];
 	static float[] rat = new float[4];
 
-	//OPENGL DRAW CCW order matters
+	//OPENGL DRAW CCW order matters. We are in LHS system. +y is down. +x is right. +z into screen. Row major. Postmultiply.
 	public static void doRayTracing() 
 	{
 		//initialize objects
@@ -49,10 +49,10 @@ public class RayTracerMain
 		sphere2.translate( 1.75f, 2.0f, 0 ); //doing it here gives same results as after cam transform
 
 		World world = new World();
-		world.add( triangle1 );
-		world.add( triangle2 );
-		world.add( sphere1 );
-		world.add( sphere2 );
+		world.addObject( triangle1 );
+		world.addObject( triangle2 );
+		world.addObject( sphere1 );
+		world.addObject( sphere2 );
 
 		// initialize camera and render world
 		// drawPixels in the RGB array with glDrawPixels();... put this in main

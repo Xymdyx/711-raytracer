@@ -12,26 +12,37 @@ namespace RayTracer_App.World
 	public class World
 	{
 		private List<SceneObject> _objects;
+		private List<LightSource> _lights;
 		//private int[] attributes;
-
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
+		public List<LightSource> lights { get => this._lights ; set => this._lights = value; } // checkpoint 3
+
 
 		//default CONSTRUCTOR
 		public World()
 		{
 			this._objects = new List<SceneObject>();
+			this._lights = new List<LightSource>();
 		}
 
 		//parameter CONSTRUCTOR
-		public World( List<SceneObject> objects )
+		public World( List<SceneObject> objects, List<LightSource> lights )
 		{
 			this._objects = objects;
+			this._lights = lights;
 		}
 
 		// add object to objectlist
-		public void add( SceneObject obj )
+		public void addObject( SceneObject obj )
 		{
 			this._objects.Add( obj );
+			return;
+		}
+
+		// add lightSource to lightList
+		public void addLight( LightSource light )
+		{
+			this._lights.Add( light );
 			return;
 		}
 
@@ -68,6 +79,8 @@ namespace RayTracer_App.World
 				if ( (currW != float.MinValue) && (currW != float.NaN) &&
 					(currW != float.MaxValue) && (currW < bestW) && (currW > 0 ) )
 				{
+					//TOD get intersection point, make object switch case
+					//get normal vectors dependent on type of object. spawn shadow ray
 					bestW = currW;
 					currColor = obj.illuminate();
 				} 

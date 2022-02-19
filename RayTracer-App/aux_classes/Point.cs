@@ -8,7 +8,6 @@ using System;
 using System.Numerics;
 
 //double -> float and Matrix4d -> System.Numerics Matrix4x4
-//TODO REVIEW 
 public class Point
 {
     private float _x;
@@ -113,6 +112,8 @@ public class Point
         Vector4 newScaledVec = Vector4.Transform( ptHmg, scale );
         this.fromHmgCoords( newScaledVec );
     }
+
+    //TODO ADD TRANSFORMATIONS SUCH AS ROTATING
 
     // subtract two points to get vector sans normalizing. For Moller-Trumbone ray-triangle
     public Vector ptSub( Point p2)

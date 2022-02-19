@@ -3,8 +3,6 @@ using System.Numerics;
 
 
 //MATRIX 4D -> MATRIX4X4
-//TODO ADD TRANSFORMATIONS SUCH AS SCALING, ROTATING, TRANSLATE
-
 namespace RayTracer_App.Scene_Objects
 {
 	public class SceneObject

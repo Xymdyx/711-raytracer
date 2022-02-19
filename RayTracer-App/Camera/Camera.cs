@@ -47,8 +47,6 @@ namespace RayTracer_App.Camera
 		//http://www.songho.ca/opengl/gl_camera.html
 		// https://github.com/sgorsten/linalg/issues/29 ... sanity checks that I am doing this correctly
 
-		//TODO DOUBLE-CHECK WHAT HAPPENS IN THE CAMERA
-
 		//gives the forward = target - camPos
 		private Vector calculateN() { return lookAt - eyePoint; } 
 
@@ -58,7 +56,7 @@ namespace RayTracer_App.Camera
 		//gives the y-axis (up-axis) = cross( forward, left)
 		private Vector calculateV(Vector forward, Vector left) { return forward.crossProduct( left ); } //should be normalized now... 
 
-		private void makeCamMat() //TODO FIZX THIS TO CONFORM WITH LHS
+		private void makeCamMat()
 		{
 			//use identity if world origin
 			Matrix4x4 camCoordMat = Matrix4x4.Identity; //row major
@@ -125,11 +123,7 @@ namespace RayTracer_App.Camera
 			Color hitColor = null;
 			byte[] hitColorArr = null;
 
-			// for x = 0; x < x pixels; x+= pixelwidth
-			//	for y = 0; y < y-pixels; y-= pixelHeight
-			//		world.spawnRay()... see what it hits
-			//		whatever it hits... rgbs.add( rgb float triplet)
-			//start top-left -> bottom-right
+
 			int hits = 0;
 			for ( int y = 0; y < imageHeight; y++) // positive x ->, positive y V
 			{
@@ -138,8 +132,9 @@ namespace RayTracer_App.Camera
 					fire.direction = fpPoint - this.eyePoint;
 					hitColor = world.spawnRay( fire );
 
-					if (hitColor != null) // I assume some distortion happens since I do not check if intersection happens beyond film plane
+					if (hitColor != null)
 					{
+						//TODO need to change to 0 -> 1 floats
 						hitColorArr = hitColor.asByteArr();
 						int pos = (x + (y * imageWidth) ) * 3;
 						pixColors[pos] = hitColorArr[0]; //try 0-1.0 floats instead of 255
