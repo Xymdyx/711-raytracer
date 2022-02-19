@@ -35,8 +35,9 @@ namespace RayTracer_App.Scene_Objects
 			float w1 = float.MaxValue; // the distance where the ray and sphere intersect
 			float w2 = float.MaxValue;
 
-			// A = dx^2 + dy^2 + dz^2.. should always be 1 since I normalize the rayDir
-			float A = (float) Math.Pow(rayDir.getLen(),2);
+			// A = dx^2 + dy^2 + dz^2.. should always be 1 since I normalize the rayDir. Included for completeness
+			float magn = rayDir.getLen();
+			float A = ( magn * magn );
 
 			//may need to swap subtraction.. B = 2( dx(x0- xc) + dy(yo-yc) + dz( zo-zc))
 			// https://www.ccs.neu.edu/home/fell/CS4300/Lectures/Ray-TracingFormulas.pdf... it's rayPt - center
@@ -44,12 +45,12 @@ namespace RayTracer_App.Scene_Objects
 							+ ( rayDir.v3 * (rayPt.z - center.z )) );
 
 			// C = (xo- xc)^2 + (yo - yc)^2 + (zo -zc)^2 -r^2
-			float C = (float) ( Math.Pow( (rayPt.x - center.x), 2f ) + Math.Pow( (rayPt.y - center.y), 2f )
-								+ Math.Pow( (rayPt.z - center.z), 2f ) - Math.Pow(this.radius, 2f ) ); //missed radius term...
+			float C = (float) ( ((rayPt.x - center.x) * (rayPt.x - center.x)) + ((rayPt.y - center.y) * (rayPt.y - center.y))
+								+ ((rayPt.z - center.z) * (rayPt.z - center.z)) - (this.radius * this.radius ) ); //missed radius term...
 
 
 			//apply quadratic formula since our ray vector is normalized
-			float rootTerm = (float) Math.Pow( B, 2f) - (4f * C);
+			float rootTerm = (float) ((B * B) - (4f * C));
 
 			if (rootTerm < 0 || rootTerm == float.NaN)
 			{
@@ -80,7 +81,7 @@ namespace RayTracer_App.Scene_Objects
 		{
 			// MATRIX MULTI WORKS DEFINITELY
 			Vector4 centerHmg = center.toHmgCoords(); // 1x4 Vector
-			Vector4 newVertVec = Vector4.Transform( centerHmg, camViewMat); // we postMultiply since we are is LHS w Row-major
+			Vector4 newVertVec = Vector4.Transform( centerHmg, camViewMat); // we postMultiply since we are is LHS w Row-major.. Vnew = Vold * A * B
 			center.fromHmgCoords( newVertVec ); // [x y z w] => (x/w, y/w, z/w) CP form
 			return;
 		}
@@ -88,26 +89,12 @@ namespace RayTracer_App.Scene_Objects
 
 		public void scale( float x, float y, float z )
 		{
-			Vector4 ptHmg = center.toHmgCoords();
-			Matrix4x4 scale = new Matrix4x4
-				( x, 0, 0, 0,
-					0, y, 0, 0,
-					0, 0, z, 0,
-					0, 0, 0, 1 );
-			Vector4 newScaledVec = Vector4.Transform( ptHmg, scale );
-			center.fromHmgCoords( newScaledVec );
+			center.scale( x, y, z );
 		}
 
 		public void translate( float x, float y, float z )
 		{
-			Vector4 ptHmg = center.toHmgCoords();
-			Matrix4x4 scale = new Matrix4x4
-				( 1, 0, 0, 0,
-					0, 1, 0, 0,
-					0, 0, 1, 0,
-					x, y, z, 1 );
-			Vector4 newTransVec = Vector4.Transform( ptHmg, scale );
-			center.fromHmgCoords( newTransVec );
+			center.translate( x, y, z );
 		}
 	}
 

@@ -73,7 +73,7 @@ public class Vector
 
     public float getLen()
     {
-        return (float) Math.Sqrt(Math.Pow(this.v1, 2) + Math.Pow(this.v2, 2) + Math.Pow(this.v3, 2));
+        return (float) Math.Sqrt( (this.v1 * this.v1 ) + (this.v2 * this.v2) + (this.v3 * this.v3) );
     }
 
     // normalize this vector to have 1 length
@@ -130,7 +130,8 @@ public class Vector
      */
     public Vector projectOnto(Vector vec2)
     {
-        return this.scale( (float) (dotProduct(vec2) / Math.Pow(this.getLen(), 2)) );
+        float magn = this.getLen();
+        return this.scale( (float) (dotProduct(vec2) / (magn * magn) ));
     }
 
     /*
@@ -151,6 +152,18 @@ public class Vector
         return ( (v.v1 == this.v1) && (v.v2 == this.v2) && (v.v3 == this.v3) );
 	}
 
+    // vec ops without normalizing
+    public Vector addVec( Vector vec2 )
+    {
+        return new Vector( this.v1 + vec2.v1, this.v2 + vec2.v2, this.v3 + vec2.v3, false );
+    }
+
+    // vec ops without normalizing
+    public Vector subVec( Vector vec2 )
+    {
+        return new Vector( this.v1 - vec2.v1, this.v2 - vec2.v2, this.v3 - vec2.v3, false );
+    }
+
     //TODO... may cause problems
     public override int GetHashCode()
     {
@@ -169,19 +182,39 @@ public class Vector
         return $"Vector (u1, u2, u3) = ({this.v1}, {this.v2} , {this.v3})\n";
     }
 
-/*Console.WriteLine( "Creating vector" );
+    /*Console.WriteLine( "Creating vector" );
 
-Vector tVec = new Vector( 5.0, 6.0, 7.0 );
-Vector fVec = new Vector( 5.9, 6.8, 2.1 );
-Vector cpVec = tVec.crossProduct( fVec );
+    Vector tVec = new Vector( 5.0, 6.0, 7.0 );
+    Vector fVec = new Vector( 5.9, 6.8, 2.1 );
+    Vector cpVec = tVec.crossProduct( fVec );
+    float dpVal = tVec.dotProduct( fVec );
+
+    Console.WriteLine(tVec );
+    Console.WriteLine(fVec );
+    Console.WriteLine( $" The dot product of {tVec} and {fVec} gives dot product {dpVal}" );
+    Console.WriteLine( $" The cross product of {tVec} x {fVec} gives dot product {cpVec}" );
+
+    Console.WriteLine( $"Adding both vecs: {tVec + fVec}" );
+    Console.WriteLine( $"Subtracting fVec from tVec: {tVec - fVec}" );
+    Console.WriteLine( $"Subtracting tVec from fVec: {fVec - tVec}" );*/
+
+/*
+Console.WriteLine( "Creating non-normalized vector" );
+
+Vector tVec = new Vector( 5.0f, 6.0f, 7.0f, false ); //normalize works
+Vector fVec = new Vector( 5.9f, 6.8f, 2.1f, false );
+Vector cpVec = tVec.crossProduct( fVec, false );
+Vector ftVec = fVec.crossProduct( tVec, false );
+
 float dpVal = tVec.dotProduct( fVec );
 
 Console.WriteLine(tVec );
 Console.WriteLine(fVec );
 Console.WriteLine( $" The dot product of {tVec} and {fVec} gives dot product {dpVal}" );
 Console.WriteLine( $" The cross product of {tVec} x {fVec} gives dot product {cpVec}" );
+Console.WriteLine( $" The cross product of {fVec} x {tVec} gives dot product {ftVec}" );
 
-Console.WriteLine( $"Adding both vecs: {tVec + fVec}" );
-Console.WriteLine( $"Subtracting fVec from tVec: {tVec - fVec}" );
-Console.WriteLine( $"Subtracting tVec from fVec: {fVec - tVec}" );*/
+Console.WriteLine( $"Adding both vecs: {tVec.addVec(fVec) }" );
+Console.WriteLine( $"Subtracting fVec from tVec: { tVec.subVec(fVec)}" );
+Console.WriteLine( $"Subtracting tVec from fVec: { fVec.subVec(tVec) }" );*/
 }

@@ -24,10 +24,10 @@ public class RayTracerMain
 	public static void doRayTracing() 
 	{
 		//initialize objects
-		float focalLen = 1f; //distance from camera to film plane center along N...
+		float focalLen = 1.25f; //distance from camera to film plane center along N...
 
 		float s1Depth = 2.5f; //+z into the scene... I am IN LHS
-		float s2Depth = s1Depth + 1.75f;
+		float s2Depth = s1Depth + 2.0f;
 		float sphereRad = 1.5f;
 
 		float floorDept = 3.0f;
@@ -45,7 +45,8 @@ public class RayTracerMain
 		Polygon triangle2 = new Polygon( triVerts2 );
 
 		Sphere sphere1 = new Sphere( new Point( 0, .5f, s1Depth) , sphereRad );
-		Sphere sphere2 = new Sphere( new Point( 2.5f, 1.5f, s2Depth ), sphereRad ); //setting the point elsewhere gives translating whole sphere
+		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad ); //setting the point elsewhere gives translating whole sphere
+		sphere2.translate( 2.5f, 2.0f, 0 ); //doing it here gives same results as after cam transform
 
 		World world = new World();
 		world.add( triangle1 );
@@ -61,8 +62,9 @@ public class RayTracerMain
 		//DEBUG CAMERA
 		Vector up = new Vector( 0f, 1f, 0f );
 		Point eyePos = new Point( 0f, 0f, 0f);
-		Point lookAt = new Point( 0f, 0.0f, s1Depth ); // lookAt gives odd results when looking at objects at different angles.
+		Point lookAt = new Point( .5f, .5f, s1Depth + 1f ); // lookAt gives odd results when looking at objects at different angles.
 		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
+
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
 		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen );
@@ -114,10 +116,10 @@ public class RayTracerMain
 		FG.Init( argc, argv );
 		FG.InitDisplayMode( GLUT.GLUT_RGB | GLUT.GLUT_SINGLE | GLUT.GLUT_DEPTH );
 		FG.InitWindowSize( imageWidth, imageHeight );
-		//FG.InitWindowPosition( 0, 0 );
-		FG.CreateWindow( "RayTracing CheckPoint 2" );
+		FG.InitWindowPosition( 0, 0 );
+		FG.CreateWindow( "RayTracing CheckPoint 3" );
 		GL.Init( true );            //I forgot to call this...
-		
+
 		//fixed pixels being at a higher depth being in front of those with lower depth
 		GL.Enable( GL.GL_DEPTH_TEST );
 		GL.DepthFunc( GL.GL_LEQUAL );
@@ -128,6 +130,7 @@ public class RayTracerMain
 
 		FG.DisplayFunc( display ); //white screen without this
 		FG.MainLoop(); //end
+
 		return 0;
 	}
 }

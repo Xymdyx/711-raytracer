@@ -50,22 +50,25 @@ public class Point
     public float distance( Point p2)
     {
 
-        return (float) Math.Sqrt( Math.Pow( (p2.x - this._x), 2 )
-                        + Math.Pow( (p2.y - this._y), 2 )
-                        + Math.Pow( (p2.z - this._z), 2 ) );
+        return (float) Math.Sqrt( ((p2.x - this._x) * (p2.x - this._x))
+                        + ((p2.y - this._y) * (p2.y - this._y))
+                        + ((p2.z - this._z) * (p2.z - this._z)));
     }
 
+    // to a non-normalized vector
     public Vector toVec()
 	{
         return new Vector( this.x, this.y, this.z, false );
 	}
 
-    // from Matrix4d in OpenGLDotNet to Matrix4x4 in System.numerics
+    // from Matrix4d in OpenGLDotNet to Vector3 in System.numerics
     // https://github.com/microsoft/referencesource/blob/master/System.Numerics/System/Numerics/Vector3.cs
     public Vector4 toHmgCoords()
     {
-        return new Vector4( this.x, this.y, this.z, 1f );
+        return new Vector4( this.x, this.y, this.z, 1f ); //tested that this works fine
     }
+    
+    // reconvert to 3d coords after making transformations with toHmgCoords
     public void fromHmgCoords( Vector4 hmgMat )
     {
         //convert from row-major hmg mat back to a new Point
@@ -79,18 +82,33 @@ public class Point
         return (this.x == 0 && this.y == 0 && this.z == 0);
     }
 
-    //TODO FIGURE OUT HOW TO DO THIS
+    //translate a Point via row-major Vector4 transformed with Mat4x4
     public void translate( float x, float y, float z )
     {
         Vector4 ptMat = this.toHmgCoords( );
-        Matrix4x4 tranMat = new Matrix4x4
+        Vector4 ptHmg = this.toHmgCoords();
+        Matrix4x4 trans = new Matrix4x4
             ( 1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            x, y, z, 1 );
-        Matrix4x4 result = tranMat;
+             0, 1, 0, 0,
+             0, 0, 1, 0,
+             x, y, z, 1 );
+        Vector4 newTransVec = Vector4.Transform( ptHmg, trans );
+        this.fromHmgCoords( newTransVec );
 
         return;
+    }
+
+    //scale a Point via row-major Vector4 transformed with Mat4x4
+    public void scale( float x, float y, float z )
+	{
+        Vector4 ptHmg = this.toHmgCoords();
+        Matrix4x4 scale = new Matrix4x4
+            ( x, 0, 0, 0,
+             0, y, 0, 0,
+             0, 0, z, 0,
+             0, 0, 0, 1 );
+        Vector4 newScaledVec = Vector4.Transform( ptHmg, scale );
+        this.fromHmgCoords( newScaledVec );
     }
 
     // subtract two points to get vector sans normalizing. For Moller-Trumbone ray-triangle
@@ -99,4 +117,14 @@ public class Point
         return new Vector( this.x - p2.x, this.y - p2.y, this.z - p2.z, false );
     }
 
+    /* Vector4 and Matrix4x4 test:
+ Vector4 test1 = new Vector4( 1, 1, 1, 1 );
+		Matrix4x4 mat1 = new Matrix4x4
+			( 1, 2, 3, 4,
+			  5, 6, 7, 8 ,
+			  9, 10, 11, 12,
+			  13, 14, 15, 16);
+		Vector4 result1 = Vector4.Transform( test1, mat1 );
+		Console.WriteLine( test1 + " vector before matrix multiply with:\n" + mat1 );
+		Console.WriteLine("\n" + test1 + " vector after matrix multiply :\n" + result1 ); */
 }

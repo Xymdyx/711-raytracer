@@ -91,7 +91,7 @@ namespace RayTracer_App.Camera
 			makeCamMat();
 			world.transformAll( camTransformMat );
 
-			float fpHeight = 5.0f; //smaller the more zoomed in
+			float fpHeight = 6f; //smaller the more zoomed in
 			float fpWidth = fpHeight;
 
 			//pixel info
@@ -120,24 +120,23 @@ namespace RayTracer_App.Camera
 			Color hitColor = null;
 			byte[] hitColorArr = null;
 
-			// for x =- 0; x < x pixels; x+= pixelwidth
-			//	for y = -; y < y-pixels; y+= pixelHeight
+			// for x = 0; x < x pixels; x+= pixelwidth
+			//	for y = 0; y < y-pixels; y-= pixelHeight
 			//		world.spawnRay()... see what it hits
 			//		whatever it hits... rgbs.add( rgb float triplet)
-			//start from bottom-left -> top-right
+			//start top-left -> bottom-right
 			int hits = 0;
 			for ( int y = 0; y < imageHeight; y++) // positive x ->, positive y V
 			{
-
 				for ( int x = 0; x < imageWidth; x++)
 				{
 					fire.direction = fpPoint - this.eyePoint;
 					hitColor = world.spawnRay( fire );
 
-					if (hitColor != null)
+					if (hitColor != null) // I assume some distortion happens since I do not check if intersection happens beyond film plane
 					{
 						hitColorArr = hitColor.asByteArr();
-						int pos = (x + y * imageWidth) * 3;
+						int pos = (x + (y * imageWidth) ) * 3;
 						pixColors[pos] = hitColorArr[0]; //try 0-1.0 floats instead of 255
 						pixColors[pos + 1] = hitColorArr[1]; //try 0-1.0 floats instead of 255
 						pixColors[pos + 2] = hitColorArr[2]; //try 0-1.0 floats instead of 255
@@ -148,7 +147,7 @@ namespace RayTracer_App.Camera
 				}
 				//reset x to default position
 				fpPoint.x = (-fpWidth / 2) + (pixWidth / 2);
-				fpPoint.y -= pixHeight;
+				fpPoint.y -= pixHeight; // positive y is down
 			}
 
 			Console.WriteLine( $" There are {hits} non-background colors/ {imageHeight * imageWidth} colors total" );

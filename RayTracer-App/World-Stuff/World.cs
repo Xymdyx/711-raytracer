@@ -42,9 +42,10 @@ namespace RayTracer_App.World
 			return;
 		}
 
-		//transformAll stub
+		//transformAll iterates through all objects and transforms them.
 		public void transformAll( Matrix4x4 camViewMat)
 		{
+			//transforming before and after camera transform gives same results, so long as it is done before the ray shooting
 			 foreach (SceneObject obj in objects)
 			{
 				obj.transform( camViewMat ); //converts all objects to camera space
