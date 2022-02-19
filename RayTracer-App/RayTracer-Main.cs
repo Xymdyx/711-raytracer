@@ -61,7 +61,7 @@ public class RayTracerMain
 
 		//DEBUG CAMERA
 		Vector up = new Vector( 0f, 1f, 0f );
-		Point eyePos = new Point( 0f, 0f, 0f);
+		Point eyePos = new Point( 0f, 1.5f, -1f);
 		Point lookAt = new Point( .5f, .5f, s1Depth + 1f ); // lookAt gives odd results when looking at objects at different angles.
 		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
 

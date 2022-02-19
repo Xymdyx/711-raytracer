@@ -56,9 +56,9 @@ public class Point
     }
 
     // to a non-normalized vector
-    public Vector toVec()
+    public Vector toVec( bool normalize = false)
 	{
-        return new Vector( this.x, this.y, this.z, false );
+        return new Vector( this.x, this.y, this.z, normalize );
 	}
 
     // from Matrix4d in OpenGLDotNet to Vector3 in System.numerics
@@ -72,9 +72,12 @@ public class Point
     public void fromHmgCoords( Vector4 hmgMat )
     {
         //convert from row-major hmg mat back to a new Point
-        this.x = hmgMat.X / hmgMat.W;
-        this.y = hmgMat.Y / hmgMat.W;
-        this.z = hmgMat.Z/ hmgMat.W;
+        this.x = hmgMat.X;
+        this.y = hmgMat.Y;
+        this.z = hmgMat.Z;
+        // / hmgMat.W; //the w may not be 1 here, do we still divide by it?
+        // / hmgMat.W; //the w may not be 1 here, do we still divide by it?
+        /// hmgMat.W;
     }
 
     public bool isOrigin()

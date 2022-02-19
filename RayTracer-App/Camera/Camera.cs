@@ -31,6 +31,7 @@ namespace RayTracer_App.Camera
 			this._up = new Vector( 0, 1, 0 );
 			this._eyePoint = new Point( 0, 0, 0 ); // world origin is the default
 			this._lookAt = new Point( 0, 0, 10 ); // default lookat position
+			this.camTransformMat = Matrix4x4.Identity;
 		}
 
 // parameter constructor...
@@ -39,13 +40,14 @@ namespace RayTracer_App.Camera
 			this._up = up;
 			this._eyePoint = eyePoint;
 			this._lookAt = lookAt;
+			this.camTransformMat = Matrix4x4.Identity;
 		}
 
-//METHODS
+		//METHODS
 		//http://www.songho.ca/opengl/gl_camera.html
 		// https://github.com/sgorsten/linalg/issues/29 ... sanity checks that I am doing this correctly
 
-		//TODO DOUBLE-CHECK WHAT HAPPENS IN THE CAMERA AND VERYIFY MS 4X4MATRIX
+		//TODO DOUBLE-CHECK WHAT HAPPENS IN THE CAMERA
 
 		//gives the forward = target - camPos
 		private Vector calculateN() { return lookAt - eyePoint; } 
@@ -61,7 +63,7 @@ namespace RayTracer_App.Camera
 			//use identity if world origin
 			Matrix4x4 camCoordMat = Matrix4x4.Identity; //row major
 		
-			//https://www.geertarien.com/blog/2017/07/30/breakdown-of-the-lookAt-function-in-OpenGL/... from LHS i
+			//https://www.geertarien.com/blog/2017/07/30/breakdown-of-the-lookAt-function-in-OpenGL/... from LHS
 
 			Vector zAxis = calculateN(); // camera FORWARD direction
 			Vector xAxis = calculateU( zAxis );
@@ -72,11 +74,14 @@ namespace RayTracer_App.Camera
 							xAxis.v2, yAxis.v2, zAxis.v2, 0,
 							xAxis.v3, yAxis.v3, zAxis.v3, 0,
 		-(eyeVec.dotProduct( xAxis)), -(eyeVec.dotProduct( yAxis)), -(eyeVec.dotProduct( zAxis)), 1);*/
+			float eyeXDP = -(eyeVec.dotProduct( xAxis ));
+			float eyeYDP = -(eyeVec.dotProduct( yAxis ));
+			float eyeZDP = -(eyeVec.dotProduct( zAxis ));
 
 			camCoordMat = new Matrix4x4
-							( xAxis.v1, xAxis.v2, xAxis.v3,	-(eyeVec.dotProduct( xAxis )),
-							yAxis.v1, yAxis.v2, yAxis.v3, -(eyeVec.dotProduct( yAxis )),
-							zAxis.v1, zAxis.v2, zAxis.v3, -(eyeVec.dotProduct( zAxis )),
+							( xAxis.v1, xAxis.v2, xAxis.v3,	eyeXDP,
+							yAxis.v1, yAxis.v2, yAxis.v3, eyeYDP,
+							zAxis.v1, zAxis.v2, zAxis.v3, eyeZDP,
 							0, 0, 0, 1 );
 
 			this.camTransformMat = camCoordMat;
@@ -89,7 +94,7 @@ namespace RayTracer_App.Camera
 		{
 			// this converts everything to camera coords
 			makeCamMat();
-			world.transformAll( camTransformMat );
+			world.transformAll( this.camTransformMat );
 
 			float fpHeight = 6f; //smaller the more zoomed in
 			float fpWidth = fpHeight;
