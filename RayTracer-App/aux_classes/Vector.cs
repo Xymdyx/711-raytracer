@@ -68,7 +68,7 @@ public class Vector
     // self-operations
     public Vector scale(float k)
     {
-        return new Vector(k * this.v1, k * this.v2, k * this.v3);
+        return new Vector(k * this.v1, k * this.v2, k * this.v3, false);
     }
 
     public float getLen()
@@ -181,6 +181,19 @@ public class Vector
     {
         return $"Vector (u1, u2, u3) = ({this.v1}, {this.v2} , {this.v3})\n";
     }
+
+    //REFLECT METHOD
+    // reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
+    public static Vector reflect( Vector incoming, Vector normal )
+	{
+        
+        Vector rightTerm =  normal.scale( incoming.dotProduct( normal ) ); //does not normalize here
+        rightTerm.normalize();
+        rightTerm.normalize();
+        rightTerm = rightTerm.scale( 2f );
+
+        return incoming - rightTerm;
+	}
 
     /*Console.WriteLine( "Creating vector" );
 

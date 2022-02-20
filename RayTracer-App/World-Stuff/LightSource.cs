@@ -14,5 +14,6 @@ namespace RayTracer_App.World
 
 		public Point position { get => this._position; set => this._position = value; }
 		public Color lightColor { get => this._lightColor; set => this._lightColor = value; }
+
 	}
 }

@@ -4,7 +4,7 @@ using System.Numerics;
 using System.Collections.Generic;
 
 using RayTracer_App.Scene_Objects;
-
+using RayTracer_App.Illumination_Models;
 //MATRIX 4D -> MATRIX4X4
 
 namespace RayTracer_App.World
@@ -13,9 +13,11 @@ namespace RayTracer_App.World
 	{
 		private List<SceneObject> _objects;
 		private List<LightSource> _lights;
+		private IlluminationModel _lightModel;
 		//private int[] attributes;
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
 		public List<LightSource> lights { get => this._lights ; set => this._lights = value; } // checkpoint 3
+		public IlluminationModel lightModel { get => this._lightModel; set => this._lightModel = value; }
 
 
 		//default CONSTRUCTOR
@@ -23,13 +25,23 @@ namespace RayTracer_App.World
 		{
 			this._objects = new List<SceneObject>();
 			this._lights = new List<LightSource>();
+			this._lightModel = Phong.regularPhong;
 		}
 
 		//parameter CONSTRUCTOR
-		public World( List<SceneObject> objects, List<LightSource> lights )
+		public World( List<SceneObject> objects, List<LightSource> lights)
 		{
 			this._objects = objects;
 			this._lights = lights;
+			this._lightModel = Phong.regularPhong;
+		}
+
+		//full CONSTRUCTOR
+		public World( List<SceneObject> objects, List<LightSource> lights, IlluminationModel lightModel )
+		{
+			this._objects = objects;
+			this._lights = lights;
+			this._lightModel = lightModel;
 		}
 
 		// add object to objectlist
@@ -71,6 +83,8 @@ namespace RayTracer_App.World
 			Color currColor = null;
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
+			float radiance = 0.0f;
+			Point intersection = null;
 
 			foreach (SceneObject obj in objects)
 			{
@@ -83,6 +97,20 @@ namespace RayTracer_App.World
 					//get normal vectors dependent on type of object. spawn shadow ray
 					bestW = currW;
 					currColor = obj.illuminate();
+
+					// get info for shadow ray...
+					Sphere s = obj as Sphere;
+					Polygon t = obj as Polygon;
+					if (s != null) intersection = s.getRayPoint( ray, currW );
+					else if (t != null) intersection = t.getRayPoint( ray, currW );
+
+					foreach( LightSource light in this.lights ) //TODO - 2/20
+					{
+						Vector shadowRay = light.position - intersection;
+						Vector reflect = Vector.reflect( shadowRay, obj.normal ); // added normal field to sceneObject, may cause bugs
+						radiance = lightModel.illuminate( intersection, obj.normal, shadowRay, reflect, ray.direction, this.lights );
+						
+					}
 				} 
 			}
 			return currColor;

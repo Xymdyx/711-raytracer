@@ -9,9 +9,11 @@ namespace RayTracer_App.Scene_Objects
 	{
 		//fields
 		private string _material;
+		private Vector _normal;
 
 		//properties 
 		public string material {get => this._material; set => this._material = value; }
+		public Vector normal { get => this._normal; set => this._normal = value; }
 
 		//constructors
 		public SceneObject() { _material = "None"; }
@@ -27,6 +29,12 @@ namespace RayTracer_App.Scene_Objects
 		{
 			return 0.0f;
 		}
+
+		public virtual Point getRayPoint( LightRay ray, float w )
+		{
+			return new Point( 0f, 0f, 0f );
+		}
+
 
 		public virtual void transform( Matrix4x4 camViewMat ){ return; }
 

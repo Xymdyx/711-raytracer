@@ -72,12 +72,21 @@ namespace RayTracer_App.Scene_Objects
 				// where is our point?
 				if (w < 0 || w == float.NaN) return float.MaxValue; // intersection behind origin
 
-				Vector normal = e1.crossProduct( e2, false );
+				this.normal = e1.crossProduct( e2, true ); //set the normal here while we have these
 
 				return w; //w is distance along ray of intersection point
 			}
 
 			return w;
+		}
+
+		// function for getting where along ray intersection happens with a triangle
+		// sets normal somewhere.. see 28 in notes
+		public override Point getRayPoint( LightRay ray, float w )
+		{
+			Vector scaledDir = ray.direction.scale( w );
+			Point rayPoint = ray.origin + scaledDir;
+			return rayPoint;
 		}
 
 		public override Color illuminate()

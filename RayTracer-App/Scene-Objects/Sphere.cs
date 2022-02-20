@@ -8,21 +8,26 @@ namespace RayTracer_App.Scene_Objects
 	public class Sphere : SceneObject
 	{
 		private Point _center;
+		private Vector _normal;
 		private float _radius;
 
 		public Point center { get => this._center; set => this._center = value; }
+		public Vector normal { get => this._normal; set => this._normal = value; }
+
 		public float radius { get => this._radius ; set => this._radius = value; }
 
 		public Sphere()
 		{
 			this._center = new Point() ;
 			this._radius = 1.0f;
+			this._normal = null;
 		}
 
 		public Sphere( Point center, float radius )
 		{
 			this._center = center;
 			this._radius = radius;
+			this._normal = null;
 		}
 
 		// Ray-sphere intersection, triple checking on 2/18/22
@@ -69,7 +74,16 @@ namespace RayTracer_App.Scene_Objects
 				w2 = (float) (-B - Math.Sqrt( rootTerm )) / 2f;
 				return Math.Min( w1, w2 );
 			}
-			// TODO caller function computes the point of intersection with returned w....page 27 in notes
+		}
+
+		// function for getting where along ray intersection happens with a sphere
+		// sets normal somewhere.. see 27 in notes
+		public override Point getRayPoint( LightRay ray, float w )
+		{
+			Vector scaledDir = ray.direction.scale( w );
+			Point rayPoint = ray.origin + scaledDir;
+			this.normal = rayPoint - ray.origin; //want this normalized
+			return rayPoint;
 		}
 
 		public override Color illuminate()
