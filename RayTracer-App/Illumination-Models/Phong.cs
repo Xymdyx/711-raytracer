@@ -1,5 +1,6 @@
 ﻿using System;
 using RayTracer_App.World;
+using RayTracer_App.Scene_Objects;
 using System.Collections.Generic;
 
 
@@ -42,14 +43,13 @@ namespace RayTracer_App.Illumination_Models
 		}
 
 
-		//precondiiton: all vectors normalized
+		//precondiiton: all vectors normalized. we know the incoming ray makes it to a light source at this point
 		//TODO IMPLEMENT ILLUMINATE
-		public override float illuminate( Point intersect, Vector normal, Vector incoming,
-			Vector mirrorReflect, Vector cameraRay, List<LightSource> lights )
+		public override float illuminate( Point intersect, Vector normal, LightRay incoming,
+			Vector mirrorReflect, Vector cameraRay, LightSource light, SceneObject litObj )
 		{
-			// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
-
-			//if it doesn't hit an object, apply Phong sans the ambient
+			// kd * (litObj.illuminate() * light.color * (incoming.dotProduct( Normal) ) + 
+			// ks * (Color.specular * lights.color * (mirrorReflect.dotProduct( cameraRay) ;
 			return 0f; // no irradiance, we are in shadow
 		}
 	}

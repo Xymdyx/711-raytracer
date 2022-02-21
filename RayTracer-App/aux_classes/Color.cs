@@ -13,6 +13,12 @@ public class Color
     //TODO DEFINE STATIC CONSTANTS FOR SPHERE COLOR, FLOOR COLOR, AND BACKGROUND COLOR
     const int COLOR_MAX = 255;
 
+    public static Color whiteSpecular = new Color( 1f, 1f , 1f);
+    public static Color bgColor = new Color( 0f, 1f, 0f );
+    public static Color sphereColor = new Color( 0.214f, 0.519f, 0.630f );
+    public static Color floorColor = new Color( 1.0f, 0.0f, 0.0f );
+
+
     private float _r;
     private float _g;
     private float _b;
@@ -34,6 +40,13 @@ public class Color
         this._r = r;
         this._g = g;
         this._b = b;
+    }
+
+    //operators
+    //scale a Color by k....which ranges from 0-1
+    public Color scale( float k ) 
+    {
+        return new Color( this.r * k, this.g * k, this.b * k );
     }
 
     public int[] asIntArr()

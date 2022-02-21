@@ -1,4 +1,4 @@
-﻿using System;
+﻿using RayTracer_App.Illumination_Models;
 using System.Numerics;
 
 
@@ -10,17 +10,26 @@ namespace RayTracer_App.Scene_Objects
 		//fields
 		private string _material;
 		private Vector _normal;
+		private IlluminationModel _lightModel;
 
 		//properties 
 		public string material {get => this._material; set => this._material = value; }
 		public Vector normal { get => this._normal; set => this._normal = value; }
+		public IlluminationModel lightModel { get => this._lightModel; set => this._lightModel = value; }
+
 
 		//constructors
-		public SceneObject() { _material = "None"; }
+		public SceneObject() { 
+			this._material = "None";
+			this._normal = null;
+			this._lightModel = Phong.regularPhong;
+		}
 
-		public SceneObject( string material )
+		public SceneObject( string material, IlluminationModel lightModel, Vector normal = null )
 		{
 			this._material = material;
+			this._normal = normal;
+			this._lightModel = lightModel;
 		}
 
 

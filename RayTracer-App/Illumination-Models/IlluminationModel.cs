@@ -1,6 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using RayTracer_App.Scene_Objects;
 using RayTracer_App.World;
 namespace RayTracer_App.Illumination_Models
 {
@@ -9,7 +8,7 @@ namespace RayTracer_App.Illumination_Models
 		// calculate ray from intersect to light sources. If it hits no objects, return resultant radience.
 		// else return 0 for no radiance, making that point shadowed
 
-		public abstract float illuminate( Point intersect, Vector normal, Vector incoming,
-			Vector mirrorReflect, Vector cameraRay, List<LightSource> lights );
+		public abstract float illuminate( Point intersect, Vector normal, LightRay incoming,
+			Vector mirrorReflect, Vector cameraRay, LightSource light, SceneObject litObj );
 	}
 }

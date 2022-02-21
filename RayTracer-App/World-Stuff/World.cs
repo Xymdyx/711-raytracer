@@ -13,11 +13,10 @@ namespace RayTracer_App.World
 	{
 		private List<SceneObject> _objects;
 		private List<LightSource> _lights;
-		private IlluminationModel _lightModel;
+
 		//private int[] attributes;
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
 		public List<LightSource> lights { get => this._lights ; set => this._lights = value; } // checkpoint 3
-		public IlluminationModel lightModel { get => this._lightModel; set => this._lightModel = value; }
 
 
 		//default CONSTRUCTOR
@@ -25,7 +24,6 @@ namespace RayTracer_App.World
 		{
 			this._objects = new List<SceneObject>();
 			this._lights = new List<LightSource>();
-			this._lightModel = Phong.regularPhong;
 		}
 
 		//parameter CONSTRUCTOR
@@ -33,16 +31,8 @@ namespace RayTracer_App.World
 		{
 			this._objects = objects;
 			this._lights = lights;
-			this._lightModel = Phong.regularPhong;
 		}
 
-		//full CONSTRUCTOR
-		public World( List<SceneObject> objects, List<LightSource> lights, IlluminationModel lightModel )
-		{
-			this._objects = objects;
-			this._lights = lights;
-			this._lightModel = lightModel;
-		}
 
 		// add object to objectlist
 		public void addObject( SceneObject obj )
@@ -76,7 +66,26 @@ namespace RayTracer_App.World
 
 			return;
 		}
-		
+
+		//helper for checking if a ray intersects with an object in the scene.
+		public float checkRayIntersection( LightRay ray )
+		{
+			float bestW = float.MaxValue;
+			float currW = float.MaxValue;
+			foreach (SceneObject obj in objects)
+			{
+				currW = obj.intersect( ray );
+
+				if ((currW != float.MinValue) && (currW != float.NaN) &&
+					(currW != float.MaxValue) && (currW < bestW) && (currW > 0))
+				{
+					bestW = currW;
+				}
+
+			}
+			return bestW;
+		}
+
 		public Color spawnRay( LightRay ray )
 		{
 
@@ -98,7 +107,7 @@ namespace RayTracer_App.World
 					bestW = currW;
 					currColor = obj.illuminate();
 
-					// get info for shadow ray...
+					// get info for shadow ray...CP3
 					Sphere s = obj as Sphere;
 					Polygon t = obj as Polygon;
 					if (s != null) intersection = s.getRayPoint( ray, currW );
@@ -106,10 +115,15 @@ namespace RayTracer_App.World
 
 					foreach( LightSource light in this.lights ) //TODO - 2/20
 					{
-						Vector shadowRay = light.position - intersection;
-						Vector reflect = Vector.reflect( shadowRay, obj.normal ); // added normal field to sceneObject, may cause bugs
-						radiance = lightModel.illuminate( intersection, obj.normal, shadowRay, reflect, ray.direction, this.lights );
-						
+						LightRay shadowRay = new LightRay( light.position - intersection, intersection );
+						float shadowW = checkRayIntersection( shadowRay );
+						if (shadowW != float.MaxValue) //the shadowRay makes it to light source unobstructed.
+						{
+							// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
+							Vector reflect = Vector.reflect( shadowRay.direction, obj.normal ); // added normal field to sceneObject, may cause bugs
+							IlluminationModel objLightModel = obj.lightModel;
+							radiance += objLightModel.illuminate( intersection, obj.normal, shadowRay, reflect, ray.direction, light, obj );
+						}
 					}
 				} 
 			}
