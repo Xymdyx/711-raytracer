@@ -147,7 +147,7 @@ namespace RayTracer_App.Camera
 					{
 						//TODO need to change to 0 -> 1 floats
 						//run tone reproduction function on hitColor and then do the following
-						// hitColor = runTR( hitColor );
+						hitColor = runTR( hitColor );
 						hitColorArr = hitColor.asByteArr();
 						int pos = (x + (y * imageWidth) ) * 3;
 						pixColors[pos] = hitColorArr[0]; //try 0-1.0 floats instead of 255

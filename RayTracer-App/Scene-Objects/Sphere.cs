@@ -8,12 +8,9 @@ namespace RayTracer_App.Scene_Objects
 	public class Sphere : SceneObject
 	{
 		private Point _center;
-		private Vector _normal;
 		private float _radius;
 
 		public Point center { get => this._center; set => this._center = value; }
-		public Vector normal { get => this._normal; set => this._normal = value; }
-
 		public float radius { get => this._radius ; set => this._radius = value; }
 
 		public Sphere()
@@ -21,6 +18,8 @@ namespace RayTracer_App.Scene_Objects
 			this._center = new Point() ;
 			this._radius = 1.0f;
 			this._normal = null;
+			this.diffuse = Color.sphereColor;
+			this.specular = Color.whiteSpecular;
 		}
 
 		public Sphere( Point center, float radius )
@@ -28,6 +27,17 @@ namespace RayTracer_App.Scene_Objects
 			this._center = center;
 			this._radius = radius;
 			this._normal = null;
+			this.diffuse = Color.sphereColor;
+			this.specular = Color.whiteSpecular;
+		}
+
+		public Sphere( Point center, float radius, Color diffuse, Color specular )
+		{
+			this._center = center;
+			this._radius = radius;
+			this._normal = null;
+			this._diffuse = diffuse;
+			this._specular = specular;
 		}
 
 		// Ray-sphere intersection, triple checking on 2/18/22

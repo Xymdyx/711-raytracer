@@ -8,11 +8,11 @@ namespace RayTracer_App.Scene_Objects
 	public class SceneObject
 	{
 		//fields
-		private string _material;
-		private Vector _normal;
-		private IlluminationModel _lightModel;
-		private Color _diffuse;
-		private Color _specular;
+		protected string _material;
+		protected Vector _normal;
+		protected IlluminationModel _lightModel;
+		protected Color _diffuse;
+		protected Color _specular;
 
 		//properties 
 		public string material {get => this._material; set => this._material = value; }

@@ -18,6 +18,7 @@ public class Point
     public float y { get => this._y; set => this._y = value; }
     public float z { get => this._z; set => this._z = value; }
 
+    public static Point origin = new Point( 0, 0, 0 );
 //DEFAULT CONSTRUCTOR
     public Point()
     {

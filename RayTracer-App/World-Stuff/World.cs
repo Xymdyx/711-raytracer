@@ -103,10 +103,8 @@ namespace RayTracer_App.World
 				if ( (currW != float.MinValue) && (currW != float.NaN) &&
 					(currW != float.MaxValue) && (currW < bestW) && (currW > 0 ) )
 				{
-					//TOD get intersection point, make object switch case
-					//get normal vectors dependent on type of object. spawn shadow ray
 					bestW = currW;
-					currColor = obj.illuminate();
+					//currColor = obj.illuminate(); //comment out for testing CP3
 
 					// get info for shadow ray...CP3
 					Sphere s = obj as Sphere;
@@ -117,6 +115,7 @@ namespace RayTracer_App.World
 					lightRadiance = new Color( 0f, 0f, 0f );
 					foreach( LightSource light in this.lights ) //TODO - 2/20
 					{
+						//get normal vectors dependent on type of object. spawn shadow ray
 						LightRay shadowRay = new LightRay( light.position - intersection, intersection );
 						float shadowW = checkRayIntersection( shadowRay );
 						if (shadowW != float.MaxValue) //the shadowRay makes it to light source unobstructed.
@@ -126,7 +125,13 @@ namespace RayTracer_App.World
 							IlluminationModel objLightModel = obj.lightModel;
 							lightRadiance += objLightModel.illuminate( intersection, obj.normal, shadowRay, reflect, ray.direction, light, obj );
 						}
+						//update the currentColor
+						if (currColor == null)
+							currColor = lightRadiance;
+						else
+							currColor += lightRadiance;
 					}
+
 				} 
 			}
 			return currColor;

@@ -48,7 +48,13 @@ public class RayTracerMain
 		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad ); //setting the point elsewhere gives translating whole sphere
 		sphere2.translate( 1.75f, 2.0f, 0 ); //doing it here gives same results as after cam transform
 
+		//cp3... place mainLight source above the spheres
+		Point mainLightPos = new Point( 0, -2f, s1Depth );
+		Color mainLightColor = Color.whiteSpecular;
+		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );
+
 		World world = new World();
+		world.addLight( mainLight );
 		world.addObject( triangle1 );
 		world.addObject( triangle2 );
 		world.addObject( sphere1 );
