@@ -8,7 +8,7 @@ namespace RayTracer_App.Illumination_Models
 		// calculate ray from intersect to light sources. If it hits no objects, return resultant radience.
 		// else return 0 for no radiance, making that point shadowed
 
-		public abstract float illuminate( Point intersect, Vector normal, LightRay incoming,
+		public abstract Color illuminate( Point intersect, Vector normal, LightRay incoming,
 			Vector mirrorReflect, Vector cameraRay, LightSource light, SceneObject litObj );
 	}
 }

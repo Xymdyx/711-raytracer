@@ -11,11 +11,16 @@ namespace RayTracer_App.Scene_Objects
 		private string _material;
 		private Vector _normal;
 		private IlluminationModel _lightModel;
+		private Color _diffuse;
+		private Color _specular;
 
 		//properties 
 		public string material {get => this._material; set => this._material = value; }
 		public Vector normal { get => this._normal; set => this._normal = value; }
 		public IlluminationModel lightModel { get => this._lightModel; set => this._lightModel = value; }
+		public Color diffuse { get => this._diffuse; set => this._diffuse = value; }
+		public Color specular { get => this._specular; set => this._specular = value; }
+
 
 
 		//constructors
@@ -23,6 +28,8 @@ namespace RayTracer_App.Scene_Objects
 			this._material = "None";
 			this._normal = null;
 			this._lightModel = Phong.regularPhong;
+			this._diffuse = Color.defaultBlack;
+			this._specular = Color.whiteSpecular;
 		}
 
 		public SceneObject( string material, IlluminationModel lightModel, Vector normal = null )
@@ -30,6 +37,18 @@ namespace RayTracer_App.Scene_Objects
 			this._material = material;
 			this._normal = normal;
 			this._lightModel = lightModel;
+			this._diffuse = Color.defaultBlack;
+			this._specular = Color.whiteSpecular;
+		}
+
+		//now with colors
+		public SceneObject( string material, IlluminationModel lightModel, Color diffuse, Color specular, Vector normal = null )
+		{
+			this._material = material;
+			this._normal = normal;
+			this._lightModel = lightModel;
+			this._diffuse = diffuse;
+			this._specular = specular;
 		}
 
 

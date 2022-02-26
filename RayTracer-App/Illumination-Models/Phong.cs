@@ -44,13 +44,20 @@ namespace RayTracer_App.Illumination_Models
 
 
 		//precondiiton: all vectors normalized. we know the incoming ray makes it to a light source at this point
-		//TODO IMPLEMENT ILLUMINATE
-		public override float illuminate( Point intersect, Vector normal, LightRay incoming,
+		//TODO IMPLEMENT ILLUMINATE... this returns an irradiance triplet, which will be converted by the camera via TR to a color.
+		public override Color illuminate( Point intersect, Vector normal, LightRay incoming,
 			Vector mirrorReflect, Vector cameraRay, LightSource light, SceneObject litObj )
 		{
 			// kd * (litObj.illuminate() * light.color * (incoming.dotProduct( Normal) ) + 
+			Color diffuseTerm = litObj.diffuse * light.lightColor;
+			diffuseTerm = diffuseTerm.scale( this.kd * incoming.direction.dotProduct( normal ) );
+
 			// ks * (Color.specular * lights.color * (mirrorReflect.dotProduct( cameraRay) ;
-			return 0f; // no irradiance, we are in shadow
+			Color specTerm = litObj.specular * light.lightColor;
+			specTerm = specTerm.scale( this.ks * mirrorReflect.dotProduct( cameraRay ) );
+
+			//( this.ks * litObj.specular * light.lightColor * mirrorReflect.dotProduct( cameraRay ) );
+			return diffuseTerm + specTerm;
 		}
 	}
 }

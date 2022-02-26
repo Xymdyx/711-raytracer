@@ -92,7 +92,8 @@ namespace RayTracer_App.World
 			Color currColor = null;
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
-			float radiance = 0.0f;
+			//Color radiance = new Color( 0, 0, 0 );
+			Color lightRadiance = null;
 			Point intersection = null;
 
 			foreach (SceneObject obj in objects)
@@ -113,6 +114,7 @@ namespace RayTracer_App.World
 					if (s != null) intersection = s.getRayPoint( ray, currW );
 					else if (t != null) intersection = t.getRayPoint( ray, currW );
 
+					lightRadiance = new Color( 0f, 0f, 0f );
 					foreach( LightSource light in this.lights ) //TODO - 2/20
 					{
 						LightRay shadowRay = new LightRay( light.position - intersection, intersection );
@@ -122,7 +124,7 @@ namespace RayTracer_App.World
 							// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
 							Vector reflect = Vector.reflect( shadowRay.direction, obj.normal ); // added normal field to sceneObject, may cause bugs
 							IlluminationModel objLightModel = obj.lightModel;
-							radiance += objLightModel.illuminate( intersection, obj.normal, shadowRay, reflect, ray.direction, light, obj );
+							lightRadiance += objLightModel.illuminate( intersection, obj.normal, shadowRay, reflect, ray.direction, light, obj );
 						}
 					}
 				} 

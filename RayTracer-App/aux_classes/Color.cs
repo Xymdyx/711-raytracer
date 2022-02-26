@@ -14,6 +14,7 @@ public class Color
     const int COLOR_MAX = 255;
 
     public static Color whiteSpecular = new Color( 1f, 1f , 1f);
+    public static Color defaultBlack = new Color( 255f, 255f, 255f );
     public static Color bgColor = new Color( 0f, 1f, 0f );
     public static Color sphereColor = new Color( 0.214f, 0.519f, 0.630f );
     public static Color floorColor = new Color( 1.0f, 0.0f, 0.0f );
@@ -26,6 +27,7 @@ public class Color
     public float r { get => this._r; set => this._r = value; }
     public float g { get => this._g; set => this._g = value; }
     public float b { get => this._b; set => this._b = value; }
+
 
     //default constructor.. THE BACKGROUND COLOR
     public Color() 
@@ -41,6 +43,12 @@ public class Color
         this._g = g;
         this._b = b;
     }
+
+    public static Color operator +( Color c1, Color c2 ) => new Color( c1.r + c2.r, c1.g + c2.g, c1.b + c2.b );
+    public static Color operator -( Color c1, Color c2 ) => new Color( c1.r - c2.r, c1.g - c2.g, c1.b - c2.b );
+
+    public static Color operator *(  Color c1, Color c2 ) => new Color( c1.r * c2.r, c1.g * c2.g, c1.b * c2.b );
+
 
     //operators
     //scale a Color by k....which ranges from 0-1

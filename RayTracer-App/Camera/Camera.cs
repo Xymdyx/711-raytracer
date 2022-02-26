@@ -86,6 +86,17 @@ namespace RayTracer_App.Camera
 			
 		}
 
+		// TODO runs tone reproduction on the irradiance triplet retrieved from an intersection
+		// just ternaries for now. If the sum of energy is >1, we max it at 1.
+		public Color runTR( Color irradiance ) 
+		{
+			Color trColor = new Color( 0, 0, 0 );
+			trColor.r = irradiance.r >= 1.0f ? trColor.r = 1.0f : trColor.r = irradiance.r;
+			trColor.g = irradiance.g >= 1.0f ? trColor.g = 1.0f : trColor.g = irradiance.g;
+			trColor.b = irradiance.b >= 1.0f ? trColor.b = 1.0f : trColor.b = irradiance.b;
+
+			return trColor;
+		}
 
 //tried list of float[] and float[]...
 		public byte[] render( World.World world, int imageHeight, int imageWidth, float focalLen )
@@ -130,11 +141,13 @@ namespace RayTracer_App.Camera
 				for ( int x = 0; x < imageWidth; x++)
 				{
 					fire.direction = fpPoint - this.eyePoint;
-					hitColor = world.spawnRay( fire );
+					hitColor = world.spawnRay( fire ); //this will be irradiance....
 
 					if (hitColor != null)
 					{
 						//TODO need to change to 0 -> 1 floats
+						//run tone reproduction function on hitColor and then do the following
+						// hitColor = runTR( hitColor );
 						hitColorArr = hitColor.asByteArr();
 						int pos = (x + (y * imageWidth) ) * 3;
 						pixColors[pos] = hitColorArr[0]; //try 0-1.0 floats instead of 255
