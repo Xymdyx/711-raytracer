@@ -52,10 +52,14 @@ namespace RayTracer_App.Illumination_Models
 			Color diffuseTerm = litObj.diffuse * light.lightColor;
 			diffuseTerm = diffuseTerm.scale( this.kd * incoming.direction.dotProduct( normal ) );
 
-			// ks * (Color.specular * lights.color * (mirrorReflect.dotProduct( cameraRay) ;
+			// ks * (Color.specular * lights.color * (mirrorReflect.dotProduct( cameraRay)^ke) ;
 			Color specTerm = litObj.specular * light.lightColor;
-			specTerm = specTerm.scale( this.ks * mirrorReflect.dotProduct( cameraRay ) );
+			float specReflDp = mirrorReflect.dotProduct( cameraRay );
 
+			for (int exp = 1; exp < this.ke; exp++) //carry out power operation
+				specReflDp *= specReflDp;
+
+			specTerm = specTerm.scale( this.ks * specReflDp);
 			//( this.ks * litObj.specular * light.lightColor * mirrorReflect.dotProduct( cameraRay ) );
 			return diffuseTerm + specTerm;
 		}

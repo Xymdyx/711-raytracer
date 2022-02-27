@@ -80,6 +80,7 @@ namespace RayTracer_App.World
 					(currW != float.MaxValue) && (currW < bestW) && (currW > 0))
 				{
 					bestW = currW;
+					break;
 				}
 
 			}
@@ -118,7 +119,7 @@ namespace RayTracer_App.World
 						//get normal vectors dependent on type of object. spawn shadow ray
 						LightRay shadowRay = new LightRay( light.position - intersection, intersection );
 						float shadowW = checkRayIntersection( shadowRay );
-						if (shadowW != float.MaxValue) //the shadowRay makes it to light source unobstructed.
+						if (shadowW == float.MaxValue) //the shadowRay makes it to light source unobstructed.
 						{
 							// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
 							Vector reflect = Vector.reflect( shadowRay.direction, obj.normal ); // added normal field to sceneObject, may cause bugs

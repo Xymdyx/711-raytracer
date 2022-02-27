@@ -188,8 +188,8 @@ public class Vector
 	{
         
         Vector rightTerm =  normal.scale( incoming.dotProduct( normal ) ); //does not normalize here
-        rightTerm.normalize();
-        rightTerm.normalize();
+        float len = rightTerm.getLen();
+        rightTerm = rightTerm.scale( (1 / (len * len)) ); //fixed
         rightTerm = rightTerm.scale( 2f );
 
         return incoming - rightTerm;

@@ -49,7 +49,7 @@ public class RayTracerMain
 		sphere2.translate( 1.75f, 2.0f, 0 ); //doing it here gives same results as after cam transform
 
 		//cp3... place mainLight source above the spheres
-		Point mainLightPos = new Point( 0, -2f, s1Depth );
+		Point mainLightPos = new Point( 0, -3f, 1.0f );
 		Color mainLightColor = Color.whiteSpecular;
 		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );
 
@@ -61,7 +61,6 @@ public class RayTracerMain
 		world.addObject( sphere2 );
 
 		// initialize camera and render world
-		// drawPixels in the RGB array with glDrawPixels();... put this in main
 		imageWidth = 1600;
 		imageHeight = imageWidth;
 
