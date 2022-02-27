@@ -18,8 +18,8 @@ namespace RayTracer_App.Scene_Objects
 			this._center = new Point() ;
 			this._radius = 1.0f;
 			this._normal = null;
-			this.diffuse = Color.sphereColor;
-			this.specular = Color.whiteSpecular;
+			this._diffuse = Color.sphereColor;
+			this._specular = Color.whiteSpecular;
 		}
 
 		public Sphere( Point center, float radius )
@@ -27,8 +27,8 @@ namespace RayTracer_App.Scene_Objects
 			this._center = center;
 			this._radius = radius;
 			this._normal = null;
-			this.diffuse = Color.sphereColor;
-			this.specular = Color.whiteSpecular;
+			this._diffuse = Color.sphereColor;
+			this._specular = Color.whiteSpecular;
 		}
 
 		public Sphere( Point center, float radius, Color diffuse, Color specular )

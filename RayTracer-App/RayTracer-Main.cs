@@ -49,7 +49,7 @@ public class RayTracerMain
 		sphere2.translate( 1.75f, 2.0f, 0 ); //doing it here gives same results as after cam transform
 
 		//cp3... place mainLight source above the spheres
-		Point mainLightPos = new Point( 0, -3f, 1.0f );
+		Point mainLightPos = new Point( 1.00f, -2f, -6.0f );
 		Color mainLightColor = Color.whiteSpecular;
 		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );
 

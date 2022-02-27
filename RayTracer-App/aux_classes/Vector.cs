@@ -187,11 +187,10 @@ public class Vector
     public static Vector reflect( Vector incoming, Vector normal )
 	{
         
-        Vector rightTerm =  normal.scale( incoming.dotProduct( normal ) ); //does not normalize here
-        float len = rightTerm.getLen();
-        rightTerm = rightTerm.scale( (1 / (len * len)) ); //fixed
-        rightTerm = rightTerm.scale( 2f );
-
+        float inNormDp = incoming.dotProduct( normal );
+        float len = normal.getLen();
+        float divisor = len * len; //fixed
+        Vector rightTerm = normal.scale( 2f * (inNormDp / divisor) ); //does not normalize here
         return incoming - rightTerm;
 	}
 

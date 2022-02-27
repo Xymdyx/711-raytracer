@@ -105,7 +105,12 @@ namespace RayTracer_App.World
 					(currW != float.MaxValue) && (currW < bestW) && (currW > 0 ) )
 				{
 					bestW = currW;
-					//currColor = obj.illuminate(); //comment out for testing CP3
+					currColor = null; //reset the color since we know we're overwriting it
+
+					//TODO... 1. double check getRayPoint
+					// 2. Double check color, point, and new vector ops
+					//3. Rethink TR?
+
 
 					// get info for shadow ray...CP3
 					Sphere s = obj as Sphere;
@@ -113,7 +118,7 @@ namespace RayTracer_App.World
 					if (s != null) intersection = s.getRayPoint( ray, currW );
 					else if (t != null) intersection = t.getRayPoint( ray, currW );
 
-					lightRadiance = new Color( 0f, 0f, 0f );
+					lightRadiance = Color.defaultBlack;
 					foreach( LightSource light in this.lights ) //TODO - 2/20
 					{
 						//get normal vectors dependent on type of object. spawn shadow ray
@@ -122,9 +127,9 @@ namespace RayTracer_App.World
 						if (shadowW == float.MaxValue) //the shadowRay makes it to light source unobstructed.
 						{
 							// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
-							Vector reflect = Vector.reflect( shadowRay.direction, obj.normal ); // added normal field to sceneObject, may cause bugs
+							Vector reflect = Vector.reflect( -shadowRay.direction, obj.normal ); // added normal field to sceneObject, may cause bugs
 							IlluminationModel objLightModel = obj.lightModel;
-							lightRadiance += objLightModel.illuminate( intersection, obj.normal, shadowRay, reflect, ray.direction, light, obj );
+							lightRadiance += objLightModel.illuminate( intersection, obj.normal, shadowRay, reflect, -ray.direction, light, obj );
 						}
 						//update the currentColor
 						if (currColor == null)

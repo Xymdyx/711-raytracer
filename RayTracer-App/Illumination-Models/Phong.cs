@@ -14,7 +14,7 @@ namespace RayTracer_App.Illumination_Models
 		// kd + ks < 1.. they range from 0 - 1 each
 
 		//static constants for Phong
-		public static Phong regularPhong = new Phong( 0f, .55f, .45f, 1f );
+		public static Phong regularPhong = new Phong( 0f, .15f, .25f, 1f );
 
 		private float _ka; // not going to implement since ambient will be shaved later
 		private float _kd; // Lambertian diffuse
@@ -55,11 +55,12 @@ namespace RayTracer_App.Illumination_Models
 			// ks * (Color.specular * lights.color * (mirrorReflect.dotProduct( cameraRay)^ke) ;
 			Color specTerm = litObj.specular * light.lightColor;
 			float specReflDp = mirrorReflect.dotProduct( cameraRay );
+			float totalSpecRefl = specReflDp;
 
 			for (int exp = 1; exp < this.ke; exp++) //carry out power operation
-				specReflDp *= specReflDp;
+				totalSpecRefl *= specReflDp;
 
-			specTerm = specTerm.scale( this.ks * specReflDp);
+			specTerm = specTerm.scale( this.ks * totalSpecRefl);
 			//( this.ks * litObj.specular * light.lightColor * mirrorReflect.dotProduct( cameraRay ) );
 			return diffuseTerm + specTerm;
 		}
