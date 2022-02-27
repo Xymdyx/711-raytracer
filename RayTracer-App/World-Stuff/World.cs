@@ -68,12 +68,14 @@ namespace RayTracer_App.World
 		}
 
 		//helper for checking if a ray intersects with an object in the scene.
-		public float checkRayIntersection( LightRay ray )
+		public float checkRayIntersection( LightRay ray, SceneObject originObject )
 		{
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
 			foreach (SceneObject obj in objects)
 			{
+				if (obj == originObject) continue; //obviously this ray will intersect where it originated from so ignore the origin object
+
 				currW = obj.intersect( ray );
 
 				if ((currW != float.MinValue) && (currW != float.NaN) &&
@@ -107,7 +109,7 @@ namespace RayTracer_App.World
 					bestW = currW;
 					currColor = null; //reset the color since we know we're overwriting it
 
-					//TODO... 1. double check getRayPoint
+					//TODO... 1. double check getRayPoint -- done
 					// 2. Double check color, point, and new vector ops
 					//3. Rethink TR?
 
@@ -123,11 +125,11 @@ namespace RayTracer_App.World
 					{
 						//get normal vectors dependent on type of object. spawn shadow ray
 						LightRay shadowRay = new LightRay( light.position - intersection, intersection );
-						float shadowW = checkRayIntersection( shadowRay );
+						float shadowW = checkRayIntersection( shadowRay, obj );
 						if (shadowW == float.MaxValue) //the shadowRay makes it to light source unobstructed.
 						{
 							// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
-							Vector reflect = Vector.reflect( -shadowRay.direction, obj.normal ); // added normal field to sceneObject, may cause bugs
+							Vector reflect = Vector.reflect( intersection - light.position, obj.normal ); // added normal field to sceneObject, may cause bugs
 							IlluminationModel objLightModel = obj.lightModel;
 							lightRadiance += objLightModel.illuminate( intersection, obj.normal, shadowRay, reflect, -ray.direction, light, obj );
 						}

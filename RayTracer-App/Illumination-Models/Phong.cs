@@ -14,7 +14,7 @@ namespace RayTracer_App.Illumination_Models
 		// kd + ks < 1.. they range from 0 - 1 each
 
 		//static constants for Phong
-		public static Phong regularPhong = new Phong( 0f, .15f, .25f, 1f );
+		public static Phong regularPhong = new Phong( 0f, .55f, .05f, 20f );
 
 		private float _ka; // not going to implement since ambient will be shaved later
 		private float _kd; // Lambertian diffuse

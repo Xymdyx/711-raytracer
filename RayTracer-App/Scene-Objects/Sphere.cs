@@ -40,6 +40,16 @@ namespace RayTracer_App.Scene_Objects
 			this._specular = specular;
 		}
 
+		// function for getting where along ray intersection happens with a sphere
+		// sets normal somewhere.. see 27 in notes
+		public override Point getRayPoint( LightRay ray, float w ) //corrected on 2/27...
+		{
+			Vector scaledDir = ray.direction.scale( w );
+			Point rayPoint = ray.origin + scaledDir;
+			this.normal = rayPoint - this.center; //want this normalized
+			return rayPoint;
+		}
+
 		// Ray-sphere intersection, triple checking on 2/18/22
 		// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 		public override float intersect( LightRay ray )
@@ -86,15 +96,6 @@ namespace RayTracer_App.Scene_Objects
 			}
 		}
 
-		// function for getting where along ray intersection happens with a sphere
-		// sets normal somewhere.. see 27 in notes
-		public override Point getRayPoint( LightRay ray, float w )
-		{
-			Vector scaledDir = ray.direction.scale( w );
-			Point rayPoint = ray.origin + scaledDir;
-			this.normal = rayPoint - ray.origin; //want this normalized
-			return rayPoint;
-		}
 
 		public override Color illuminate()
 		{

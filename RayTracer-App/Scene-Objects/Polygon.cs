@@ -39,6 +39,15 @@ namespace RayTracer_App.Scene_Objects
 		}
 
 
+		// function for getting where along ray intersection happens with a triangle
+		// sets normal somewhere.. see 28 in notes
+		public override Point getRayPoint( LightRay ray, float w ) //double-checked on 2/27
+		{
+			Vector scaledDir = ray.direction.scale( w );
+			Point rayPoint = ray.origin + scaledDir;
+			return rayPoint;
+		}
+
 		//use barycentric coordinates formula to get intersection
 		public override float intersect( LightRay ray )
 		{
@@ -90,14 +99,6 @@ namespace RayTracer_App.Scene_Objects
 			return w;
 		}
 
-		// function for getting where along ray intersection happens with a triangle
-		// sets normal somewhere.. see 28 in notes
-		public override Point getRayPoint( LightRay ray, float w )
-		{
-			Vector scaledDir = ray.direction.scale( w );
-			Point rayPoint = ray.origin + scaledDir;
-			return rayPoint;
-		}
 
 		public override Color illuminate()
 		{
