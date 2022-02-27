@@ -24,9 +24,9 @@ public class RayTracerMain
 	public static void doRayTracing() 
 	{
 		//initialize objects
-		float focalLen = 1.25f; //distance from camera to film plane center along N...
+		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25
 
-		float s1Depth = 2.5f; //+z into the scene... I am IN LHS
+		float s1Depth = 9.5f; //+z into the scene... I am IN LHS
 		float s2Depth = s1Depth + 3.0f;
 		float sphereRad = 1.5f;
 
@@ -49,7 +49,7 @@ public class RayTracerMain
 		sphere2.translate( 1.75f, 2.0f, 0 ); //doing it here gives same results as after cam transform
 
 		//cp3... place mainLight source above the spheres
-		Point mainLightPos = new Point( 1.00f, -4f, -5.5f );
+		Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // 1.5f, -1f, -5.0f
 		Color mainLightColor = Color.whiteSpecular;
 		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );
 
@@ -65,7 +65,7 @@ public class RayTracerMain
 		imageHeight = imageWidth;
 
 		Vector up = new Vector( 0f, 1f, 0f );
-		Point eyePos = new Point( 0f, -1f, -5f);
+		Point eyePos = new Point( 0f, -1f, -5f); //0f, -1f, -5f
 		Point lookAt = new Point( .5f, .5f, s1Depth + 1f ); // lookAt gives odd results when looking at objects at different angles.
 		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
 

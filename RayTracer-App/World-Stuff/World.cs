@@ -95,7 +95,6 @@ namespace RayTracer_App.World
 			Color currColor = null;
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
-			//Color radiance = new Color( 0, 0, 0 );
 			Color lightRadiance = null;
 			Point intersection = null;
 

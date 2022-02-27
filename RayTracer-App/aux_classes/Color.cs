@@ -17,7 +17,6 @@ public class Color
     public static Color defaultBlack = new Color( 0f, 0f, 0f );
     public static Color bgColor = new Color( 0f, 1f, 0f );
     public static Color sphereColor = new Color( 0.0f, 0.0f, 1.0f );
-//    public static Color sphereColor = new Color( 0.214f, 0.519f, 0.630f );
     public static Color floorColor = new Color( 1.0f, 0.0f, 0.0f );
 
 

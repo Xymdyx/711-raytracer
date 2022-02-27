@@ -188,10 +188,10 @@ public class Vector
 	{
         
         float inNormDp = incoming.dotProduct( normal );
-        float len = normal.getLen();
-        float divisor = len * len; //fixed
-        Vector rightTerm = normal.scale( 2f * (inNormDp / divisor) ); //does not normalize here
-        return incoming - rightTerm;
+       // float len = normal.getLen(); //should be 1
+       // float divisor = len * len; //fixed
+        Vector rightTerm = normal.scale( 2 * (inNormDp) ) ; //does not normalize here
+        return rightTerm - incoming ;
 	}
 
     /*Console.WriteLine( "Creating vector" );
