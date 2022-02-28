@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Numerics;
+using RayTracer_App.Illumination_Models;
+
 
 //MATRIX 4D -> MATRIX4X4
 
@@ -17,12 +19,39 @@ namespace RayTracer_App.Scene_Objects
 		{
 			this._center = new Point() ;
 			this._radius = 1.0f;
+			this._normal = null;
+			this._diffuse = Color.sphereColor;
+			this._specular = Color.whiteSpecular;
 		}
 
 		public Sphere( Point center, float radius )
 		{
 			this._center = center;
 			this._radius = radius;
+			this._normal = null;
+			this._diffuse = Color.sphereColor;
+			this._specular = Color.whiteSpecular;
+			this._lightModel = Phong.regularPhong; //change iullum model here for now
+
+		}
+
+		public Sphere( Point center, float radius, Color diffuse, Color specular )
+		{
+			this._center = center;
+			this._radius = radius;
+			this._normal = null;
+			this._diffuse = diffuse;
+			this._specular = specular;
+		}
+
+		// function for getting where along ray intersection happens with a sphere
+		// sets normal somewhere.. see 27 in notes
+		public override Point getRayPoint( LightRay ray, float w ) //corrected on 2/27...
+		{
+			Vector scaledDir = ray.direction.scale( w );
+			Point rayPoint = ray.origin + scaledDir;
+			this.normal = rayPoint - this.center; //want this normalized
+			return rayPoint;
 		}
 
 		// Ray-sphere intersection, triple checking on 2/18/22
@@ -69,8 +98,8 @@ namespace RayTracer_App.Scene_Objects
 				w2 = (float) (-B - Math.Sqrt( rootTerm )) / 2f;
 				return Math.Min( w1, w2 );
 			}
-			// TODO caller function computes the point of intersection with returned w....page 27 in notes
 		}
+
 
 		public override Color illuminate()
 		{

@@ -47,8 +47,6 @@ namespace RayTracer_App.Camera
 		//http://www.songho.ca/opengl/gl_camera.html
 		// https://github.com/sgorsten/linalg/issues/29 ... sanity checks that I am doing this correctly
 
-		//TODO DOUBLE-CHECK WHAT HAPPENS IN THE CAMERA
-
 		//gives the forward = target - camPos
 		private Vector calculateN() { return lookAt - eyePoint; } 
 
@@ -58,7 +56,7 @@ namespace RayTracer_App.Camera
 		//gives the y-axis (up-axis) = cross( forward, left)
 		private Vector calculateV(Vector forward, Vector left) { return forward.crossProduct( left ); } //should be normalized now... 
 
-		private void makeCamMat() //TODO FIZX THIS TO CONFORM WITH LHS
+		private void makeCamMat()
 		{
 			//use identity if world origin
 			Matrix4x4 camCoordMat = Matrix4x4.Identity; //row major
@@ -86,6 +84,54 @@ namespace RayTracer_App.Camera
 
 			this.camTransformMat = camCoordMat;
 			
+		}
+
+		//attempt at supersampling with only doing 4 basic corners of a pixel
+		public Color superSamplePixel( Point centerPoint, float pixHeight, float pixWidth, World.World world )
+		{
+			Color averageHitColor = null;
+			Color[] hitColors = new Color[4]; //for super-sampling
+			Point[] hitPoints = new Point[4] {
+				new Point( centerPoint.x - pixWidth / 2, centerPoint.y + pixHeight / 2, centerPoint.z), //top-left
+				new Point( centerPoint.x + pixWidth / 2, centerPoint.y + pixHeight / 2, centerPoint.z ), //top-right
+				new Point( centerPoint.x - pixWidth / 2, centerPoint.y - pixHeight / 2, centerPoint.z ), //bottom-left
+				new Point( centerPoint.x + pixWidth /2, centerPoint.y - pixHeight / 2, centerPoint.z ), //bottom-right
+			};
+			
+			for( int hitIdx = 0; hitIdx < 4; hitIdx ++ )
+			{
+				LightRay hitRay = new LightRay( hitPoints[hitIdx] - this.eyePoint, this.eyePoint );
+				hitColors[hitIdx] = world.spawnRay( hitRay );
+			}
+
+			//average the 4 colors
+			for (int colNum = 0; colNum < 4; colNum++)
+			{
+				if (hitColors[colNum] != null)
+				{
+					if (averageHitColor == null)
+						averageHitColor = hitColors[colNum];
+					else
+						averageHitColor += hitColors[colNum];
+				}
+			}
+
+			if ( averageHitColor != null )
+				averageHitColor = averageHitColor.scale( .25f );
+
+			return averageHitColor;
+		}
+
+		// runs tone reproduction on the irradiance triplet retrieved from an intersection
+		// just ternaries for now. If the sum of energy is >1, we max it at 1.
+		public Color runTR( Color irradiance ) 
+		{
+			Color trColor = new Color( 0, 0, 0 );
+			trColor.r = irradiance.r >= 1.0f ? trColor.r = 1.0f : trColor.r = irradiance.r;
+			trColor.g = irradiance.g >= 1.0f ? trColor.g = 1.0f : trColor.g = irradiance.g;
+			trColor.b = irradiance.b >= 1.0f ? trColor.b = 1.0f : trColor.b = irradiance.b;
+
+			return trColor;
 		}
 
 
@@ -124,22 +170,28 @@ namespace RayTracer_App.Camera
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;
 			byte[] hitColorArr = null;
+			bool isSuperSampling = false;
 
-			// for x = 0; x < x pixels; x+= pixelwidth
-			//	for y = 0; y < y-pixels; y-= pixelHeight
-			//		world.spawnRay()... see what it hits
-			//		whatever it hits... rgbs.add( rgb float triplet)
-			//start top-left -> bottom-right
+
 			int hits = 0;
 			for ( int y = 0; y < imageHeight; y++) // positive x ->, positive y V
 			{
 				for ( int x = 0; x < imageWidth; x++)
 				{
-					fire.direction = fpPoint - this.eyePoint;
-					hitColor = world.spawnRay( fire );
-
-					if (hitColor != null) // I assume some distortion happens since I do not check if intersection happens beyond film plane
+					//supersample branch here... have an array of hitcolors... average them then pass to TR below
+					if (!isSuperSampling)
 					{
+						fire.direction = fpPoint - this.eyePoint;
+						hitColor = world.spawnRay( fire ); //this will be irradiance....
+					}
+					else
+						hitColor = superSamplePixel( fpPoint, pixHeight, pixWidth, world );
+
+					if (hitColor != null)
+					{
+						//TODO need to change to 0 -> 1 floats
+						//run tone reproduction function on hitColor and then do the following
+						hitColor = runTR( hitColor );
 						hitColorArr = hitColor.asByteArr();
 						int pos = (x + (y * imageWidth) ) * 3;
 						pixColors[pos] = hitColorArr[0]; //try 0-1.0 floats instead of 255

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics; //for Matrix4x4 float
+using RayTracer_App.Illumination_Models;
 
 //MATRIX 4D -> MATRIX4X4
 namespace RayTracer_App.Scene_Objects
@@ -8,26 +9,49 @@ namespace RayTracer_App.Scene_Objects
 	public class Polygon : SceneObject
 	{
 		private List<Point> _vertices;
-		private Vector _normal;
-
 
 		public List<Point> vertices { get => this._vertices; set => this._vertices = value; } 
-		public Vector normal { get => this._normal; set => this._normal = value; }
 
 // default constructor for a plain triangle
 		public Polygon()
 		{
 			this._vertices = new List<Point> { new Point( 1, 0, 0 ), new Point( 0, 1, 0 ), new Point( -1, 0, 0 ) };
-			this.normal = new Vector();
+			this._normal = null;
+			this._diffuse = Color.floorColor;
+			this._specular = Color.whiteSpecular;
+			this._lightModel = Phong.regularPhong;
 		}
 
 // parameter constructor
 		public Polygon( List<Point> vertices ) 
 		{
 			this._vertices = vertices;
-			this._normal = new Vector(0,1,0); //TODO calculate normal
+			this._normal = null; //TODO calculate normal
+			this._diffuse = Color.floorColor;
+			this._specular = Color.whiteSpecular;
+			this._lightModel = Phong.floorPhong; //change this to change lighting
+
 		}
 
+		public Polygon( List<Point> vertices, Color diffuse, Color specular )
+		{
+			this._vertices = vertices;
+			this._normal = null; //TODO calculate normal
+			this._diffuse = diffuse;
+			this._specular = specular;
+			this._lightModel = Phong.floorPhong;
+
+		}
+
+
+		// function for getting where along ray intersection happens with a triangle
+		// sets normal somewhere.. see 28 in notes
+		public override Point getRayPoint( LightRay ray, float w ) //double-checked on 2/27
+		{
+			Vector scaledDir = ray.direction.scale( w );
+			Point rayPoint = ray.origin + scaledDir;
+			return rayPoint;
+		}
 
 		//use barycentric coordinates formula to get intersection
 		public override float intersect( LightRay ray )
@@ -72,13 +96,14 @@ namespace RayTracer_App.Scene_Objects
 				// where is our point?
 				if (w < 0 || w == float.NaN) return float.MaxValue; // intersection behind origin
 
-				Vector normal = e1.crossProduct( e2, false );
+				this._normal = e1.crossProduct( e2, true ); //set the normal here while we have these
 
 				return w; //w is distance along ray of intersection point
 			}
 
 			return w;
 		}
+
 
 		public override Color illuminate()
 		{
@@ -144,3 +169,43 @@ namespace RayTracer_App.Scene_Objects
 	//Vector normal = e1.crossProduct( e2 );
 
 }
+/*				NOT-NORMALIZED
+ *				//do triangle intersection formula with barycentric coordinates
+				// https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+				// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/moller-trumbore-ray-triangle-intersection
+				// try not normalizing anything - 2/13
+
+				// intersection = ray.origin + (ray.direction * w)
+				//u,v are barycentric boordsinates of intersection point
+				//use (w,u,v) = (1/(P . e1)) * ( Q . e2, P . T, Q. D)
+				// cross, dot, and normalize good
+				float kEpsilon = 1e-6f;
+
+				Vector e1 = vertices[1].ptSub( vertices[0] ); // e1 = v1 - v0
+				Vector e2 = vertices[2].ptSub( vertices[0] ); // e2= v2 - v0
+
+				Vector P = ray.direction.crossProduct( e2, false ); // P = rayDirection x e2
+				float denom = P.dotProduct( e1 ); // denom = p dot e1
+
+				if ((denom >= -kEpsilon && denom <= kEpsilon) || denom == float.NaN) return float.MaxValue;  // ray is parallel to triangle
+
+				float denomScale = 1f / denom;
+
+				Vector T = ray.origin.ptSub( vertices[0] ); // T = rayDirection - v0
+				float u = P.dotProduct( T ) * denomScale; // u = (P dot T) * denomScale
+
+				if (u < 0 || u > 1) return float.MaxValue;
+
+				Vector Q = T.crossProduct( e1, false ); // Q = T x e1
+				float v = Q.dotProduct( ray.direction ) * denomScale; //  v = (Q dot rayDir) * denomScale
+
+				if (v < 0 || u + v > 1) return float.MaxValue;
+
+				w = Q.dotProduct( e2 ) * denomScale; //point along ray where we intersect... w = (Q dot e2) * denomScale
+
+				// where is our point?
+				if (w < 0 || w == float.NaN) return float.MaxValue; // intersection behind origin
+
+				this._normal = e1.crossProduct( e2, true ); //set the normal here while we have these
+
+				return w; //w is distance along ray of intersection point*/

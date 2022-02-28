@@ -20,14 +20,15 @@ public class RayTracerMain
 	static bool[] valid = new bool[1];
 	static float[] rat = new float[4];
 
-	//OPENGL DRAW CCW order matters
+	//OPENGL DRAW CCW order matters. We are in LHS system. +y is down. +x is right. +z into screen. Row major. Postmultiply.
 	public static void doRayTracing() 
 	{
 		//initialize objects
-		float focalLen = 1.25f; //distance from camera to film plane center along N...
+		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25
 
-		float s1Depth = 2.5f; //+z into the scene... I am IN LHS
-		float s2Depth = s1Depth + 3.0f;
+		float s1Depth = 8.75f; //+z into the scene... I am IN LHS
+		float s1Height = 1.25f;
+		float s2Depth = s1Depth + 1.85f;
 		float sphereRad = 1.5f;
 
 		float floorDept = 3.0f;
@@ -35,33 +36,40 @@ public class RayTracerMain
 
 		//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
 		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
-		//		List<Point> triVerts1 = new List<Point> {  new Point( 20f, floorHeight, 12f ), new Point( -6f, floorHeight, 12f ), new Point( 2f, floorHeight, 3f ), }; //ccw from point that forms the right angle
-		//List<Point> triVerts2 = new List<Point> { new Point( 15.5f, floorHeight, 2.5f ), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f ) }; //ccw manner.... positive is up, down is negative
+		//ccw manner.... positive is up, down is negative
 
 		List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f ), }; //ccw from point that forms the right angle
-		List<Point> triVerts2 = new List<Point> {  new Point( 70.5f, floorHeight, 6.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f )}; //ccw manner.... positive is up, down is negative
+		List<Point> triVerts2 = new List<Point> { new Point( 1.5f, floorHeight, 2.0f ), new Point( 70.5f, floorHeight, 6.0f ), new Point( -6f, floorHeight, 60.5f ) }; //ccw manner.... positive is up, down is negative
+	   //List<Point> triVerts2 = new List<Point> {  new Point( 70.5f, floorHeight, 6.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f )}; //ccw manner.... positive is up, down is negative
 
 		Polygon triangle1 = new Polygon( triVerts1 );
 		Polygon triangle2 = new Polygon( triVerts2 );
 
-		Sphere sphere1 = new Sphere( new Point( 0, .5f, s1Depth) , sphereRad );
+		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth) , sphereRad );
 		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad ); //setting the point elsewhere gives translating whole sphere
-		sphere2.translate( 1.75f, 2.0f, 0 ); //doing it here gives same results as after cam transform
+		sphere2.translate(  1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform
+
+		//cp3... place mainLight source above the spheres
+		// 1.5f, -1f, -5.0f
+		//.85f, -30.85f, s1Depth - 5.5f , in front and way high
+		Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // the z was originally s1Depth + .75
+		Color mainLightColor = Color.whiteSpecular;
+		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );
 
 		World world = new World();
-		world.add( triangle1 );
-		world.add( triangle2 );
-		world.add( sphere1 );
-		world.add( sphere2 );
+		world.addLight( mainLight );
+		world.addObject( triangle1 );
+		world.addObject( triangle2 );
+		world.addObject( sphere1 );
+		world.addObject( sphere2 );
 
 		// initialize camera and render world
-		// drawPixels in the RGB array with glDrawPixels();... put this in main
 		imageWidth = 1600;
 		imageHeight = imageWidth;
 
 		Vector up = new Vector( 0f, 1f, 0f );
-		Point eyePos = new Point( 0f, -1f, -5f);
-		Point lookAt = new Point( .5f, .5f, s1Depth + 1f ); // lookAt gives odd results when looking at objects at different angles.
+		Point eyePos = new Point( 0f, -1f, -5f); //0f, -1f, -5f
+		Point lookAt = new Point( .5f, .5f, s1Depth + 1f ); 
 		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
 
 
