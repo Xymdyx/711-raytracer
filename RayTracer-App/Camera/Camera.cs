@@ -132,6 +132,7 @@ namespace RayTracer_App.Camera
 			Point fpPoint = new Point ( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen); //gldrawPixels starts drawing lower-left corner at raster positions
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;
+			Color[] hitColors = new Color[5]; //for super-sampling
 			byte[] hitColorArr = null;
 
 
@@ -140,6 +141,7 @@ namespace RayTracer_App.Camera
 			{
 				for ( int x = 0; x < imageWidth; x++)
 				{
+					//supersample here... have an array of hitcolors... average them then pass to TR below
 					fire.direction = fpPoint - this.eyePoint;
 					hitColor = world.spawnRay( fire ); //this will be irradiance....
 

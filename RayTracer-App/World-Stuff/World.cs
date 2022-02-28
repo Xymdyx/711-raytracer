@@ -68,14 +68,13 @@ namespace RayTracer_App.World
 		}
 
 		//helper for checking if a ray intersects with an object in the scene.
-		public static float checkRayIntersection( LightRay ray, List<SceneObject> allObjects ,SceneObject originObject )
+		// added shadowBias displacement for shadowRays so I no longer have to check the current object
+		public static float checkRayIntersection( LightRay ray, List<SceneObject> allObjects )
 		{
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
 			foreach (SceneObject obj in allObjects)
 			{
-				if (obj == originObject) continue; //obviously this ray will intersect where it originated from so ignore the origin object
-
 				currW = obj.intersect( ray );
 
 				if ((currW != float.MinValue) && (currW != float.NaN) &&

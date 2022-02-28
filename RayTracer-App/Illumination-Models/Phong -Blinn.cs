@@ -7,15 +7,15 @@ namespace RayTracer_App.Illumination_Models
 {
 	public class PhongBlinn : IlluminationModel
 	{
-		// L = (ka*Co*La) + (kd * Sum..i=light( Li*Co (Si.dot(N) )) + (ks (Sum..i=light( Li*Cs (Ri.dot(V)^ke)
+		// L = (ka*Co*La) + (kd * Sum..i=light( Li*Co (Si.dot(N) )) + (ks (Sum..i=light( Li*Cs (H.dot(N)^ke)
 		// Co = objectColor, Li = LightRadiance(RGB), Cs = specular color
-		// Vecs: N = normal, R = reflectionDir, S = dir of incoming light, V = incoming ray from cam
+		// Vecs: N = normal, H = halfway vector ( camera + shadowRay.direction ), S = dir of incoming light, V = incoming ray from cam
 		// kd + ks < 1.. they range from 0 - 1 each
 
 		//static constants for PhongBlinn
 		//best 0f, .55f, .05f, 20f 
-		public static PhongBlinn regularPhongBlinn = new PhongBlinn ( 0f, .55f, .25f, 10f );
-		public static PhongBlinn floorPhongBlinn = new PhongBlinn( 0f, .75f, .05f, 128f );
+		public static PhongBlinn regularPhongBlinn = new PhongBlinn ( 0f, .65f, .25f, 100f );
+		public static PhongBlinn floorPhongBlinn = new PhongBlinn( 0f, .45f, .35f, 128f );
 
 
 		private float _ka; // not going to implement since ambient will be shaved later
@@ -51,34 +51,36 @@ namespace RayTracer_App.Illumination_Models
 			Vector mirrorReflect, Vector cameraRay, LightSource light, SceneObject litObj ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
 		{
 
-			// kd * (litObj.illuminate() * light.color * (incoming.dotProduct( Normal) ) + 
-			Vector incomingVec = -incoming.direction;
-			Color diffuseTerm = litObj.diffuse * light.lightColor;
-			diffuseTerm = diffuseTerm.scale( this.kd * incomingVec.dotProduct( normal ) ); //changed to be negative - 2/27
+			//// kd * (litObj.illuminate() * light.color * (incoming.dotProduct( Normal) ) + 
+			//Vector incomingVec = -incoming.direction;
+			//Color diffuseTerm = litObj.diffuse * light.lightColor;
+			//diffuseTerm = diffuseTerm.scale( this.kd * incomingVec.dotProduct( normal ) ); //changed to be negative - 2/27
 
-			// ks * (Color.specular * lights.color * (mirrorReflect.dotProduct( cameraRay)^ke) ;
-			Color specTerm = litObj.specular * light.lightColor;
-			float specReflDp = mirrorReflect.dotProduct( cameraRay );
-			float totalSpecRefl = specReflDp;
-			totalSpecRefl = (float) Math.Pow( specReflDp, ke ) ;
+			//// ks * (Color.specular * lights.color * (mirrorReflect.dotProduct( cameraRay)^ke) ;
+			//Color specTerm = litObj.specular * light.lightColor;
+			//float specReflDp = mirrorReflect.dotProduct( cameraRay );
+			//float totalSpecRefl = specReflDp;
+			//totalSpecRefl = (float) Math.Pow( specReflDp, ke ) ;
 
-			specTerm = specTerm.scale( this.ks * totalSpecRefl);
-			//( this.ks * litObj.specular * light.lightColor * mirrorReflect.dotProduct( cameraRay ) );
-			return diffuseTerm + specTerm;
+			//specTerm = specTerm.scale( this.ks * totalSpecRefl);
+			////( this.ks * litObj.specular * light.lightColor * mirrorReflect.dotProduct( cameraRay ) );
+			return Color.defaultBlack;
 		}
 
 		//precondiiton: the negative of the cameraRay gets passed so it is going TO the viewer's eye, not from
 		//TODO IMPLEMENT ILLUMINATE... this returns an irradiance triplet, which will be converted by the camera via TR to a color.
-		public override Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
+		public override Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, float shadowBias = 1e-4f ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
 		{
 
 			Color lightIrradiance = Color.defaultBlack;
 
 				foreach( LightSource light in lights ) //TODO - 2/20
 				{
-					//get normal vectors dependent on type of object. spawn shadow ray
-					LightRay shadowRay = new LightRay( light.position - intersect, intersect );
-					float shadowW = World.World.checkRayIntersection( shadowRay, allObjs, litObj );
+				//get normal vectors dependent on type of object. spawn shadow ray with slight shadow bias to get it above the surface of the object
+					Vector shadowDisplacement = litObj.normal.scale( shadowBias );
+					Point displacedOrigin = intersect + shadowDisplacement;
+					LightRay shadowRay = new LightRay( light.position - displacedOrigin, displacedOrigin );
+					float shadowW = World.World.checkRayIntersection( shadowRay, allObjs );
 			
 					if (shadowW != float.MaxValue) //the shadowRay gets blocked by an object on way to light
 						continue;
@@ -86,15 +88,16 @@ namespace RayTracer_App.Illumination_Models
 					// kd * (litObj.illuminate() * light.color * (shadowRay.dotProduct( Normal) ) + 
 					Vector shadowRayVec = -shadowRay.direction;
 					
-				//use halfway vector in lieu of the normal
-					Vector halfWay = cameraRay + -shadowRay.direction;
+					//use halfway vector in lieu of the normal
+					// H = L + V
+					Vector halfWay = cameraRay + -shadowRayVec; //these need to go TO the intersection point and bounce to the viewer
 
 					Color diffuseTerm = litObj.diffuse * light.lightColor;
 					diffuseTerm = diffuseTerm.scale( this.kd * shadowRayVec.dotProduct( litObj.normal ) ); //changed to be negative - 2/27
 
-					// ks * (Color.specular * lights.color * (mirrorReflect.dotProduct( cameraRay)^ke) ;
+					// ks * (Color.specular * lights.color * (halfway.dotProduct(obj.Normal)^ke) ;
 					Color specTerm = litObj.specular * light.lightColor;
-					float specReflDp = halfWay.dotProduct( cameraRay );
+					float specReflDp = halfWay.dotProduct( litObj.normal );
 					float totalSpecRefl = specReflDp;
 					totalSpecRefl = (float)Math.Pow( specReflDp, ke );
 

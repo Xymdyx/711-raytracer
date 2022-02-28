@@ -39,7 +39,8 @@ public class RayTracerMain
 		//ccw manner.... positive is up, down is negative
 
 		List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f ), }; //ccw from point that forms the right angle
-		List<Point> triVerts2 = new List<Point> {  new Point( 70.5f, floorHeight, 6.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f )}; //ccw manner.... positive is up, down is negative
+		List<Point> triVerts2 = new List<Point> { new Point( 1.5f, floorHeight, 2.0f ), new Point( 70.5f, floorHeight, 6.0f ), new Point( -6f, floorHeight, 60.5f ) }; //ccw manner.... positive is up, down is negative
+	   //List<Point> triVerts2 = new List<Point> {  new Point( 70.5f, floorHeight, 6.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f )}; //ccw manner.... positive is up, down is negative
 
 		Polygon triangle1 = new Polygon( triVerts1 );
 		Polygon triangle2 = new Polygon( triVerts2 );
@@ -49,7 +50,9 @@ public class RayTracerMain
 		sphere2.translate(  1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform
 
 		//cp3... place mainLight source above the spheres
-		Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // 1.5f, -1f, -5.0f
+		// 1.5f, -1f, -5.0f
+		//.85f, -30.85f, s1Depth - 5.5f , in front and way high
+		Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // the z was originally s1Depth + .75
 		Color mainLightColor = Color.whiteSpecular;
 		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );
 
