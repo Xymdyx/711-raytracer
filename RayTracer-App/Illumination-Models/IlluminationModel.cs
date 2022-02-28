@@ -10,5 +10,7 @@ namespace RayTracer_App.Illumination_Models
 
 		public abstract Color illuminate( Point intersect, Vector normal, LightRay incoming,
 			Vector mirrorReflect, Vector cameraRay, LightSource light, SceneObject litObj );
+		public abstract Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj );
+
 	}
 }

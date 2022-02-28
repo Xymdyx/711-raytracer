@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Numerics;
+using RayTracer_App.Illumination_Models;
+
 
 //MATRIX 4D -> MATRIX4X4
 
@@ -29,6 +31,8 @@ namespace RayTracer_App.Scene_Objects
 			this._normal = null;
 			this._diffuse = Color.sphereColor;
 			this._specular = Color.whiteSpecular;
+			this._lightModel = PhongBlinn.regularPhongBlinn;
+
 		}
 
 		public Sphere( Point center, float radius, Color diffuse, Color specular )

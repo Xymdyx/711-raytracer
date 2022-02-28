@@ -3,20 +3,19 @@ using RayTracer_App.World;
 using RayTracer_App.Scene_Objects;
 using System.Collections.Generic;
 
-
 namespace RayTracer_App.Illumination_Models
 {
-	public class Phong : IlluminationModel
+	public class PhongBlinn : IlluminationModel
 	{
 		// L = (ka*Co*La) + (kd * Sum..i=light( Li*Co (Si.dot(N) )) + (ks (Sum..i=light( Li*Cs (Ri.dot(V)^ke)
 		// Co = objectColor, Li = LightRadiance(RGB), Cs = specular color
 		// Vecs: N = normal, R = reflectionDir, S = dir of incoming light, V = incoming ray from cam
 		// kd + ks < 1.. they range from 0 - 1 each
 
-		//static constants for Phong
+		//static constants for PhongBlinn
 		//best 0f, .55f, .05f, 20f 
-		public static Phong regularPhong = new Phong( 0f, .55f, .25f, 10f );
-		public static Phong floorPhong = new Phong( 0f, .75f, .05f, 128f );
+		public static PhongBlinn regularPhongBlinn = new PhongBlinn ( 0f, .55f, .25f, 10f );
+		public static PhongBlinn floorPhongBlinn = new PhongBlinn( 0f, .75f, .05f, 128f );
 
 
 		private float _ka; // not going to implement since ambient will be shaved later
@@ -29,7 +28,7 @@ namespace RayTracer_App.Illumination_Models
 		public float ks { get => this._ks; set => this._ks = value; }
 		public float ke { get => this._ke; set => this._ke = value; }
 
-		public Phong()
+		public PhongBlinn()
 		{
 			this.ka = 0f;
 			this.kd = .65f;
@@ -37,7 +36,7 @@ namespace RayTracer_App.Illumination_Models
 			this.ke = 1f;
 		}
 
-		public Phong( float ka, float kd, float ks, float ke ) 
+		public PhongBlinn( float ka, float kd, float ks, float ke ) 
 		{
 			this.ka = ka;
 			this.kd = kd;
@@ -84,17 +83,18 @@ namespace RayTracer_App.Illumination_Models
 					if (shadowW != float.MaxValue) //the shadowRay gets blocked by an object on way to light
 						continue;
 
-					// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
-					Vector reflect = Vector.reflect( intersect - light.position, litObj.normal );
-
 					// kd * (litObj.illuminate() * light.color * (shadowRay.dotProduct( Normal) ) + 
 					Vector shadowRayVec = -shadowRay.direction;
+					
+				//use halfway vector in lieu of the normal
+					Vector halfWay = cameraRay + -shadowRay.direction;
+
 					Color diffuseTerm = litObj.diffuse * light.lightColor;
 					diffuseTerm = diffuseTerm.scale( this.kd * shadowRayVec.dotProduct( litObj.normal ) ); //changed to be negative - 2/27
 
 					// ks * (Color.specular * lights.color * (mirrorReflect.dotProduct( cameraRay)^ke) ;
 					Color specTerm = litObj.specular * light.lightColor;
-					float specReflDp = reflect.dotProduct( cameraRay );
+					float specReflDp = halfWay.dotProduct( cameraRay );
 					float totalSpecRefl = specReflDp;
 					totalSpecRefl = (float)Math.Pow( specReflDp, ke );
 

@@ -68,11 +68,11 @@ namespace RayTracer_App.World
 		}
 
 		//helper for checking if a ray intersects with an object in the scene.
-		public float checkRayIntersection( LightRay ray, SceneObject originObject )
+		public static float checkRayIntersection( LightRay ray, List<SceneObject> allObjects ,SceneObject originObject )
 		{
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
-			foreach (SceneObject obj in objects)
+			foreach (SceneObject obj in allObjects)
 			{
 				if (obj == originObject) continue; //obviously this ray will intersect where it originated from so ignore the origin object
 
@@ -108,10 +108,9 @@ namespace RayTracer_App.World
 					bestW = currW;
 					currColor = null; //reset the color since we know we're overwriting it
 
-					//TODO... 1. double check getRayPoint -- done
-					// 2. Double check color, point, and new vector ops
-					//3. Rethink TR?
-
+					//TODO... 					
+					// 3. look into supersampling
+					// 4. If time permits, try to implement the Askkin model
 
 					// get info for shadow ray...CP3
 					Sphere s = obj as Sphere;
@@ -119,29 +118,38 @@ namespace RayTracer_App.World
 					if (s != null) intersection = s.getRayPoint( ray, currW );
 					else if (t != null) intersection = t.getRayPoint( ray, currW );
 
-					lightRadiance = Color.defaultBlack;
-					foreach( LightSource light in this.lights ) //TODO - 2/20
-					{
-						//get normal vectors dependent on type of object. spawn shadow ray
-						LightRay shadowRay = new LightRay( light.position - intersection, intersection );
-						float shadowW = checkRayIntersection( shadowRay, obj );
-						if (shadowW == float.MaxValue) //the shadowRay makes it to light source unobstructed.
-						{
-							// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
-							Vector reflect = Vector.reflect( intersection - light.position, obj.normal ); // added normal field to sceneObject, may cause bugs
-							IlluminationModel objLightModel = obj.lightModel;
-							lightRadiance += objLightModel.illuminate( intersection, obj.normal, shadowRay, reflect, -ray.direction, light, obj );
-						}
-						//update the currentColor
-						if (currColor == null)
-							currColor = lightRadiance;
-						else
-							currColor += lightRadiance;
-					}
-
+					IlluminationModel objLightModel = obj.lightModel;
+					currColor = objLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, obj ); //return to irradiance for TR
 				} 
 			}
 			return currColor;
 		}
 	}
+
+	/*For illuminate when main logic was done in spawnRay
+	 * 
+	//1. migrate all of this logic to the Phong illuminate method
+	//lightRadiance = Color.defaultBlack;
+	//foreach( LightSource light in this.lights ) //TODO - 2/20
+	//{
+	//	//get normal vectors dependent on type of object. spawn shadow ray
+	//	LightRay shadowRay = new LightRay( light.position - intersection, intersection );
+	//	float shadowW = checkRayIntersection( shadowRay, this.objects, obj );
+	//	if (shadowW == float.MaxValue) //the shadowRay makes it to light source unobstructed.
+	//	{
+	//		// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
+	//		Vector reflect = Vector.reflect( intersection - light.position, obj.normal ); // added normal field to sceneObject, may cause bugs
+	//		Vector halfWay = -ray.direction + -shadowRay.direction;
+	//		IlluminationModel objLightModel = obj.lightModel;
+	//		//objLightModel.illuminate( intersection, obj.normal, shadowRay, reflect, -ray.direction, light, obj ); Phong
+	//		//Phong blinn- replace reflection with halfway
+	//		lightRadiance += objLightModel.illuminate( intersection, obj.normal, shadowRay, reflect, -ray.direction, light, obj );
+	//	}
+	//	//update the currentColor
+	//	if (currColor == null)
+	//		currColor = lightRadiance;
+	//	else
+	//		currColor += lightRadiance;
+	//}
+*/
 }
