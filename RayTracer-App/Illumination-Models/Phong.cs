@@ -15,7 +15,7 @@ namespace RayTracer_App.Illumination_Models
 
 		//static constants for Phong
 		//best 0f, .55f, .05f, 20f 
-		public static Phong regularPhong = new Phong( 0f, .65f, .25f, 100f );
+		public static Phong regularPhong = new Phong( 0f, .65f, .25f, 12f );
 		public static Phong floorPhong = new Phong( 0f, .45f, .35f, 128f );
 
 		private float _ka; // not going to implement since ambient will be shaved later
@@ -88,16 +88,18 @@ namespace RayTracer_App.Illumination_Models
 
 				// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
 				// kd * (litObj.illuminate() * light.color * (shadowRay.dotProduct( Normal) ) + 
-					Vector shadowRayVec = -shadowRay.direction;
+					Vector shadowRayVec = shadowRay.direction;
 					Vector reflect = Vector.reflect( shadowRayVec, litObj.normal );
-					Color diffuseTerm = litObj.diffuse * light.lightColor;
-					diffuseTerm = diffuseTerm.scale( this.kd * shadowRayVec.dotProduct( litObj.normal ) ); //changed to be negative - 2/27
 
-					// ks * (Color.specular * lights.color * (mirrorReflect.dotProduct( cameraRay)^ke) ;
+					Color diffuseTerm = litObj.diffuse * light.lightColor;
+					float diffuseDP = (float) Math.Max( shadowRayVec.dotProduct( litObj.normal ), 0.0 ); //account for negative cosine
+					diffuseTerm = diffuseTerm.scale( this.kd * diffuseDP );
+				
+				// ks * (Color.specular * lights.color * (mirrorReflect.dotProduct( cameraRay)^ke) ;
 					Color specTerm = litObj.specular * light.lightColor;
-					float specReflDp = reflect.dotProduct( cameraRay );
+					float specReflDp = (float) Math.Max( reflect.dotProduct( cameraRay ), 0.0 );
 					float totalSpecRefl = specReflDp;
-					totalSpecRefl = (float)Math.Pow( specReflDp, ke );
+					totalSpecRefl = (float) Math.Pow( specReflDp, ke );
 
 					specTerm = specTerm.scale( this.ks * totalSpecRefl );
 					//( this.ks * litObj.specular * light.lightColor * mirrorReflect.dotProduct( cameraRay ) );

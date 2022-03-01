@@ -14,7 +14,7 @@ namespace RayTracer_App.Illumination_Models
 
 		//static constants for PhongBlinn
 		//best 0f, .55f, .05f, 20f 
-		public static PhongBlinn regularPhongBlinn = new PhongBlinn ( 0f, .65f, .25f, 100f );
+		public static PhongBlinn regularPhongBlinn = new PhongBlinn ( 0f, .65f, .25f, 12f );
 		public static PhongBlinn floorPhongBlinn = new PhongBlinn( 0f, .45f, .35f, 128f );
 
 
@@ -69,7 +69,7 @@ namespace RayTracer_App.Illumination_Models
 
 		//precondiiton: the negative of the cameraRay gets passed so it is going TO the viewer's eye, not from
 		//TODO IMPLEMENT ILLUMINATE... this returns an irradiance triplet, which will be converted by the camera via TR to a color.
-		public override Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, float shadowBias = 1e-4f ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
+		public override Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, float shadowBias = 1e-6f ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
 		{
 
 			Color lightIrradiance = Color.defaultBlack;
@@ -86,20 +86,21 @@ namespace RayTracer_App.Illumination_Models
 						continue;
 
 					// kd * (litObj.illuminate() * light.color * (shadowRay.dotProduct( Normal) ) + 
-					Vector shadowRayVec = -shadowRay.direction;
-					
+					Vector shadowRayVec = shadowRay.direction;
+
 					//use halfway vector in lieu of the normal
 					// H = L + V
-					Vector halfWay = cameraRay + -shadowRayVec; //these need to go TO the intersection point and bounce to the viewer
+					Vector halfWay = cameraRay + shadowRayVec; //these need to go TO the intersection point and bounce to the viewer...according to wikipedia
 
 					Color diffuseTerm = litObj.diffuse * light.lightColor;
-					diffuseTerm = diffuseTerm.scale( this.kd * shadowRayVec.dotProduct( litObj.normal ) ); //changed to be negative - 2/27
+					float diffuseDP = (float) Math.Max( shadowRayVec.dotProduct( litObj.normal ), 0.0 ); //account for negative cosine
+					diffuseTerm = diffuseTerm.scale( this.kd * diffuseDP ); //changed to be negative - 2/27
 
 					// ks * (Color.specular * lights.color * (halfway.dotProduct(obj.Normal)^ke) ;
 					Color specTerm = litObj.specular * light.lightColor;
-					float specReflDp = halfWay.dotProduct( litObj.normal );
+					float specReflDp = (float) Math.Max( halfWay.dotProduct( litObj.normal ), 0.0 );
 					float totalSpecRefl = specReflDp;
-					totalSpecRefl = (float)Math.Pow( specReflDp, ke );
+					totalSpecRefl = (float )Math.Pow( specReflDp, ke );
 
 					specTerm = specTerm.scale( this.ks * totalSpecRefl );
 					//( this.ks * litObj.specular * light.lightColor * mirrorReflect.dotProduct( cameraRay ) );

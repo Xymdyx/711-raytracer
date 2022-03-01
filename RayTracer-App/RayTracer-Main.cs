@@ -68,7 +68,7 @@ public class RayTracerMain
 		imageHeight = imageWidth;
 
 		Vector up = new Vector( 0f, 1f, 0f );
-		Point eyePos = new Point( 0f, -1f, -5f); //0f, -1f, -5f
+		Point eyePos = new Point( 0f, -1f, -5f ); //0f, -1f, -5f
 		Point lookAt = new Point( .5f, .5f, s1Depth + 1f ); 
 		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
 
