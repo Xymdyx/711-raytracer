@@ -1,5 +1,6 @@
 ﻿using RayTracer_App.Illumination_Models;
 using System.Numerics;
+using RayTracer_App.
 
 
 //MATRIX 4D -> MATRIX4X4
@@ -13,6 +14,7 @@ namespace RayTracer_App.Scene_Objects
 		protected IlluminationModel _lightModel;
 		protected Color _diffuse;
 		protected Color _specular;
+		protected Voxel _boundingBox; //advanced checkpoint1... kd-tree
 
 		//properties 
 		public string material {get => this._material; set => this._material = value; }
@@ -20,6 +22,7 @@ namespace RayTracer_App.Scene_Objects
 		public IlluminationModel lightModel { get => this._lightModel; set => this._lightModel = value; }
 		public Color diffuse { get => this._diffuse; set => this._diffuse = value; }
 		public Color specular { get => this._specular; set => this._specular = value; }
+		public Voxel boundingBox { get => this._boundingBox; set => this._boundingBox = value; }
 
 
 

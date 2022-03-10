@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using RayTracer_App.Voxels;
 
 namespace RayTracer_App.Kd_tree
 {
@@ -22,6 +23,35 @@ namespace RayTracer_App.Kd_tree
 			this._root = root;
 		}
 
+		//methods
+
+		//traverse tree using TA-B algo specified in 6-2 slides
+		public KdLeafNode traverse( Point entry, Point exit, float splitOffset )
+		{
+			return null;
+		}
+
+		public bool terminal( Scene_Objects.SceneObject objects, Voxel vox, int recDepth )
+		{
+			return true;
+		}
+
+		//get node... starts as //getNode( allObjects, sceneBoundingBox)
+		public KdNode getNode( Scene_Objects.SceneObject objects, Voxel vox )
+		{
+			/*
+			 * if (Terminal (L, V)) return new leaf node (L)
+			Find partition plane P
+			Split V with P producing VFRONTand VREAR
+			Partition elements of L producing LFRONTand LREAR
+			return new interior node (P, getNode(LFRONT, VFRONT),
+			getNode(LREAR, VREAR))
+			*/
+
+			return new KdInteriorNode();
+		}
+
+		//methods for splitting the tree
 		public float doRoundRobin()
 		{
 			return 0.0f;
