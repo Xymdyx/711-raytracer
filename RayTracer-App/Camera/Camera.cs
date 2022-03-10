@@ -92,10 +92,10 @@ namespace RayTracer_App.Camera
 			Color averageHitColor = null;
 			Color[] hitColors = new Color[4]; //for super-sampling
 			Point[] hitPoints = new Point[4] {
-				new Point( centerPoint.x - pixWidth / 2, centerPoint.y + pixHeight / 2, centerPoint.z), //top-left
-				new Point( centerPoint.x + pixWidth / 2, centerPoint.y + pixHeight / 2, centerPoint.z ), //top-right
-				new Point( centerPoint.x - pixWidth / 2, centerPoint.y - pixHeight / 2, centerPoint.z ), //bottom-left
-				new Point( centerPoint.x + pixWidth /2, centerPoint.y - pixHeight / 2, centerPoint.z ), //bottom-right
+				new Point( centerPoint.x - pixWidth / 2f, centerPoint.y + pixHeight / 2f, centerPoint.z), //top-left
+				new Point( centerPoint.x + pixWidth / 2f, centerPoint.y + pixHeight / 2f, centerPoint.z ), //top-right
+				new Point( centerPoint.x - pixWidth / 2f, centerPoint.y - pixHeight / 2f, centerPoint.z ), //bottom-left
+				new Point( centerPoint.x + pixWidth /2f, centerPoint.y - pixHeight / 2f, centerPoint.z ), //bottom-right
 			};
 			
 			for( int hitIdx = 0; hitIdx < 4; hitIdx ++ )
@@ -170,7 +170,7 @@ namespace RayTracer_App.Camera
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;
 			byte[] hitColorArr = null;
-			bool isSuperSampling = false;
+			bool isSuperSampling = true;
 
 
 			int hits = 0;

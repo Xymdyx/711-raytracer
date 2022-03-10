@@ -13,10 +13,13 @@ namespace RayTracer_App.World
 	{
 		private List<SceneObject> _objects;
 		private List<LightSource> _lights;
+		private Kd_tree.KdTree _kdTree;
 
 		//private int[] attributes;
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
 		public List<LightSource> lights { get => this._lights ; set => this._lights = value; } // checkpoint 3
+
+		public Kd_tree.KdTree kdTree { get => this._kdTree; set => this._kdTree = value;  } // advanced checkpoint 1
 
 
 		//default CONSTRUCTOR
