@@ -79,6 +79,8 @@ namespace RayTracer_App.Scene_Objects
 
 				if ((denom >= -kEpsilon && denom <= kEpsilon) || denom == float.NaN) return float.MaxValue;  // ray is parallel to triangle
 
+				// TODO... CP4... store u and v values somewhere...
+
 				float denomScale = 1f / denom;
 
 				Vector T = ray.origin.ptSub( vertices[0] ); // T = rayDirection - v0
