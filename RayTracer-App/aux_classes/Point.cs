@@ -10,6 +10,9 @@ using System.Numerics;
 //double -> float and Matrix4d -> System.Numerics Matrix4x4
 public class Point
 {
+    // CONSTANTS
+    public static Point floorOrigin = new Point( -6f, 1.25f, 60.5f ); // floor origin for cp4
+
     private float _x;
     private float _y;
     private float _z;
@@ -42,6 +45,8 @@ public class Point
     public static Point operator -( Point p1, Vector v1 ) => new Point( p1.x - v1.v1, p1.y - v1.v2, p1.z - v1.v3 );
 
     public static Vector operator -( Point p1, Point p2 ) => new Vector( p1.x - p2.x, p1.y - p2.y, p1.z - p2.z );
+
+    public static Point operator *( Point p1, float k ) => new Point( p1.x * k, p1.y * k, p1.z * k );
 
 
 //METHODS

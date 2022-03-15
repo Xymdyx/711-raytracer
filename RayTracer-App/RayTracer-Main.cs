@@ -38,9 +38,9 @@ public class RayTracerMain
 		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
 		//ccw manner.... positive is up, down is negative
 
-		List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f ), }; //ccw from point that forms the right angle
-		List<Point> triVerts2 = new List<Point> { new Point( 1.5f, floorHeight, 2.0f ), new Point( 70.5f, floorHeight, 6.0f ), new Point( -6f, floorHeight, 60.5f ) }; //ccw manner.... positive is up, down is negative
-
+		List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 78.5f ), }; //ccw from point that forms the right angle
+		List<Point> triVerts2 = new List<Point> { new Point( 1.5f, floorHeight, 2.0f ), new Point( 70.5f, floorHeight, 6.0f ), new Point( -6f, floorHeight, 78.5f ) }; //ccw manner.... positive is up, down is negative
+		// biggest z = 60.5f +. 78.5f to get square floor
 		Polygon triangle1 = new Polygon( triVerts1 );
 		Polygon triangle2 = new Polygon( triVerts2 );
 
