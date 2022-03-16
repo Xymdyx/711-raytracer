@@ -17,9 +17,12 @@ public class Point
     private float _y;
     private float _z;
 
+    private Point _texCoord;
+
     public float x { get => this._x; set => this._x = value; }
     public float y { get => this._y; set => this._y = value; }
     public float z { get => this._z; set => this._z = value; }
+    public Point texCoord { get => this._texCoord; set => this._texCoord = value; }
 
     public static Point origin = new Point( 0, 0, 0 );
 //DEFAULT CONSTRUCTOR
@@ -28,6 +31,7 @@ public class Point
         this._x = 0;
         this._y = 0;
         this._z = 0;
+        this._texCoord = null; 
     }
 //FULL CONSTRUCTOR
     public Point( float x, float y, float z )
@@ -35,9 +39,10 @@ public class Point
         this._x = x;
         this._y = y;
         this._z = z;
+        this._texCoord = null;
     }
 
-//operator overloads + and -... All of these normalize, use methods for non-normalized
+    //operator overloads + and -... All of these normalize, use methods for non-normalized
     public static Point operator +( Point p1 ) => new Point( (p1.x), (p1.y), (p1.z) );
     public static Point operator -( Point p1 ) => new Point( -(p1.x), -(p1.y), -(p1.z) );
 
@@ -48,10 +53,37 @@ public class Point
 
     public static Point operator *( Point p1, float k ) => new Point( p1.x * k, p1.y * k, p1.z * k );
 
+    public static bool operator ==( Point lhs, Point rhs )
+	{
+        if (lhs is null)
+        {
+            if (rhs is null)
+            {
+                // null == null = true.
+                return true;
+            }
 
-//METHODS
+            // Only the left side is null.
+            return false;
+        }
+        // Equals handles the case of null on right side.
+        return lhs.Equals( rhs );
+    }
 
-//calculate distance
+    public static bool operator !=( Point lhs, Point rhs ) => !( lhs == rhs );
+
+    public override bool Equals( object obj )
+    {
+        if ((obj == null) || !(this.GetType().Equals( obj.GetType() )))
+            return false;
+
+        Point p = (Point)obj;
+        return ((p.x == this.x) && (p.y == this.y) && (p.z == this.z));
+    }
+
+    //METHODS
+
+    //calculate distance
     public float distance( Point p2)
     {
 
@@ -127,7 +159,8 @@ public class Point
         return new Vector( this.x - p2.x, this.y - p2.y, this.z - p2.z, false );
     }
 
-    /* Vector4 and Matrix4x4 test:
+
+	/* Vector4 and Matrix4x4 test:
  Vector4 test1 = new Vector4( 1, 1, 1, 1 );
 		Matrix4x4 mat1 = new Matrix4x4
 			( 1, 2, 3, 4,

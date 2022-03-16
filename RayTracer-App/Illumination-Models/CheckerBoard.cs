@@ -52,21 +52,30 @@ namespace RayTracer_App.Illumination_Models
 				coordinates (u, v, w) is given by:
 				T = uT0+ vT1+ wT2
 			 * transform algo: find row and col where intersect occurs, if row and col's parity match, it's red. else, yellow */
+
 			Point floorOrigin = Point.floorOrigin;
 			float u = litObj.u;
 			float v = litObj.v;
-			float floorX = 76.5f;
-			float floorZ = 76.5f;
-			float checkW = (float) (floorX / rows);
-			float checkH = (float) (floorZ / cols);
+			float floorX = 1f; // was 76.5f
+			float floorZ = 1f;
+			float checkW = (float) (floorX / rows); 
+			float checkH = (float) (floorZ / cols); 
 
 			float w = 1 - (u  + v);
+			//use vertices' assigned texture coords... this gives a much smaller result for the texture point
 
-			Vector textVec = (litObj.vertices[0] * u).toVec() + (litObj.vertices[1] * v).toVec() + (litObj.vertices[2] * w).toVec();
-			textVec.v2 = litObj.vertices[0].y; //return y back to normal...
+
+			Vector texVec1 = (litObj.vertices[0].texCoord * u).toVec();
+			Vector texVec2 = (litObj.vertices[1].texCoord * v).toVec();
+			Vector texVec3 = (litObj.vertices[2].texCoord * w).toVec();
+
+
+			Vector textVec = texVec1.addVec( texVec2 );
+			textVec = textVec.addVec( texVec3 );
 			int rowNum = (int) (textVec.v1 / checkW);
 			int colNum = (int) (textVec.v3 / checkH); 
 
+			//transform func
 			if ( (rowNum % 2) == (colNum % 2) )
 				return this.color2;
 

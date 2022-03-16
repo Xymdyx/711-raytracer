@@ -1,6 +1,5 @@
 ﻿using System;
 using OpenGLDotNet;
-using OpenGLDotNet; // for draw pixels
 using System.Runtime.InteropServices; //for GCHandle
 using RayTracer_App.World;
 using RayTracer_App.Camera;
@@ -21,6 +20,7 @@ public class RayTracerMain
 	static float[] rat = new float[4];
 
 	//OPENGL DRAW CCW order matters. We are in LHS system. +y is down. +x is right. +z into screen. Row major. Postmultiply.
+	//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
 	public static void doRayTracing() 
 	{
 		//initialize objects
@@ -34,13 +34,23 @@ public class RayTracerMain
 		float floorDept = 3.0f;
 		float floorHeight = 5.5f;
 
-		//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
 		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
-		//ccw manner.... positive is up, down is negative
+		Point topLeft = new Point( -6f, floorHeight, 78.5f ); // texCoord : [0,0]
+		Point topRight = new Point( 70.5f, floorHeight, 6.0f ); // texCoord : [1,0]
+		Point bottomLeft = new Point( -6f, floorHeight, 2.0f ); //texCoord: [0,1]
+		Point bottomRight = new Point( 1.5f, floorHeight, 2.0f ); // texCoord: [1,1]
 
-		List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 78.5f ), }; //ccw from point that forms the right angle
-		List<Point> triVerts2 = new List<Point> { new Point( 1.5f, floorHeight, 2.0f ), new Point( 70.5f, floorHeight, 6.0f ), new Point( -6f, floorHeight, 78.5f ) }; //ccw manner.... positive is up, down is negative
-		// biggest z = 60.5f +. 78.5f to get square floor
+		topLeft.texCoord = new Point( 0, 0, 0 );
+		topRight.texCoord = new Point( 1, 0, 0 );
+		bottomLeft.texCoord = new Point( 0, 0, 1 );
+		bottomRight.texCoord = new Point( 1, 0, 1 );
+
+		//List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 78.5f ) }; 
+		//List<Point> triVerts2 = new List<Point> { new Point( 1.5f, floorHeight, 2.0f ), new Point( 70.5f, floorHeight, 6.0f ), new Point( -6f, floorHeight, 78.5f ) }; 
+
+		List<Point> triVerts1 = new List<Point> { topLeft, bottomLeft, bottomRight }; //... bottomLeft, bottomRight, topLeft 
+		List<Point> triVerts2 = new List<Point> { bottomRight, topRight, topLeft}; // { bottomRight, topRight, topLeft }
+
 		Polygon triangle1 = new Polygon( triVerts1 );
 		Polygon triangle2 = new Polygon( triVerts2 );
 
@@ -123,7 +133,7 @@ public class RayTracerMain
 		FG.InitDisplayMode( GLUT.GLUT_RGB | GLUT.GLUT_SINGLE | GLUT.GLUT_DEPTH );
 		FG.InitWindowSize( imageWidth, imageHeight );
 		FG.InitWindowPosition( 0, 0 );
-		FG.CreateWindow( "RayTracing CheckPoint 3" );
+		FG.CreateWindow( "RayTracing CheckPoint 4" );
 		GL.Init( true );            //I forgot to call this...
 
 		//fixed pixels being at a higher depth being in front of those with lower depth

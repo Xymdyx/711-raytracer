@@ -35,7 +35,7 @@ namespace RayTracer_App.Scene_Objects
 			this._normal = null; //TODO calculate normal
 			this._diffuse = Color.floorColor;
 			this._specular = Color.whiteSpecular;
-			this._lightModel = PhongBlinn.floorPhongBlinn; //change this to change lighting
+			this._lightModel = Phong.floorPhong; //change this to change lighting
 
 		}
 
