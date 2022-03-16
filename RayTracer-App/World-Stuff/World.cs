@@ -13,10 +13,12 @@ namespace RayTracer_App.World
 	{
 		private List<SceneObject> _objects;
 		private List<LightSource> _lights;
+		private CheckerBoardPattern _checkerboard;
 
 		//private int[] attributes;
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
 		public List<LightSource> lights { get => this._lights ; set => this._lights = value; } // checkpoint 3
+		public CheckerBoardPattern checkerboard { get => this._checkerboard; set => this._checkerboard = value; }
 
 
 		//default CONSTRUCTOR
@@ -24,6 +26,7 @@ namespace RayTracer_App.World
 		{
 			this._objects = new List<SceneObject>();
 			this._lights = new List<LightSource>();
+			this._checkerboard = new CheckerBoardPattern();
 		}
 
 		//parameter CONSTRUCTOR
@@ -31,6 +34,7 @@ namespace RayTracer_App.World
 		{
 			this._objects = objects;
 			this._lights = lights;
+			this._checkerboard = new CheckerBoardPattern();
 		}
 
 
@@ -107,48 +111,22 @@ namespace RayTracer_App.World
 					bestW = currW;
 					currColor = null; //reset the color since we know we're overwriting it
 
-					//TODO... 					
-					// 3. look into supersampling
-					// 4. If time permits, try to implement the Askkin model
-
-					// get info for shadow ray...CP3
 					Sphere s = obj as Sphere;
 					Polygon t = obj as Polygon;
 					if (s != null) intersection = s.getRayPoint( ray, currW );
 					else if (t != null) intersection = t.getRayPoint( ray, currW );
 
 					IlluminationModel objLightModel = obj.lightModel;
+
+					if (t != null) // determine triangle point color
+						obj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
+
 					currColor = objLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, obj ); //return to irradiance for TR
-				} 
+
+
+				}
 			}
 			return currColor;
 		}
 	}
-
-	/*For illuminate when main logic was done in spawnRay
-	 * 
-	//1. migrate all of this logic to the Phong illuminate method
-	//lightRadiance = Color.defaultBlack;
-	//foreach( LightSource light in this.lights ) //TODO - 2/20
-	//{
-	//	//get normal vectors dependent on type of object. spawn shadow ray
-	//	LightRay shadowRay = new LightRay( light.position - intersection, intersection );
-	//	float shadowW = checkRayIntersection( shadowRay, this.objects, obj );
-	//	if (shadowW == float.MaxValue) //the shadowRay makes it to light source unobstructed.
-	//	{
-	//		// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
-	//		Vector reflect = Vector.reflect( intersection - light.position, obj.normal ); // added normal field to sceneObject, may cause bugs
-	//		Vector halfWay = -ray.direction + -shadowRay.direction;
-	//		IlluminationModel objLightModel = obj.lightModel;
-	//		//objLightModel.illuminate( intersection, obj.normal, shadowRay, reflect, -ray.direction, light, obj ); Phong
-	//		//Phong blinn- replace reflection with halfway
-	//		lightRadiance += objLightModel.illuminate( intersection, obj.normal, shadowRay, reflect, -ray.direction, light, obj );
-	//	}
-	//	//update the currentColor
-	//	if (currColor == null)
-	//		currColor = lightRadiance;
-	//	else
-	//		currColor += lightRadiance;
-	//}
-*/
 }

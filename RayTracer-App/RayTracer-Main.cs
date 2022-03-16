@@ -1,6 +1,5 @@
 ﻿using System;
 using OpenGLDotNet;
-using OpenGLDotNet; // for draw pixels
 using System.Runtime.InteropServices; //for GCHandle
 using RayTracer_App.World;
 using RayTracer_App.Camera;
@@ -21,6 +20,7 @@ public class RayTracerMain
 	static float[] rat = new float[4];
 
 	//OPENGL DRAW CCW order matters. We are in LHS system. +y is down. +x is right. +z into screen. Row major. Postmultiply.
+	//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
 	public static void doRayTracing() 
 	{
 		//initialize objects
@@ -31,35 +31,48 @@ public class RayTracerMain
 		float s2Depth = s1Depth + 1.85f;
 		float sphereRad = 1.5f;
 
-		float floorDept = 3.0f;
 		float floorHeight = 5.5f;
 
-		//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
 		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
-		//ccw manner.... positive is up, down is negative
+		Point topLeft = new Point( -6f, floorHeight, 68.5f ); // -6f, floorHeight, 78.5f 
+		Point topRight = new Point( 30f, floorHeight, 68.5f ); // 70.5f, floorHeight, 6.0f 
+		Point topRight2 = new Point( 30f, floorHeight, 68.5f ); // 70.5f, floorHeight, 6.0f 
+		Point bottomLeft = new Point( -6f, floorHeight, 2.0f ); //-6f, floorHeight, 2.0f 
+		Point bottomLeft2 = new Point( -6f, floorHeight, 2.0f ); //-6f, floorHeight, 2.0f 
+		Point bottomRight = new Point( 30f, floorHeight, 2.0f ); // 1.5f, floorHeight, 2.0f 
 
-		List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f ), }; //ccw from point that forms the right angle
-		List<Point> triVerts2 = new List<Point> { new Point( 1.5f, floorHeight, 2.0f ), new Point( 70.5f, floorHeight, 6.0f ), new Point( -6f, floorHeight, 60.5f ) }; //ccw manner.... positive is up, down is negative
-	   //List<Point> triVerts2 = new List<Point> {  new Point( 70.5f, floorHeight, 6.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 60.5f )}; //ccw manner.... positive is up, down is negative
+		topLeft.texCoord = new Point( 0, 0, 0 );
+		topRight.texCoord = new Point( 1, 0, 0 );
+		topRight2.texCoord = new Point( 1, 0, 0 );
+		bottomLeft.texCoord = new Point( 0, 0, 1 );
+		bottomLeft2.texCoord = new Point( 0, 0, 1 );
+		bottomRight.texCoord = new Point( 1, 0, 1 );
+
+		//List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 78.5f ) }; 
+		//List<Point> triVerts2 = new List<Point> { new Point( 1.5f, floorHeight, 2.0f ), new Point( 70.5f, floorHeight, 6.0f ), new Point( -6f, floorHeight, 78.5f ) }; 
+
+		List<Point> triVerts1 = new List<Point> { topLeft, bottomLeft, topRight }; //... bottomLeft, bottomRight, topLeft 
+		List<Point> triVerts2 = new List<Point> { bottomRight, topRight2, bottomLeft2 }; // { bottomRight, topRight, topLeft }
 
 		Polygon triangle1 = new Polygon( triVerts1 );
 		Polygon triangle2 = new Polygon( triVerts2 );
+		triangle1.translate( -5f, 0, 0 );
+		triangle2.translate( -5f, 0, 0 );
 
 		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth) , sphereRad );
 		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad ); //setting the point elsewhere gives translating whole sphere
 		sphere2.translate(  1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform
 
-		//cp3... place mainLight source above the spheres
-		// 1.5f, -1f, -5.0f
-		//.85f, -30.85f, s1Depth - 5.5f , in front and way high
+		//cp3... place mainLight source above the spheres 	// 1.5f, -1f, -5.0f //.85f, -30.85f, s1Depth - 5.5f , in front and way high
+
 		Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // the z was originally s1Depth + .75
 		Color mainLightColor = Color.whiteSpecular;
 		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );
 
 		World world = new World();
 		world.addLight( mainLight );
-		world.addObject( triangle1 );
 		world.addObject( triangle2 );
+		world.addObject( triangle1 );
 		world.addObject( sphere1 );
 		world.addObject( sphere2 );
 
@@ -124,7 +137,7 @@ public class RayTracerMain
 		FG.InitDisplayMode( GLUT.GLUT_RGB | GLUT.GLUT_SINGLE | GLUT.GLUT_DEPTH );
 		FG.InitWindowSize( imageWidth, imageHeight );
 		FG.InitWindowPosition( 0, 0 );
-		FG.CreateWindow( "RayTracing CheckPoint 3" );
+		FG.CreateWindow( "RayTracing CheckPoint 4" );
 		GL.Init( true );            //I forgot to call this...
 
 		//fixed pixels being at a higher depth being in front of those with lower depth

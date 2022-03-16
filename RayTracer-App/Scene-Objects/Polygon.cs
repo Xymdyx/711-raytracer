@@ -9,17 +9,23 @@ namespace RayTracer_App.Scene_Objects
 	public class Polygon : SceneObject
 	{
 		private List<Point> _vertices;
+		private float _u = 0.0f; //for cp4
+		private float _v = 0.0f; //for cp4
+
 
 		public List<Point> vertices { get => this._vertices; set => this._vertices = value; } 
+		public float u { get => this._u; set => this._u = value; }
+		public float v { get => this._v; set => this._v = value; }
 
-// default constructor for a plain triangle
+
+		// default constructor for a plain triangle
 		public Polygon()
 		{
 			this._vertices = new List<Point> { new Point( 1, 0, 0 ), new Point( 0, 1, 0 ), new Point( -1, 0, 0 ) };
 			this._normal = null;
 			this._diffuse = Color.floorColor;
 			this._specular = Color.whiteSpecular;
-			this._lightModel = Phong.regularPhong;
+			this._lightModel = PhongBlinn.regularPhongBlinn;
 		}
 
 // parameter constructor
@@ -79,6 +85,8 @@ namespace RayTracer_App.Scene_Objects
 
 				if ((denom >= -kEpsilon && denom <= kEpsilon) || denom == float.NaN) return float.MaxValue;  // ray is parallel to triangle
 
+				// TODO... CP4... store u and v values somewhere...
+
 				float denomScale = 1f / denom;
 
 				Vector T = ray.origin.ptSub( vertices[0] ); // T = rayDirection - v0
@@ -98,6 +106,8 @@ namespace RayTracer_App.Scene_Objects
 
 				this._normal = e1.crossProduct( e2, true ); //set the normal here while we have these
 
+				this.u = u;
+				this.v = v;
 				return w; //w is distance along ray of intersection point
 			}
 
@@ -122,7 +132,7 @@ namespace RayTracer_App.Scene_Objects
 			}
 		}
 
-		// scaling all three has no visible effect
+		// scaling all three 
 		public void scale( float x, float y, float z )
 		{
 			foreach(Point vertex in vertices)
