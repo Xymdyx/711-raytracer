@@ -13,12 +13,12 @@ namespace RayTracer_App.Illumination_Models
 	{
 		private Color _color1;
 		private Color _color2;
-
+		public static int DEFAULT_DIMS = 32;
 
 		public Color color1 { get => this._color1; set => this._color1 = value; }
 		public Color color2 { get => this._color2; set => this._color2 = value; }
 
-		public CheckerBoardPattern( )
+		public CheckerBoardPattern()
 		{
 			this._color1 = new Color( 0.950f, 0.936f, 0.114f ); //yellow
 			this._color2 = Color.floorColor;
@@ -38,15 +38,15 @@ namespace RayTracer_App.Illumination_Models
 		{
 			float u = litObj.u;
 			float v = litObj.v;
-			float floorX = 1f; // was 76.5f
+			float floorX = 1f; 
 			float floorZ = 1f;
 			float checkW = (float) (floorX / rows); 
 			float checkH = (float) (floorZ / cols); 
 
 			float w = 1 - (u  + v);
 
-			Point uCoord = new Point( 0, 0, 0 );
-			Point vCoord = new Point( 1, 0, 1 );
+			Point uCoord = new Point( 1, 0, 0 );
+			Point vCoord = new Point( 0, 0, 1 );
 			Point wCoord = null;
 
 			foreach (Point p in litObj.vertices)
@@ -57,23 +57,25 @@ namespace RayTracer_App.Illumination_Models
 					break;
 				}
 			}
-			//T = uT0 + vT1 + wT2
 
-			Vector texVec1 = (uCoord * u).toVec();
-			Vector texVec2 = (vCoord * v).toVec();
-			Vector texVec3 = (wCoord * w).toVec();
 
 			//Vector texVec1 = (litObj.vertices[0].texCoord * u).toVec();
 			//Vector texVec2 = (litObj.vertices[1].texCoord * v).toVec();
 			//Vector texVec3 = (litObj.vertices[2].texCoord * w).toVec();
 
-			/*transform algo: find row and col where intersect occurs, if row and col's parity match, it's red. else, yellow */
+			//T = uT0 + vT1 + wT2
+			Vector texVec1 = (uCoord * u).toVec();
+			Vector texVec2 = (vCoord * v).toVec();
+			Vector texVec3 = (wCoord * w).toVec();
+
 			Vector textVec = texVec1.addVec( texVec2 );
 			textVec = textVec.addVec( texVec3 );
 			int rowNum = (int) (textVec.v1 / checkW);
-			int colNum = (int) (textVec.v3 / checkH); 
+			int colNum = (int) (textVec.v3 / checkH);
 
 			//transform func
+			/*transform algo: find row and col where intersect occurs, if row and col's parity match, it's red. else, yellow */
+
 			if ( (rowNum % 2) == (colNum % 2) )
 				return this.color2;
 
