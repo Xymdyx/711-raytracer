@@ -13,47 +13,29 @@ namespace RayTracer_App.Illumination_Models
 	{
 		private Color _color1;
 		private Color _color2;
-		private int _rows;
-		private int _cols;
+
 
 		public Color color1 { get => this._color1; set => this._color1 = value; }
 		public Color color2 { get => this._color2; set => this._color2 = value; }
-		public int rows { get => this._rows; set => this._rows = value; }
-		public int cols { get => this._cols; set => this._cols = value; }
 
-
-		public CheckerBoardPattern( int rows = 5, int cols = 5)
+		public CheckerBoardPattern( )
 		{
 			this._color1 = new Color( 0.950f, 0.936f, 0.114f ); //yellow
 			this._color2 = Color.floorColor;
-			this._rows = rows;
-			this._cols = cols;
+
 		}
 
-		public CheckerBoardPattern( Color color1, Color color2, int rows = 5, int cols = 5)
+		public CheckerBoardPattern( Color color1, Color color2)
 		{
 			this._color1 = color1;
 			this._color2 = color2;
-			this._rows = rows;
-			this._cols = cols;
 		}
 
 
 		//precondiiton: the negative of the cameraRay gets passed so it is going TO the viewer's eye, not from
 		//this returns an irradiance triplet, which will be used by the Phong model
-		public Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, Polygon litObj ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
+		public Color illuminate( Polygon litObj, int rows = 3, int cols = 3 ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
 		{
-			/* implement checkerboard procedural texture */
-			/* origin of the floor is: -6f, floorHeight, 60.5f  
-			 * x : 76.5f
-			 * z: 58.5f 
-			 * need u and v from triangle.intersect()
-			 * The interpolation for a given set of barycentric
-				coordinates (u, v, w) is given by:
-				T = uT0+ vT1+ wT2
-			 * transform algo: find row and col where intersect occurs, if row and col's parity match, it's red. else, yellow */
-
-			Point floorOrigin = Point.floorOrigin;
 			float u = litObj.u;
 			float v = litObj.v;
 			float floorX = 1f; // was 76.5f
@@ -62,14 +44,30 @@ namespace RayTracer_App.Illumination_Models
 			float checkH = (float) (floorZ / cols); 
 
 			float w = 1 - (u  + v);
-			//use vertices' assigned texture coords... this gives a much smaller result for the texture point
 
+			Point uCoord = new Point( 0, 0, 0 );
+			Point vCoord = new Point( 1, 0, 1 );
+			Point wCoord = null;
 
-			Vector texVec1 = (litObj.vertices[0].texCoord * u).toVec();
-			Vector texVec2 = (litObj.vertices[1].texCoord * v).toVec();
-			Vector texVec3 = (litObj.vertices[2].texCoord * w).toVec();
+			foreach (Point p in litObj.vertices)
+			{
+				if (p.texCoord != uCoord && p.texCoord != vCoord)
+				{
+					wCoord = p.texCoord;
+					break;
+				}
+			}
+			//T = uT0 + vT1 + wT2
 
+			Vector texVec1 = (uCoord * u).toVec();
+			Vector texVec2 = (vCoord * v).toVec();
+			Vector texVec3 = (wCoord * w).toVec();
 
+			//Vector texVec1 = (litObj.vertices[0].texCoord * u).toVec();
+			//Vector texVec2 = (litObj.vertices[1].texCoord * v).toVec();
+			//Vector texVec3 = (litObj.vertices[2].texCoord * w).toVec();
+
+			/*transform algo: find row and col where intersect occurs, if row and col's parity match, it's red. else, yellow */
 			Vector textVec = texVec1.addVec( texVec2 );
 			textVec = textVec.addVec( texVec3 );
 			int rowNum = (int) (textVec.v1 / checkW);

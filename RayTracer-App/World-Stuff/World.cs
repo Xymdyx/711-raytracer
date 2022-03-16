@@ -119,7 +119,7 @@ namespace RayTracer_App.World
 					IlluminationModel objLightModel = obj.lightModel;
 
 					if (t != null) // determine triangle point color
-						obj.diffuse = this.checkerboard.illuminate( intersection, -ray.direction, this.lights, this.objects, t ); //return to irradiance for TR
+						obj.diffuse = this.checkerboard.illuminate( t, 10, 10 ); //return to irradiance for TR
 
 					currColor = objLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, obj ); //return to irradiance for TR
 

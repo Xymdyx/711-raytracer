@@ -31,25 +31,28 @@ public class RayTracerMain
 		float s2Depth = s1Depth + 1.85f;
 		float sphereRad = 1.5f;
 
-		float floorDept = 3.0f;
 		float floorHeight = 5.5f;
 
 		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
-		Point topLeft = new Point( -6f, floorHeight, 78.5f ); // texCoord : [0,0]
-		Point topRight = new Point( 70.5f, floorHeight, 6.0f ); // texCoord : [1,0]
-		Point bottomLeft = new Point( -6f, floorHeight, 2.0f ); //texCoord: [0,1]
-		Point bottomRight = new Point( 1.5f, floorHeight, 2.0f ); // texCoord: [1,1]
+		Point topLeft = new Point( -6f, floorHeight, 68.5f ); // -6f, floorHeight, 78.5f 
+		Point topRight = new Point( 30f, floorHeight, 68.5f ); // 70.5f, floorHeight, 6.0f 
+		Point topRight2 = new Point( 30f, floorHeight, 68.5f ); // 70.5f, floorHeight, 6.0f 
+		Point bottomLeft = new Point( -6f, floorHeight, 2.0f ); //-6f, floorHeight, 2.0f 
+		Point bottomLeft2 = new Point( -6f, floorHeight, 2.0f ); //-6f, floorHeight, 2.0f 
+		Point bottomRight = new Point( 30f, floorHeight, 2.0f ); // 1.5f, floorHeight, 2.0f 
 
 		topLeft.texCoord = new Point( 0, 0, 0 );
 		topRight.texCoord = new Point( 1, 0, 0 );
+		topRight2.texCoord = new Point( 1, 0, 0 );
 		bottomLeft.texCoord = new Point( 0, 0, 1 );
+		bottomLeft2.texCoord = new Point( 0, 0, 1 );
 		bottomRight.texCoord = new Point( 1, 0, 1 );
 
 		//List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 78.5f ) }; 
 		//List<Point> triVerts2 = new List<Point> { new Point( 1.5f, floorHeight, 2.0f ), new Point( 70.5f, floorHeight, 6.0f ), new Point( -6f, floorHeight, 78.5f ) }; 
 
-		List<Point> triVerts1 = new List<Point> { topLeft, bottomLeft, bottomRight }; //... bottomLeft, bottomRight, topLeft 
-		List<Point> triVerts2 = new List<Point> { bottomRight, topRight, topLeft}; // { bottomRight, topRight, topLeft }
+		List<Point> triVerts1 = new List<Point> { topLeft, bottomLeft, topRight }; //... bottomLeft, bottomRight, topLeft 
+		List<Point> triVerts2 = new List<Point> { bottomRight, topRight2, bottomLeft2 }; // { bottomRight, topRight, topLeft }
 
 		Polygon triangle1 = new Polygon( triVerts1 );
 		Polygon triangle2 = new Polygon( triVerts2 );
@@ -67,8 +70,8 @@ public class RayTracerMain
 
 		World world = new World();
 		world.addLight( mainLight );
-		world.addObject( triangle1 );
 		world.addObject( triangle2 );
+		world.addObject( triangle1 );
 		world.addObject( sphere1 );
 		world.addObject( sphere2 );
 
