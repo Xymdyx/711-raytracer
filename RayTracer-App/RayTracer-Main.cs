@@ -51,8 +51,8 @@ public class RayTracerMain
 		//List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 78.5f ) }; 
 		//List<Point> triVerts2 = new List<Point> { new Point( 1.5f, floorHeight, 2.0f ), new Point( 70.5f, floorHeight, 6.0f ), new Point( -6f, floorHeight, 78.5f ) }; 
 
-		List<Point> triVerts1 = new List<Point> { topLeft, bottomLeft, topRight }; //... bottomLeft, bottomRight, topLeft 
-		List<Point> triVerts2 = new List<Point> { bottomRight, topRight2, bottomLeft2 }; // { bottomRight, topRight, topLeft }
+		List<Point> triVerts1 = new List<Point> { topLeft, bottomLeft, topRight }; //topLeft, bottomLeft, topRight
+		List<Point> triVerts2 = new List<Point> { bottomRight, topRight2, bottomLeft2 }; // bottomRight, topRight2, bottomLeft2
 
 		Polygon triangle1 = new Polygon( triVerts1 );
 		Polygon triangle2 = new Polygon( triVerts2 );
@@ -71,8 +71,8 @@ public class RayTracerMain
 
 		World world = new World();
 		world.addLight( mainLight );
-		world.addObject( triangle2 );
 		world.addObject( triangle1 );
+		world.addObject( triangle2 );
 		world.addObject( sphere1 );
 		world.addObject( sphere2 );
 
