@@ -38,44 +38,24 @@ namespace RayTracer_App.Illumination_Models
 		{
 			float u = litObj.u;
 			float v = litObj.v;
+			float w = 1 - (u + v);
 			float floorX = 1f; 
 			float floorZ = 1f;
-			float checkW = (float) (floorX / rows); 
-			float checkH = (float) (floorZ / cols); 
+			float checkW = (float) (floorX / (float) cols); 
+			float checkH = (float) (floorZ / (float) rows); 
 
-			float w = 1 - (u  + v);
-
-			Point uCoord = new Point( 1, 0, 0 );
-			Point vCoord = new Point( 0, 0, 1 );
-			Point wCoord = null;
-
-			foreach (Point p in litObj.vertices)
-			{
-				if (p.texCoord != uCoord && p.texCoord != vCoord)
-				{
-					wCoord = p.texCoord;
-					break;
-				}
-			}
-
-
-			//Vector texVec1 = (litObj.vertices[0].texCoord * u).toVec();
-			//Vector texVec2 = (litObj.vertices[1].texCoord * v).toVec();
-			//Vector texVec3 = (litObj.vertices[2].texCoord * w).toVec();
-
-			//T = uT0 + vT1 + wT2
-			Vector texVec1 = (uCoord * u).toVec();
-			Vector texVec2 = (vCoord * v).toVec();
-			Vector texVec3 = (wCoord * w).toVec();
+			//T = wT0 + uT1 + vT2... same as wp0 + up1 + vp2
+			Vector texVec1 = (litObj.vertices[0].texCoord * w).toVec();
+			Vector texVec2 = (litObj.vertices[1].texCoord * u).toVec();
+			Vector texVec3 = (litObj.vertices[2].texCoord * v).toVec();
 
 			Vector textVec = texVec1.addVec( texVec2 );
 			textVec = textVec.addVec( texVec3 );
-			int rowNum = (int) (textVec.v1 / checkW);
-			int colNum = (int) (textVec.v3 / checkH);
+			int rowNum = (int) ( (textVec.v3 / checkH) );
+			int colNum = (int)( (textVec.v1 / checkW) );
 
 			//transform func
 			/*transform algo: find row and col where intersect occurs, if row and col's parity match, it's red. else, yellow */
-
 			if ( (rowNum % 2) == (colNum % 2) )
 				return this.color2;
 
