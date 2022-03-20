@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using RayTracer_App.Voxels;
+using RayTracer_App.Scene_Objects;
 
 namespace RayTracer_App.Kd_tree
 {
@@ -31,13 +32,13 @@ namespace RayTracer_App.Kd_tree
 			return null;
 		}
 
-		public bool terminal( Scene_Objects.SceneObject objects, Voxel vox, int recDepth )
+		public bool terminal( List<SceneObject> objects, Voxel vox, int recDepth )
 		{
 			return true;
 		}
 
 		//get node... starts as //getNode( allObjects, sceneBoundingBox)
-		public KdNode getNode( Scene_Objects.SceneObject objects, Voxel vox )
+		public KdNode getNode( List<SceneObject> objects, Voxel vox )
 		{
 			/*
 			 * if (Terminal (L, V)) return new leaf node (L)

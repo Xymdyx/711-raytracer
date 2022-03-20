@@ -45,6 +45,14 @@ public class Point
 
 
 //METHODS
+    public float getAxisCoord( int axis )
+	{
+        if (axis == 0) return this.x;
+        else if (axis == 1) return this.y;
+        else if (axis == 2) return this.z;
+
+        return float.NaN;
+	}
 
 //calculate distance
     public float distance( Point p2)

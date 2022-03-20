@@ -74,6 +74,11 @@ namespace RayTracer_App.Scene_Objects
 			return new Color(); //return the background color
 		}
 
+		public virtual Point getMaxPt( int axis ) { return Point.origin;  }
+
+		public virtual Point getMinPt( int axis ) { return Point.origin; }
+
+
 		//override ToString()
 	}
 }

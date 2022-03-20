@@ -10,20 +10,27 @@ using System.Text;
 
 namespace RayTracer_App.Voxels
 {
-	public abstract class AABB : Voxel
+	public class AABB : Voxel
 	{
+		public enum Axes { X, Y, Z }
+
+		private int _axis;
+		public int axis { get => this._axis; set => this._axis = value; }
+
 		public AABB()
 		{
 			this._shape = 0; //for box
 			this._max = null;
 			this._min = null;
+			this.axis = (int) Axes.X;
 		}
 
-		public AABB( Point max, Point min )
+		public AABB( Point max, Point min, int axis )
 		{
 			this._shape = 0;
 			this._max = max;
 			this._min = min;
+			this.axis = axis;
 		}
 
 		

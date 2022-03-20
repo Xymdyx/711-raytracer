@@ -6,6 +6,7 @@ namespace RayTracer_App.Voxels
 { 
 		public abstract class Voxel
 		{
+
 		//fields and properties
 			protected int _shape;
 			protected Point _max;

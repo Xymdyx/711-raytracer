@@ -2,9 +2,9 @@
 using System;
 using System.Numerics;
 using System.Collections.Generic;
-
 using RayTracer_App.Scene_Objects;
 using RayTracer_App.Illumination_Models;
+using RayTracer_App.Voxels;
 //MATRIX 4D -> MATRIX4X4
 
 namespace RayTracer_App.World
@@ -13,13 +13,15 @@ namespace RayTracer_App.World
 	{
 		private List<SceneObject> _objects;
 		private List<LightSource> _lights;
+		private AABB _sceneBB;
 		private Kd_tree.KdTree _kdTree;
 
 		//private int[] attributes;
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
 		public List<LightSource> lights { get => this._lights ; set => this._lights = value; } // checkpoint 3
 
-		public Kd_tree.KdTree kdTree { get => this._kdTree; set => this._kdTree = value;  } // advanced checkpoint 1
+		public AABB sceneBB { get => this._sceneBB; set => this._sceneBB = value; } // advanced checkpoint 1
+		public Kd_tree.KdTree kdTree { get => this._kdTree; set => this._kdTree = value;  } 
 
 
 		//default CONSTRUCTOR
@@ -110,11 +112,6 @@ namespace RayTracer_App.World
 					bestW = currW;
 					currColor = null; //reset the color since we know we're overwriting it
 
-					//TODO... 					
-					// 3. look into supersampling
-					// 4. If time permits, try to implement the Askkin model
-
-					// get info for shadow ray...CP3
 					Sphere s = obj as Sphere;
 					Polygon t = obj as Polygon;
 					if (s != null) intersection = s.getRayPoint( ray, currW );
@@ -125,6 +122,37 @@ namespace RayTracer_App.World
 				} 
 			}
 			return currColor;
+		}
+
+		public void findBB( int axis = 0) 
+		{
+			Point max = null;
+			Point min = null;
+			Point realMax = null;
+			Point realMin = null;
+
+			if (this._sceneBB == null)
+			{
+				foreach( SceneObject obj in objects)
+				{
+					Polygon t = obj as Polygon;
+					Sphere s = obj as Sphere;
+					if( t != null ){
+						max = t.getMaxPt( axis );
+						min = t.getMinPt( axis );
+					} 
+					else if ( s != null)
+					{
+						max = s.getMaxPt( axis );
+						min = s.getMinPt( axis );
+					}
+
+					if (max.getAxisCoord(axis) > realMax.getAxisCoord(axis) ) realMax = max;
+					if (min.getAxisCoord(axis) < realMin.getAxisCoord(axis) ) realMin = min;
+				}
+
+				this._sceneBB = new AABB( realMax, realMin, axis );
+			}
 		}
 	}
 
