@@ -63,6 +63,7 @@ public class RayTracerMain
 		world.addObject( triangle2 );
 		world.addObject( sphere1 );
 		world.addObject( sphere2 );
+		world.findBB();
 
 		// initialize camera and render world
 		imageWidth = 1600;

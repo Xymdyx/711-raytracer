@@ -147,7 +147,7 @@ namespace RayTracer_App.Scene_Objects
 			return this.center + maxAxisDir;
 		}
 
-		// helper for getting minimum and max points
+		// helper for getting minimum points on sphere
 		public Point getMinPt( int axis )
 		{
 			if (axis >= 3 || axis < 0)

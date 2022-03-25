@@ -29,6 +29,8 @@ namespace RayTracer_App.World
 		{
 			this._objects = new List<SceneObject>();
 			this._lights = new List<LightSource>();
+			this._kdTree = null;
+			this._sceneBB = null;
 		}
 
 		//parameter CONSTRUCTOR
@@ -36,6 +38,8 @@ namespace RayTracer_App.World
 		{
 			this._objects = objects;
 			this._lights = lights;
+			this._kdTree = null;
+			this._sceneBB = null;
 		}
 
 
@@ -124,6 +128,8 @@ namespace RayTracer_App.World
 			return currColor;
 		}
 
+		// create the bounding box for the scene once all objects have been placed in it.
+		// axis.. 0 =x, y =1, 2 =z
 		public void findBB( int axis = 0) 
 		{
 			Point max = null;
@@ -147,8 +153,10 @@ namespace RayTracer_App.World
 						min = s.getMinPt( axis );
 					}
 
-					if (max.getAxisCoord(axis) > realMax.getAxisCoord(axis) ) realMax = max;
-					if (min.getAxisCoord(axis) < realMin.getAxisCoord(axis) ) realMin = min;
+					if ( (realMax == null) || ( max.getAxisCoord(axis) > realMax.getAxisCoord(axis)) ) 
+						realMax = max;
+					if ((realMin == null) || ( min.getAxisCoord(axis) < realMin.getAxisCoord(axis)) ) 
+						realMin = min;
 				}
 
 				this._sceneBB = new AABB( realMax, realMin, axis );
