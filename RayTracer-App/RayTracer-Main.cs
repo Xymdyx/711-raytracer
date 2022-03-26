@@ -30,16 +30,17 @@ public class RayTracerMain
 		float s1Height = 1.25f;
 		float s2Depth = s1Depth + 1.85f;
 		float sphereRad = 1.5f;
+		float s1Refl = .5f;
 
 		float floorHeight = 5.5f;
 
 		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
-		Point topLeft = new Point( -6f, floorHeight, 68.5f ); // -6f, floorHeight, 78.5f 
-		Point topRight = new Point( 30f, floorHeight, 68.5f ); // 70.5f, floorHeight, 6.0f 
-		Point topRight2 = new Point( 30f, floorHeight, 68.5f ); // 70.5f, floorHeight, 6.0f 
-		Point bottomLeft = new Point( -6f, floorHeight, 2.0f ); //-6f, floorHeight, 2.0f 
-		Point bottomLeft2 = new Point( -6f, floorHeight, 2.0f ); //-6f, floorHeight, 2.0f 
-		Point bottomRight = new Point( 30f, floorHeight, 2.0f ); // 1.5f, floorHeight, 2.0f 
+		Point topLeft = new Point( -6f, floorHeight, 68.5f ); 
+		Point topRight = new Point( 30f, floorHeight, 68.5f ); 
+		Point topRight2 = new Point( 30f, floorHeight, 68.5f ); 
+		Point bottomLeft = new Point( -6f, floorHeight, 2.0f ); 
+		Point bottomLeft2 = new Point( -6f, floorHeight, 2.0f ); 
+		Point bottomRight = new Point( 30f, floorHeight, 2.0f ); 
 
 		topLeft.texCoord = new Point( 0, 0, 0 );
 		topRight.texCoord = new Point( 1, 0, 0 );
@@ -48,19 +49,16 @@ public class RayTracerMain
 		bottomLeft2.texCoord = new Point( 0, 0, 1 );
 		bottomRight.texCoord = new Point( 1, 0, 1 );
 
-		//List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 78.5f ) }; 
-		//List<Point> triVerts2 = new List<Point> { new Point( 1.5f, floorHeight, 2.0f ), new Point( 70.5f, floorHeight, 6.0f ), new Point( -6f, floorHeight, 78.5f ) }; 
-
-		List<Point> triVerts1 = new List<Point> { topLeft, bottomLeft, topRight }; //topLeft, bottomLeft, topRight
-		List<Point> triVerts2 = new List<Point> { bottomRight, topRight2, bottomLeft2 }; // bottomRight, topRight2, bottomLeft2
+		List<Point> triVerts1 = new List<Point> { topLeft, bottomLeft, topRight }; 
+		List<Point> triVerts2 = new List<Point> { bottomRight, topRight2, bottomLeft2 };
 
 		Polygon triangle1 = new Polygon( triVerts1 );
 		Polygon triangle2 = new Polygon( triVerts2 );
 		triangle1.translate( -5f, 0, 0 );
 		triangle2.translate( -5f, 0, 0 );
 
-		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth) , sphereRad );
-		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad ); //setting the point elsewhere gives translating whole sphere
+		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth) , sphereRad, s1Refl); //reflective sphere cp5
+		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad );
 		sphere2.translate(  1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform
 
 		//cp3... place mainLight source above the spheres 	// 1.5f, -1f, -5.0f //.85f, -30.85f, s1Depth - 5.5f , in front and way high
@@ -137,7 +135,7 @@ public class RayTracerMain
 		FG.InitDisplayMode( GLUT.GLUT_RGB | GLUT.GLUT_SINGLE | GLUT.GLUT_DEPTH );
 		FG.InitWindowSize( imageWidth, imageHeight );
 		FG.InitWindowPosition( 0, 0 );
-		FG.CreateWindow( "RayTracing CheckPoint 4" );
+		FG.CreateWindow( "RayTracing CheckPoint 5" );
 		GL.Init( true );            //I forgot to call this...
 
 		//fixed pixels being at a higher depth being in front of those with lower depth
@@ -155,16 +153,3 @@ public class RayTracerMain
 	}
 }
 
-/*		Matrix4x4 mat1= new Matrix4x4(
-			1, 2, 3, 4,
-			5, 6, 7, 8,
-			9, 10, 11, 12
-			, 13, 14, 15, 16 );
-		Matrix4x4 mat2 = new Matrix4x4(
-			17, 18, 19, 20,
-			21, 22, 23, 24,
-			25, 26, 27, 28,
-			29, 30, 31, 32 );
-		Console.WriteLine( $"Test of {mat1} and {mat2} addition:\n {mat1 + mat2}\n " );
-		Console.WriteLine( $"Test of {mat1} and {mat2} subtraction:\n {mat1 - mat2} \n" );
-		Console.WriteLine( $"Test of {mat1} and {mat2} multiplication:\n {mat1 * mat2} \n" );*/

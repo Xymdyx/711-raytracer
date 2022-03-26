@@ -13,6 +13,8 @@ namespace RayTracer_App.Scene_Objects
 		protected IlluminationModel _lightModel;
 		protected Color _diffuse;
 		protected Color _specular;
+		protected float _kRefl;
+		protected float _kTrans;
 
 		//properties 
 		public string material {get => this._material; set => this._material = value; }
@@ -20,6 +22,9 @@ namespace RayTracer_App.Scene_Objects
 		public IlluminationModel lightModel { get => this._lightModel; set => this._lightModel = value; }
 		public Color diffuse { get => this._diffuse; set => this._diffuse = value; }
 		public Color specular { get => this._specular; set => this._specular = value; }
+		public float kRefl { get => this._kRefl; set => this._kRefl = value; }
+		public float kTrans { get => this._kTrans; set => this._kTrans = value; }
+
 
 
 
@@ -30,6 +35,8 @@ namespace RayTracer_App.Scene_Objects
 			this._lightModel = Phong.regularPhong;
 			this._diffuse = Color.defaultBlack;
 			this._specular = Color.whiteSpecular;
+			this._kRefl = 0.0f;
+			this._kTrans = 0.0f;
 		}
 
 		public SceneObject( string material, IlluminationModel lightModel, Vector normal = null )
@@ -39,16 +46,20 @@ namespace RayTracer_App.Scene_Objects
 			this._lightModel = lightModel;
 			this._diffuse = Color.defaultBlack;
 			this._specular = Color.whiteSpecular;
+			this._kRefl = 0.0f;
+			this._kTrans = 0.0f;
 		}
 
-		//now with colors
-		public SceneObject( string material, IlluminationModel lightModel, Color diffuse, Color specular, Vector normal = null )
+		//now with k Coefficients
+		public SceneObject( string material, IlluminationModel lightModel, Color diffuse, Color specular, float kRefl = 0.0f, float kTrans = 0.0f, Vector normal = null )
 		{
 			this._material = material;
 			this._normal = normal;
 			this._lightModel = lightModel;
 			this._diffuse = diffuse;
 			this._specular = specular;
+			this._kRefl = kRefl;
+			this._kTrans = kTrans;
 		}
 
 

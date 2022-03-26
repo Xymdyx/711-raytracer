@@ -101,7 +101,7 @@ namespace RayTracer_App.Camera
 			for( int hitIdx = 0; hitIdx < 4; hitIdx ++ )
 			{
 				LightRay hitRay = new LightRay( hitPoints[hitIdx] - this.eyePoint, this.eyePoint );
-				hitColors[hitIdx] = world.spawnRay( hitRay );
+				hitColors[hitIdx] = world.spawnRay( hitRay, 1 ); //cp5
 			}
 
 			//average the 4 colors
@@ -182,7 +182,7 @@ namespace RayTracer_App.Camera
 					if (!isSuperSampling)
 					{
 						fire.direction = fpPoint - this.eyePoint;
-						hitColor = world.spawnRay( fire ); //this will be irradiance....
+						hitColor = world.spawnRay( fire, 1 ); //this will be irradiance.... CP5	
 					}
 					else
 						hitColor = superSamplePixel( fpPoint, pixHeight, pixWidth, world );
