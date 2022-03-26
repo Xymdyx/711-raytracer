@@ -150,7 +150,7 @@ namespace RayTracer_App.Camera
 			float pixWidth = fpWidth / imageWidth;
 
 			//initialize default background color at all pixels to begin with
-			Color bgColor = new Color();
+			Color bgColor = Color.bgColor;
 			byte[] bgArr = bgColor.asByteArr();
 			byte[] pixColors = new byte[imageHeight * imageWidth * 3];
 

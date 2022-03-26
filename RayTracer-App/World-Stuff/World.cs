@@ -129,8 +129,11 @@ namespace RayTracer_App.World
 					{
 						if(obj.kRefl > 0)
 						{
-							LightRay reflRay = new LightRay( Vector.reflect( ray.direction, obj.normal ), intersection );
-							currColor += spawnRay( reflRay, recDepth + 1 );
+							LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, obj.normal ), intersection );
+							currColor = spawnRay( reflRay, recDepth + 1 );
+
+							if( currColor != null)
+								currColor = currColor.scale( obj.kRefl );
 						}
 						if( obj.kTrans > 0)
 						{

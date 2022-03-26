@@ -27,10 +27,10 @@ public class RayTracerMain
 		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25
 
 		float s1Depth = 8.75f; //+z into the scene... I am IN LHS
-		float s1Height = 1.25f;
+		float s1Height = 1.75f;
 		float s2Depth = s1Depth + 1.85f;
 		float sphereRad = 1.5f;
-		float s1Refl = .5f;
+		float s2Refl = .75f;
 
 		float floorHeight = 5.5f;
 
@@ -57,13 +57,15 @@ public class RayTracerMain
 		triangle1.translate( -5f, 0, 0 );
 		triangle2.translate( -5f, 0, 0 );
 
-		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth) , sphereRad, s1Refl); //reflective sphere cp5
-		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad );
+		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth) , sphereRad); //reflective sphere cp5
+		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad, s2Refl );
 		sphere2.translate(  1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform
 
 		//cp3... place mainLight source above the spheres 	// 1.5f, -1f, -5.0f //.85f, -30.85f, s1Depth - 5.5f , in front and way high
 
-		Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // the z was originally s1Depth + .75
+		//Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // the z was originally s1Depth + .75
+		Point mainLightPos = new Point( -.85f, -15.85f, s1Depth - 2.75f ); // the z was originally s1Depth + .75
+
 		Color mainLightColor = Color.whiteSpecular;
 		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );
 
