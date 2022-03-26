@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using RayTracer_App;
 
 namespace RayTracer_App.Voxels 
 { 
@@ -16,7 +14,7 @@ namespace RayTracer_App.Voxels
 			public Point min { get => this._min; set => this._min = value; }
 
 
-		public abstract bool intersect();
+		public abstract bool intersect( LightRay ray );
 
 		}
 }

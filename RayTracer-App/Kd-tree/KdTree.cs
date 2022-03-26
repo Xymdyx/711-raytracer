@@ -38,7 +38,7 @@ namespace RayTracer_App.Kd_tree
 		}
 
 		//get node... starts as //getNode( allObjects, sceneBoundingBox)
-		public KdNode getNode( List<SceneObject> objects, Voxel vox )
+		public KdNode getNode( List<SceneObject> objects, Voxel vox, int axis )
 		{
 			/*
 			 * if (Terminal (L, V)) return new leaf node (L)

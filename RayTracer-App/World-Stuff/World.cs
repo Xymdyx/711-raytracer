@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using RayTracer_App.Scene_Objects;
 using RayTracer_App.Illumination_Models;
 using RayTracer_App.Voxels;
+using RayTracer_App.Kd_tree;
 //MATRIX 4D -> MATRIX4X4
 
 namespace RayTracer_App.World
@@ -15,7 +16,7 @@ namespace RayTracer_App.World
 		private List<LightSource> _lights;
 		private CheckerBoardPattern _checkerboard;
 		private AABB _sceneBB;
-		private Kd_tree.KdTree _kdTree;
+		private KdTree _kdTree;
 
 		//private int[] attributes;
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
@@ -32,7 +33,7 @@ namespace RayTracer_App.World
 			this._objects = new List<SceneObject>();
 			this._lights = new List<LightSource>();
 			this._checkerboard = new CheckerBoardPattern();
-			this._kdTree = null;
+			this._kdTree = new KdTree();
 			this._sceneBB = null;
 		}
 
@@ -42,7 +43,7 @@ namespace RayTracer_App.World
 			this._objects = objects;
 			this._lights = lights;
 			this._checkerboard = new CheckerBoardPattern();
-			this._kdTree = null;
+			this._kdTree = new KdTree();
 			this._sceneBB = null;
 		}
 
@@ -138,6 +139,7 @@ namespace RayTracer_App.World
 			return currColor;
 		}
 
+/* KDTREE METHODS */
 		// create the bounding box for the scene once all objects have been placed in it.
 		// axis.. 0 =x, y =1, 2 =z
 		public void findBB( int axis = 0) 
@@ -171,6 +173,12 @@ namespace RayTracer_App.World
 
 				this._sceneBB = new AABB( realMax, realMin, axis );
 			}
+		}
+
+		//builds the kdTree for the world
+		public void buildKd()
+		{
+			kdTree.getNode( this.objects, this.sceneBB, 0 );
 		}
 	}
 }

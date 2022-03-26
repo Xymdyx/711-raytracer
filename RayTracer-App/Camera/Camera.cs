@@ -142,6 +142,8 @@ namespace RayTracer_App.Camera
 			makeCamMat();
 			world.transformAll( this.camTransformMat );
 
+			world.findBB(); //advanced cp 1
+
 			float fpHeight = 6f; //smaller the more zoomed in
 			float fpWidth = fpHeight;
 
