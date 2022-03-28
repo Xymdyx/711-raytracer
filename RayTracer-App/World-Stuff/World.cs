@@ -140,38 +140,61 @@ namespace RayTracer_App.World
 		}
 
 /* KDTREE METHODS */
-		// create the bounding box for the scene once all objects have been placed in it.
+
+		// set a boundibg box
 		// axis.. 0 =x, y =1, 2 =z
-		public void findBB( int axis = 0) 
+		public void setBB( Point p1, Point p2 , int axis = 0 )
 		{
-			Point max = null;
-			Point min = null;
-			Point realMax = null;
-			Point realMin = null;
+			//hardcoded BB that works
+			this._sceneBB = new AABB( p1, p2, axis );
+		}
+
+		// find max and min x,y,z vals for whole scene ( the front upper-left and back bottom-right corners of the AABB
+		// form AABB points from these
+		// pass to aabb		public void findBB( int boxAxis = 0 )
+		public void findBB( int boxAxis = 0)
+		{
+
+			float[] max = new float[3];
+			float[] min = new float[3];
+
+			float[] sceneMax = { float.MinValue, float.MinValue, float.MinValue };
+			float[] sceneMin = { float.MaxValue, float.MaxValue, float.MaxValue };
+
 
 			if (this._sceneBB == null)
 			{
-				foreach( SceneObject obj in objects)
+				foreach (SceneObject obj in objects)
 				{
 					Polygon t = obj as Polygon;
 					Sphere s = obj as Sphere;
-					if( t != null ){
-						max = t.getMaxPt( axis );
-						min = t.getMinPt( axis );
-					} 
-					else if ( s != null)
-					{
-						max = s.getMaxPt( axis );
-						min = s.getMinPt( axis );
-					}
 
-					if ( (realMax == null) || ( max.getAxisCoord(axis) > realMax.getAxisCoord(axis)) ) 
-						realMax = max;
-					if ((realMin == null) || ( min.getAxisCoord(axis) < realMin.getAxisCoord(axis)) ) 
-						realMin = min;
+					//find the max and min x,y,z vals for each point and compare against scene
+					for (int axis = 0; axis < 3; axis++)
+					{
+						if (t != null)
+						{
+							max[axis] = t.getMaxPt( axis ).getAxisCoord( axis );
+							min[axis] = t.getMinPt( axis ).getAxisCoord( axis );
+						}
+						else if (s != null)
+						{
+							max[axis] = s.getMaxPt( axis ).getAxisCoord( axis );
+							min[axis] = s.getMinPt( axis ).getAxisCoord( axis );
+						}
+
+						//update scene min and max points if applicable
+						if ( max[axis] > sceneMax[axis] )
+							sceneMax[axis] = max[axis];
+						if ( min[axis] < sceneMin[axis] )
+							sceneMin[axis] = min[axis];
+					}
 				}
 
-				this._sceneBB = new AABB( realMax, realMin, axis );
+				//set AABB for the scene
+				Point minPt = new Point( sceneMin[0], sceneMin[1], sceneMin[2] );
+				Point maxPt = new Point( sceneMax[0], sceneMax[1], sceneMax[2] );
+				this._sceneBB = new AABB( minPt, maxPt, boxAxis );
 			}
 		}
 

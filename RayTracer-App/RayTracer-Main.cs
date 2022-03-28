@@ -85,7 +85,6 @@ public class RayTracerMain
 		Point lookAt = new Point( .5f, .5f, s1Depth + 1f ); 
 		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
 
-
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
 		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen );
 

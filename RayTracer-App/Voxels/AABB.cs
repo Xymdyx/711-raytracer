@@ -13,6 +13,8 @@ namespace RayTracer_App.Voxels
 {
 	public class AABB : Voxel
 	{
+		// https://computergraphics.stackexchange.com/questions/6064/aabb-bounding-boxes
+		//need to compute after camera transform
 		public enum Axes { X, Y, Z }
 
 		private int _axis;
@@ -33,7 +35,7 @@ namespace RayTracer_App.Voxels
 		{
 			if( center != null)
 			{
-				Vector extents = this.center - this.min;
+				Vector extents = this.center.ptSub(this.min);
 				extents.v1 = Math.Abs( extents.v1 );
 				extents.v2 = Math.Abs( extents.v2 );
 				extents.v3 = Math.Abs( extents.v3 );
@@ -52,11 +54,11 @@ namespace RayTracer_App.Voxels
 			this._extents = null;
 		}
 
-		public AABB( Point max, Point min, int axis )
+		public AABB( Point p1, Point p2, int axis ) //given two opposite vertices of the AABB, calculate the minimum and Max points
 		{
 			this._shape = 0;
-			this._max = max;
-			this._min = min;
+			this._max = new Point( Math.Max(p1.x, p2.x), Math.Max(p1.y, p2.y), Math.Max(p1.z, p2.z) );
+			this._min = new Point( Math.Min( p1.x, p2.x ), Math.Min( p1.y, p2.y ), Math.Min( p1.z, p2.z ) ); //this allows us to keep track of the true minimum and maxes
 			this.axis = axis;
 			findCenter();
 			findExtents();
