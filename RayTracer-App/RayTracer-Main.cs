@@ -63,8 +63,7 @@ public class RayTracerMain
 
 		//cp3... place mainLight source above the spheres 	// 1.5f, -1f, -5.0f //.85f, -30.85f, s1Depth - 5.5f , in front and way high
 
-		//Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // the z was originally s1Depth + .75
-		Point mainLightPos = new Point( -.85f, -15.85f, s1Depth - 2.75f ); // the z was originally s1Depth + .75
+		Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // the z was originally s1Depth + .75
 
 		Color mainLightColor = Color.whiteSpecular;
 		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );

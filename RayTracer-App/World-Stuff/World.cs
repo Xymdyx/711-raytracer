@@ -129,6 +129,7 @@ namespace RayTracer_App.World
 					{
 						if(obj.kRefl > 0)
 						{
+							//importance sampling here if on
 							LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, obj.normal ), intersection );
 							currColor = spawnRay( reflRay, recDepth + 1 );
 
