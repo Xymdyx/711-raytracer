@@ -14,6 +14,7 @@ namespace RayTracer_App.World
 		private List<SceneObject> _objects;
 		private List<LightSource> _lights;
 		private CheckerBoardPattern _checkerboard;
+		private static int MAX_DEPTH = 7; //cp5 max bounces
 
 		//private int[] attributes;
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
@@ -92,7 +93,7 @@ namespace RayTracer_App.World
 			return bestW;
 		}
 
-		public Color spawnRay( LightRay ray )
+		public Color spawnRay( LightRay ray, int recDepth )
 		{
 
 			Color currColor = null;
@@ -123,7 +124,26 @@ namespace RayTracer_App.World
 
 					currColor = objLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, obj ); //return to irradiance for TR
 
+					//cp5 
+					if ( recDepth < MAX_DEPTH)
+					{
+						if(obj.kRefl > 0)
+						{
+							//importance sampling here if on
+							LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, obj.normal ), intersection );
+							currColor = spawnRay( reflRay, recDepth + 1 );
 
+							if( currColor != null)
+								currColor = currColor.scale( obj.kRefl );
+						}
+						if( obj.kTrans > 0)
+						{
+							//spawn transmission ray
+							//currColor += spawnRay( translRay, recDepth + 1 );
+							;
+						}
+
+					}
 				}
 			}
 			return currColor;

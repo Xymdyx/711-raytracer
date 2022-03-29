@@ -15,7 +15,7 @@ public class Color
 
     public static Color whiteSpecular = new Color( 1f, 1f , 1f);
     public static Color defaultBlack = new Color( 0f, 0f, 0f );
-    public static Color bgColor = new Color( 0f, 1f, 0f );
+    public static Color bgColor = new Color( 0.148f, 0.661f, 0.740f ); //0, 1f, 0
     public static Color sphereColor = new Color( 0.0f, 0.0f, 1.0f );
     public static Color floorColor = new Color( 1.0f, 0.0f, 0.0f );
 
