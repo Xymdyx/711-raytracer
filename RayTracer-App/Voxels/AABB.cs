@@ -31,11 +31,13 @@ namespace RayTracer_App.Voxels
 			this._center =  (this.min + vMax) * .5f;
 		}
 
+		//find distance vector from center to two opposite corners
 		public void findExtents()
 		{
 			if( center != null)
 			{
 				Vector extents = this.center.ptSub(this.min);
+
 				extents.v1 = Math.Abs( extents.v1 );
 				extents.v2 = Math.Abs( extents.v2 );
 				extents.v3 = Math.Abs( extents.v3 );

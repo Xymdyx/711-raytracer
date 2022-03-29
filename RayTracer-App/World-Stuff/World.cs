@@ -201,7 +201,7 @@ namespace RayTracer_App.World
 		//builds the kdTree for the world
 		public void buildKd()
 		{
-			kdTree.getNode( this.objects, this.sceneBB, 0 );
+			kdTree.root = kdTree.getNode( this.objects, this.sceneBB, 0 );
 		}
 	}
 }

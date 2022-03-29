@@ -163,6 +163,7 @@ public class Point
     //TODO ADD TRANSFORMATIONS SUCH AS ROTATING
 
     // subtract two points to get vector sans normalizing. For Moller-Trumbone ray-triangle
+    // dest - origin
     public Vector ptSub( Point p2)
     {
         return new Vector( this.x - p2.x, this.y - p2.y, this.z - p2.z, false );
