@@ -111,11 +111,11 @@ namespace RayTracer_App.Kd_tree
 			return new KdInteriorNode( axis, partitionVal, 
 				getNode(frontObjs, vFront, depth + 1), getNode( rearObjs, vRear, depth + 1 ) );
 		}
-
-		//methods for splitting the tree
-		public float doRoundRobin()
+		
+		// a given ray traverses the tree
+		public void travelTAB( LightRay ray )
 		{
-			return 0.0f;
+			return;
 		}
 
 		// if time permits
