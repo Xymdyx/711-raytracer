@@ -1,4 +1,5 @@
 ﻿using System;
+using RayTracer_App.Voxels;
 using System.Collections.Generic;
 using System.Text;
 
@@ -11,26 +12,30 @@ namespace RayTracer_App.Kd_tree
 		private float _axisVal;
 		private KdNode _front;
 		private KdNode _rear;
+		private AABB _selfAABB;
 
 		//properties
 		public int axis { get => this._axis; set => this._axis = value; }
 		public float axisVal { get => this._axisVal; set => this._axisVal = value; }
 		public KdNode front { get => this._front; set => this._front = value; }
 		public KdNode rear { get => this._rear; set => this._rear = value; }
+		public AABB selfAABB { get => this._selfAABB; set => this._selfAABB = value; }
 
 		//constructors
 		public KdInteriorNode()
 		{
 			this._axis = 0;
 			this._axisVal = 0.0f;
+			this._selfAABB = null;
 			this._front = null;
 			this._rear = null;
 		}
 
-		public KdInteriorNode( int axis, float axisVal, KdNode front, KdNode rear )
+		public KdInteriorNode( int axis, float axisVal, AABB selfAABB, KdNode front, KdNode rear )
 		{
 			this._axis = axis;
 			this._axisVal = axisVal;
+			this._selfAABB = selfAABB;
 			this._front = front;
 			this._rear = rear;
 		}

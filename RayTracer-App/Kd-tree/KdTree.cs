@@ -110,7 +110,7 @@ namespace RayTracer_App.Kd_tree
 				if (hitsRear) rearObjs.Add( obj );
 			}
 
-			return new KdInteriorNode( axis, partitionVal, 
+			return new KdInteriorNode( axis, partitionVal, vox,
 				getNode(frontObjs, vFront, depth + 1), getNode( rearObjs, vRear, depth + 1 ) );
 		}
 
@@ -124,17 +124,27 @@ namespace RayTracer_App.Kd_tree
 			return new Point();
 		}
 		
+		private bool intersectGood( float currW )
+		{
+			return (currW != float.MinValue) && (currW != float.NaN) &&
+					(currW != float.MaxValue);
+		}
 		// a given ray traverses the tree and gets the closest intersection
-		public float travelTAB( LightRay ray, AABB parentBox, KdNode node = null )
+		public float travelTAB( LightRay ray, KdNode node = null )
 		{
 			// a[coord] = proper coord of entry pt
 			// b[coord] = proper coord of exit point
 			// s = splitting plane offset... from splitting-plane ray intersection
 			//ray must intersect whole scene bounding box prior
-			Point entryPt = null;
-			Point exitPt = null;
-			Point sPlanePt = null;
-			Vector sVec = null;
+			Point entryPt;
+			Point exitPt;
+			Point sPlanePt;
+			Vector sVec;
+			float aCoord;
+			float bCoord;
+			float splitOffset;
+
+			float bestW = float.MaxValue; //initialize to error per convention so far
 
 			if (node == null)
 				node = this.root;
@@ -146,15 +156,54 @@ namespace RayTracer_App.Kd_tree
 			if (leaf != null)
 				return 0.0f ;// test all intersections with objects and return the closest;
 			
+			// N = negative, P = positive, Z = along splitting plane
 			else if( inner != null)
 			{
-				parentBox.intersect( ray ); // update entry and exit points
-				sVec = findSplitVec( parentBox, inner.axis );
+				inner.selfAABB.intersect( ray ); // update entry and exit points
+				entryPt = ray.entryPt.copy();
+				exitPt = ray.exitPt.copy();
+				aCoord = entryPt.getAxisCoord( inner.axis );
+				bCoord = exitPt.getAxisCoord( inner.axis );
+				splitOffset = inner.axisVal;
+
+				if( aCoord <= splitOffset)
+				{
+					if (bCoord < splitOffset)
+						bestW = travelTAB( ray, inner.rear ); //N1, N2, N3, P5, Z3
+					else
+					{
+						if (bCoord == splitOffset)
+							bestW = travelTAB( ray, inner.front ); //traverse arbitrary child node.. Z2
+						else
+						{
+							//compute and store location of splitOffset....I believe this is already done(?)
+							bestW = travelTAB( ray, inner.rear );
+
+							if ( intersectGood( bestW ) ) return bestW; //return here since we know first check will def be closer
+
+							bestW = travelTAB( ray, inner.front ); //N4
+						}
+					}
+				}
+				else // aCoord > splitOffset
+				{
+					if (bCoord > splitOffset)
+						bestW = travelTAB( ray, inner.front ); // P1, P2, P3, N5, Z1
+					else
+					{
+						//compute and store location of splitOffset....I believe this is already done(?)
+						bestW = travelTAB( ray, inner.front );
+
+						if ( intersectGood( bestW ) ) return bestW; //return here since we know first check will def be closer
+
+						bestW = travelTAB( ray, inner.rear ); //P4
+					}
+				}
 
 
 			}
 
-			return float.MaxValue; //error
+			return bestW; //error
 		}
 
 		// if time permits
