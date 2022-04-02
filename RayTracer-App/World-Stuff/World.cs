@@ -137,12 +137,13 @@ namespace RayTracer_App.World
 			Point intersection = null;
 
 			//no kdTree
-			if (this.kdTree == null) 
+
+			if (this.kdTree == null)
 				bestW = findRayIntersect( ray, this.objects );
 			else
 				bestW = this.kdTree.travelTAB( ray, this );
-				
-			
+
+
 			//move this out for efficiency
 			if ( (this.bestObj != null) && (bestW != float.MaxValue) )
 			{

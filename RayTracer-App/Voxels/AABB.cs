@@ -119,8 +119,8 @@ namespace RayTracer_App.Voxels
 				maxT = maxZ;
 
 			//so the ray knows where it went for later
-			ray.entryPt = bEntry;
-			ray.exitPt = bExit;
+			ray.entryPt = ray.findPtAlong( minT ) ;
+			ray.exitPt = ray.findPtAlong( maxT );
 
 			return true;
 		}

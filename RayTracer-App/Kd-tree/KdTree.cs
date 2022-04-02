@@ -83,8 +83,8 @@ namespace RayTracer_App.Kd_tree
 				new vox( maxpt, minPt + [xExt,0, ])
 			*/
 
-			AABB vFront = new AABB( vox.min, vox.center + splitVec, axis );
-			AABB vRear = new AABB( vox.max, vox.center - splitVec, axis );
+			AABB vFront = new AABB( vox.max, vox.center - splitVec , axis );
+			AABB vRear = new AABB( vox.min, vox.center + splitVec, axis );
 			List<SceneObject> frontObjs = new List<SceneObject>();
 			List<SceneObject> rearObjs = new List<SceneObject>();
 
