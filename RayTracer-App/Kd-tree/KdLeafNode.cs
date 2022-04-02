@@ -18,5 +18,15 @@ namespace RayTracer_App.Kd_tree
 		{
 			this._objectPtrs = objectPtrs;
 		}
+
+		public override string ToString()
+		{
+			String info = $"Kd-Leaf with {objectPtrs.Count} objects: ";
+			int objNum = 1;
+			foreach( SceneObject obj in objectPtrs)
+				info += $"Object {objNum}:" + obj.ToString() + "\t";
+
+			return info;
+		}
 	}
 }

@@ -176,12 +176,6 @@ public class Vector
         return ((0 == this.v1) && (0 == this.v2) && (0 == this.v3));
     }
 
-    //TOSTRING METHOD
-    public override string ToString()
-    {
-        return $"Vector (u1, u2, u3) = ({this.v1}, {this.v2} , {this.v3})\n";
-    }
-
     //REFLECT METHOD
     // reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
     public static Vector reflect( Vector incoming, Vector normal )
@@ -194,39 +188,14 @@ public class Vector
         return rightTerm - incoming ;
 	}
 
-    /*Console.WriteLine( "Creating vector" );
+    //TOSTRING METHOD
+    public override string ToString()
+    {
+        return $"Vector (u1, u2, u3) = ({this.v1}, {this.v2} , {this.v3})\n";
+    }
 
-    Vector tVec = new Vector( 5.0, 6.0, 7.0 );
-    Vector fVec = new Vector( 5.9, 6.8, 2.1 );
-    Vector cpVec = tVec.crossProduct( fVec );
-    float dpVal = tVec.dotProduct( fVec );
-
-    Console.WriteLine(tVec );
-    Console.WriteLine(fVec );
-    Console.WriteLine( $" The dot product of {tVec} and {fVec} gives dot product {dpVal}" );
-    Console.WriteLine( $" The cross product of {tVec} x {fVec} gives dot product {cpVec}" );
-
-    Console.WriteLine( $"Adding both vecs: {tVec + fVec}" );
-    Console.WriteLine( $"Subtracting fVec from tVec: {tVec - fVec}" );
-    Console.WriteLine( $"Subtracting tVec from fVec: {fVec - tVec}" );*/
-
-/*
-Console.WriteLine( "Creating non-normalized vector" );
-
-Vector tVec = new Vector( 5.0f, 6.0f, 7.0f, false ); //normalize works
-Vector fVec = new Vector( 5.9f, 6.8f, 2.1f, false );
-Vector cpVec = tVec.crossProduct( fVec, false );
-Vector ftVec = fVec.crossProduct( tVec, false );
-
-float dpVal = tVec.dotProduct( fVec );
-
-Console.WriteLine(tVec );
-Console.WriteLine(fVec );
-Console.WriteLine( $" The dot product of {tVec} and {fVec} gives dot product {dpVal}" );
-Console.WriteLine( $" The cross product of {tVec} x {fVec} gives dot product {cpVec}" );
-Console.WriteLine( $" The cross product of {fVec} x {tVec} gives dot product {ftVec}" );
-
-Console.WriteLine( $"Adding both vecs: {tVec.addVec(fVec) }" );
-Console.WriteLine( $"Subtracting fVec from tVec: { tVec.subVec(fVec)}" );
-Console.WriteLine( $"Subtracting tVec from fVec: { fVec.subVec(tVec) }" );*/
+    public Vector copy()
+	{
+        return new Vector( this.v1, this.v2, this.v3, false );
+	}
 }

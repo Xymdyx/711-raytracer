@@ -15,7 +15,6 @@ namespace RayTracer_App.Voxels
 	{
 		// https://computergraphics.stackexchange.com/questions/6064/aabb-bounding-boxes
 		//need to compute after camera transform
-		public enum Axes { X, Y, Z }
 
 		private int _axis;
 		private Point _center;
@@ -51,7 +50,7 @@ namespace RayTracer_App.Voxels
 			this._shape = 0; //for box
 			this._max = null;
 			this._min = null;
-			this.axis = (int) Axes.X;
+			this.axis = 0;
 			this._center = null;
 			this._extents = null;
 		}

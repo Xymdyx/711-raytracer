@@ -212,6 +212,12 @@ namespace RayTracer_App.Scene_Objects
 
 			return minPt;
 		}
+
+		public override string ToString()
+		{
+			String info = $"Triangle with vertices: {vertices[0]} , {vertices[1]} , {vertices[2]}" ;
+			return info;
+		}
 	}
 
 	/*triangle-ray intersection NORMALIZED VECS*/

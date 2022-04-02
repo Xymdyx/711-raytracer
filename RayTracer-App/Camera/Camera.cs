@@ -145,6 +145,8 @@ namespace RayTracer_App.Camera
 			world.findBB(); //advanced cp 1
 			world.buildKd();
 
+			Console.WriteLine( world.kdTree );
+
 			float fpHeight = 6f; //smaller the more zoomed in
 			float fpWidth = fpHeight;
 

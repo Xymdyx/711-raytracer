@@ -166,6 +166,13 @@ namespace RayTracer_App.Scene_Objects
 
 			return this.center - minAxisDir;
 		}
+
+		//toString
+		public override string ToString()
+		{
+			String info = "Sphere with center: " + this.center.ToString() + $" and radius: {this.radius}";
+			return info;
+		}
 	}
 
 	// equivalent alternative for C in intersect formula

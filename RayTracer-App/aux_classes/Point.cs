@@ -12,6 +12,7 @@ public class Point
 {
     // CONSTANTS
     public static Point floorOrigin = new Point( -6f, 1.25f, 60.5f ); // floor origin for cp4
+    public enum Axes { X, Y, Z }
 
     private float _x;
     private float _y;
@@ -169,15 +170,14 @@ public class Point
         return new Vector( this.x - p2.x, this.y - p2.y, this.z - p2.z, false );
     }
 
+	public override string ToString()
+	{
+		return $"Point [{this.x}, {this.y}, {this.z}]";
+    }
 
-	/* Vector4 and Matrix4x4 test:
- Vector4 test1 = new Vector4( 1, 1, 1, 1 );
-		Matrix4x4 mat1 = new Matrix4x4
-			( 1, 2, 3, 4,
-			  5, 6, 7, 8 ,
-			  9, 10, 11, 12,
-			  13, 14, 15, 16);
-		Vector4 result1 = Vector4.Transform( test1, mat1 );
-		Console.WriteLine( test1 + " vector before matrix multiply with:\n" + mat1 );
-		Console.WriteLine("\n" + test1 + " vector after matrix multiply :\n" + result1 ); */
+
+    public Point copy()
+    {
+        return new Point( this.x, this.y, this.z );
+    }
 }
