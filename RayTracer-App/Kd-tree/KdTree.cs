@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using RayTracer_App.World;
 using RayTracer_App.Voxels;
 using RayTracer_App.Scene_Objects;
 
@@ -10,6 +10,7 @@ namespace RayTracer_App.Kd_tree
 	{
 		//fields
 		private KdNode _root;
+
 		private static int MAX_KD_DEPTH = 5 * 4;
 		public KdNode root { get => this._root; set => this._root = value; }
 
@@ -48,7 +49,7 @@ namespace RayTracer_App.Kd_tree
 
 		public bool terminal( List<SceneObject> objects, AABB vox, int recDepth )
 		{
-			return (recDepth >= (MAX_KD_DEPTH ) || objects.Count <= 2 ); //the spheres are in the same voxel...
+			return ( objects.Count <= 2 ); //the spheres are in the same voxel...
 		}
 
 		/*get node... starts as //getNode( allObjects, sceneBoundingBox)
@@ -129,8 +130,9 @@ namespace RayTracer_App.Kd_tree
 			return (currW != float.MinValue) && (currW != float.NaN) &&
 					(currW != float.MaxValue);
 		}
+
 		// a given ray traverses the tree and gets the closest intersection
-		public float travelTAB( LightRay ray, KdNode node = null )
+		public float travelTAB( LightRay ray, World.World world ,KdNode node = null )
 		{
 			// a[coord] = proper coord of entry pt
 			// b[coord] = proper coord of exit point
@@ -149,17 +151,20 @@ namespace RayTracer_App.Kd_tree
 			if (node == null)
 				node = this.root;
 
-
 			KdLeafNode leaf = node as KdLeafNode;
 			KdInteriorNode inner = node as KdInteriorNode;
 
 			if (leaf != null)
-				return 0.0f ;// test all intersections with objects and return the closest;
+				return world.findRayIntersect( ray, leaf.objectPtrs ) ;// test all intersections with objects and return the closest;
 			
 			// N = negative, P = positive, Z = along splitting plane
 			else if( inner != null)
 			{
 				inner.selfAABB.intersect( ray ); // update entry and exit points
+
+				if (ray.entryPt == null || ray.exitPt == null)
+					return bestW;
+
 				entryPt = ray.entryPt.copy();
 				exitPt = ray.exitPt.copy();
 				aCoord = entryPt.getAxisCoord( inner.axis );
@@ -169,34 +174,34 @@ namespace RayTracer_App.Kd_tree
 				if( aCoord <= splitOffset)
 				{
 					if (bCoord < splitOffset)
-						bestW = travelTAB( ray, inner.rear ); //N1, N2, N3, P5, Z3
+						bestW = travelTAB( ray, world, inner.rear ); //N1, N2, N3, P5, Z3
 					else
 					{
 						if (bCoord == splitOffset)
-							bestW = travelTAB( ray, inner.front ); //traverse arbitrary child node.. Z2
+							bestW = travelTAB( ray, world, inner.front ); //traverse arbitrary child node.. Z2
 						else
 						{
 							//compute and store location of splitOffset....I believe this is already done(?)
-							bestW = travelTAB( ray, inner.rear );
+							bestW = travelTAB( ray, world, inner.rear );
 
 							if ( intersectGood( bestW ) ) return bestW; //return here since we know first check will def be closer
 
-							bestW = travelTAB( ray, inner.front ); //N4
+							bestW = travelTAB( ray, world, inner.front ); //N4
 						}
 					}
 				}
 				else // aCoord > splitOffset
 				{
 					if (bCoord > splitOffset)
-						bestW = travelTAB( ray, inner.front ); // P1, P2, P3, N5, Z1
+						bestW = travelTAB( ray, world, inner.front ); // P1, P2, P3, N5, Z1
 					else
 					{
 						//compute and store location of splitOffset....I believe this is already done(?)
-						bestW = travelTAB( ray, inner.front );
+						bestW = travelTAB( ray, world,  inner.front );
 
 						if ( intersectGood( bestW ) ) return bestW; //return here since we know first check will def be closer
 
-						bestW = travelTAB( ray, inner.rear ); //P4
+						bestW = travelTAB( ray, world, inner.rear ); //P4
 					}
 				}
 

@@ -35,4 +35,10 @@ public class LightRay
 	{
 		return (entryPt != null);
 	}
+
+	public Point findPtAlong( float w )
+	{
+		Vector scaledDir = this.direction.scale( w );
+		return this.origin + scaledDir;
+	}
 }

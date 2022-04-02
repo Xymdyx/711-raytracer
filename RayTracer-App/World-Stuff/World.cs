@@ -17,6 +17,8 @@ namespace RayTracer_App.World
 		private CheckerBoardPattern _checkerboard;
 		private AABB _sceneBB;
 		private KdTree _kdTree;
+		private SceneObject _bestObj;
+
 
 		//private int[] attributes;
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
@@ -24,7 +26,9 @@ namespace RayTracer_App.World
 		public CheckerBoardPattern checkerboard { get => this._checkerboard; set => this._checkerboard = value; }
 
 		public AABB sceneBB { get => this._sceneBB; set => this._sceneBB = value; } // advanced checkpoint 1
-		public Kd_tree.KdTree kdTree { get => this._kdTree; set => this._kdTree = value;  } 
+		public Kd_tree.KdTree kdTree { get => this._kdTree; set => this._kdTree = value;  }
+		public SceneObject bestObj { get => this._bestObj; set => this._bestObj = value; }
+
 
 
 		//default CONSTRUCTOR
@@ -35,6 +39,7 @@ namespace RayTracer_App.World
 			this._checkerboard = new CheckerBoardPattern();
 			this._kdTree = new KdTree();
 			this._sceneBB = null;
+			this._bestObj = null;
 		}
 
 		//parameter CONSTRUCTOR
@@ -45,6 +50,7 @@ namespace RayTracer_App.World
 			this._checkerboard = new CheckerBoardPattern();
 			this._kdTree = new KdTree();
 			this._sceneBB = null;
+			this._bestObj = null;
 		}
 
 
@@ -97,8 +103,27 @@ namespace RayTracer_App.World
 					bestW = currW;
 					break;
 				}
-
 			}
+			return bestW;
+		}
+
+		// general function for finding best intersection of ray given a list ob objects
+		public float findRayIntersect( LightRay ray, List<SceneObject> allObjects )
+		{
+			float bestW = float.MaxValue;
+			float currW = float.MaxValue;
+			foreach (SceneObject obj in allObjects)
+			{
+				currW = obj.intersect( ray );
+
+				if ((currW != float.MinValue) && (currW != float.NaN) &&
+					(currW != float.MaxValue) && (currW < bestW) && (currW > 0))
+				{
+					bestW = currW;
+					this.bestObj = obj;
+				}
+			}
+			
 			return bestW;
 		}
 
@@ -111,31 +136,29 @@ namespace RayTracer_App.World
 			Color lightRadiance = null;
 			Point intersection = null;
 
-			foreach (SceneObject obj in objects)
+			//no kdTree
+			if (this.kdTree == null) 
+				bestW = findRayIntersect( ray, this.objects );
+			else
+				bestW = this.kdTree.travelTAB( ray, this );
+				
+			
+			//move this out for efficiency
+			if ( (this.bestObj != null) && (bestW != float.MaxValue) )
 			{
-				currW = obj.intersect( ray );
+				Sphere s = this.bestObj as Sphere;
+				Polygon t = this.bestObj as Polygon;
+				if (s != null) intersection = s.getRayPoint( ray, bestW );
+				else if (t != null) intersection = t.getRayPoint( ray, bestW );
 
-				if ( (currW != float.MinValue) && (currW != float.NaN) &&
-					(currW != float.MaxValue) && (currW < bestW) && (currW > 0 ) )
-				{
-					bestW = currW;
-					currColor = null; //reset the color since we know we're overwriting it
+				IlluminationModel bestObjLightModel = this.bestObj.lightModel;
 
-					Sphere s = obj as Sphere;
-					Polygon t = obj as Polygon;
-					if (s != null) intersection = s.getRayPoint( ray, currW );
-					else if (t != null) intersection = t.getRayPoint( ray, currW );
+				if (t != null) // determine triangle point color
+					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
 
-					IlluminationModel objLightModel = obj.lightModel;
-
-					if (t != null) // determine triangle point color
-						obj.diffuse = this.checkerboard.illuminate( t ,CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
-
-					currColor = objLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, obj ); //return to irradiance for TR
-
-
-				}
+				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj ); //return to irradiance for TR
 			}
+
 			return currColor;
 		}
 

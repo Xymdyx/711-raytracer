@@ -74,49 +74,49 @@ namespace RayTracer_App.Voxels
 		//https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
 
 			//if ray's parallel, it won't intersect...These wouldn't have solns
-			float minX = (this.min.x - ray.origin.x) / ray.direction.v1;
-			float maxX = (this.max.x - ray.origin.x) / ray.direction.v1;
+			float minT = (this.min.x - ray.origin.x) / ray.direction.v1;
+			float maxT = (this.max.x - ray.origin.x) / ray.direction.v1;
 			float minY = (this.min.y - ray.origin.y) / ray.direction.v2;
 			float maxY = (this.max.y - ray.origin.y) / ray.direction.v2;
 			float minZ = (this.min.z - ray.origin.z) / ray.direction.v3;
 			float maxZ = (this.max.z - ray.origin.z) / ray.direction.v3;
 
 			//must have vals be true to name
-			if (minX < maxX)
-				(minX, maxX) = (maxX, minX); // tuples let me swap variables w/o temps
+			if (minT > maxT)
+				(minT, maxT) = (maxT, minT); // tuples let me swap variables w/o temps
 
-			if (minY < maxY)
+			if (minY > maxY)
 				(minY, maxY) = (maxY, minY);
 
-			if (minZ < maxZ)
+			if (minZ > maxZ)
 				(minZ, maxZ) = (maxZ, minZ);
 
-			Point bEntry = new Point( minX, minY, minZ ); //make these now in case we pass later
-			Point bExit = new Point( maxX, maxY, maxZ );
+			Point bEntry = new Point( minT, minY, minZ ); //make these now in case we pass later
+			Point bExit = new Point( maxT, maxY, maxZ );
 
 			ray.clearObjPts();
 			
 			//we don't hit the 2d box on the xy plane
-			if ((minX > maxY) || (minY > maxX)) 
+			if ((minT > maxY) || (minY > maxT)) 
 				return false;
 
 			//update for test below on xz plane
-			if (minY > minX)
-				minX = minY;
+			if (minY > minT)
+				minT = minY;
 
-			if (maxY < maxX)
-				maxX = maxY;
+			if (maxY < maxT)
+				maxT = maxY;
 
 			//we don't hit the 2d box on the xz plane
-			if ((minX > maxZ) || (minZ > maxX)) 
+			if ((minT > maxZ) || (minZ > maxT)) 
 				return false;
 
 			//update for posterity
-			if (minZ > minX)
-				minX = minZ;
+			if (minZ > minT)
+				minT = minZ;
 
-			if (maxZ < maxX)
-				maxX = maxZ;
+			if (maxZ < maxT)
+				maxT = maxZ;
 
 			//so the ray knows where it went for later
 			ray.entryPt = bEntry;

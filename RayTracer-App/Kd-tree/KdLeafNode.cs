@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using RayTracer_App.Scene_Objects;
+using RayTracer_App.World;
+
 namespace RayTracer_App.Kd_tree
 {
 	public class KdLeafNode : KdNode
