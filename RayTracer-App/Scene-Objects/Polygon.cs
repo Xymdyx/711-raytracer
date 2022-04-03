@@ -149,6 +149,30 @@ namespace RayTracer_App.Scene_Objects
 			}
 		}
 
+		public void rotateX( float degrees)
+		{
+			foreach (Point vertex in vertices)
+			{
+				vertex.rotateX( degrees );
+			}
+		}
+
+		public void rotateY( float degrees )
+		{
+			foreach (Point vertex in vertices)
+			{
+				vertex.rotateY( degrees );
+			}
+		}
+
+		public void rotateZ( float degrees )
+		{
+			foreach (Point vertex in vertices)
+			{
+				vertex.rotateZ( degrees );
+			}
+		}
+
 		// helper for getting minimum and max points
 		public Point getMaxPt( int axis )
 		{

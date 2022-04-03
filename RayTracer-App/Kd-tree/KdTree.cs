@@ -20,7 +20,7 @@ namespace RayTracer_App.Kd_tree
 		// constructors
 		public KdTree() 
 		{
-			this._root =  new KdInteriorNode();
+			this._root =  null;
 			this._maxLeafObjs = 2;
 		}
 

@@ -56,10 +56,9 @@ namespace RayTracer_App.aux_classes
                         {
                             List<float> newRow = inputLine.Split( new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries ).Select( x => float.Parse( x ) ).ToList();
                             Point vertex = new Point( newRow[0], newRow[1], newRow[2] );
-                            //must do transformations to individual points
-                            vertex.scale( 2.5f, 2.5f, 2.5f );
+                            //the ply is read as a RHS as far as I can tell, so I do negative transforms here to not have the rabbit upside down
+                            vertex.scale( 2.5f, -2.5f, -2.5f );
                             vertex.translate( originVec.v1, originVec.v2, originVec.v3 );
-                            //add vertex relative to bunnyOrigin
                             data.Add( vertex );
                             totalVertices--; //we want only the vertices
                         }
@@ -102,14 +101,14 @@ namespace RayTracer_App.aux_classes
                     }
                 }
             }
-            //debug.. prints correctly, VS likes to not show all outpuit...
+            /*debug.. prints correctly, VS likes to not show all outpuit...
             foreach (Point p in data)
                 Console.WriteLine( p );
 
             Console.WriteLine();
 
             foreach (Polygon tri in plyTriangles)
-                Console.WriteLine( tri );
+                Console.WriteLine( tri );*/
 
             return plyTriangles;
         }

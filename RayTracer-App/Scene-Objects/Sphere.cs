@@ -126,6 +126,21 @@ namespace RayTracer_App.Scene_Objects
 			center.translate( x, y, z );
 		}
 
+		public void rotateX( float degrees )
+		{
+			center.rotateX( degrees );
+		}
+
+		public void rotateY( float degrees )
+		{
+			center.rotateY( degrees );
+		}
+
+		public void rotateZ( float degrees )
+		{
+			center.rotateZ( degrees );
+		}
+
 		// helper for getting minimum and max points
 		public Point getMaxPt( int axis )
 		{

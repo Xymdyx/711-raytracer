@@ -161,6 +161,57 @@ public class Point
         this.fromHmgCoords( newScaledVec );
     }
 
+    //rotate a Point about the x via row-major Vector4 transformed with Mat4x4
+    public void rotateX( float degrees )
+    {
+        Vector4 ptHmg = this.toHmgCoords();
+        degrees *= (float) (Math.PI / 180f);
+        float cos = (float) Math.Cos( degrees );
+        float sin = (float)Math.Sin( degrees );
+
+        Matrix4x4 rotX = new Matrix4x4
+            ( 1, 0, 0, 0,
+             0, cos ,-sin, 0,
+             0, sin, cos, 0,
+             0, 0, 0, 1 );
+        Vector4 newScaledVec = Vector4.Transform( ptHmg, rotX );
+        this.fromHmgCoords( newScaledVec );
+    }
+
+    //rotate a Point about the y via row-major Vector4 transformed with Mat4x4
+    public void rotateY( float degrees )
+    {
+        Vector4 ptHmg = this.toHmgCoords();
+        degrees *= (float)(Math.PI / 180f);
+        float cos = (float)Math.Cos( degrees );
+        float sin = (float)Math.Sin( degrees );
+
+        Matrix4x4 rotY = new Matrix4x4
+            ( cos, 0, sin, 0,
+             0, 0, 0, 0,
+             -sin, 0, cos, 0,
+             0, 0, 0, 1 );
+        Vector4 newScaledVec = Vector4.Transform( ptHmg, rotY );
+        this.fromHmgCoords( newScaledVec );
+    }
+
+    //rotate a Point about the z via row-major Vector4 transformed with Mat4x4
+    public void rotateZ( float degrees )
+    {
+        Vector4 ptHmg = this.toHmgCoords();
+        degrees *= (float)(Math.PI / 180);
+        float cos = (float)Math.Cos( degrees );
+        float sin = (float)Math.Sin( degrees );
+
+        Matrix4x4 rotZ = new Matrix4x4
+            ( cos, -sin, 0, 0,
+             sin, cos, 0, 0,
+             0, 0, 0, 0,
+             0, 0, 0, 1 );
+        Vector4 newScaledVec = Vector4.Transform( ptHmg, rotZ );
+        this.fromHmgCoords( newScaledVec );
+    }
+
     //TODO ADD TRANSFORMATIONS SUCH AS ROTATING
 
     // subtract two points to get vector sans normalizing. For Moller-Trumbone ray-triangle

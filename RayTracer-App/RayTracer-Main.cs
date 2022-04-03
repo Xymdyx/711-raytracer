@@ -49,9 +49,6 @@ public class RayTracerMain
 		bottomLeft2.texCoord = new Point( 0, 0, 1 );
 		bottomRight.texCoord = new Point( 1, 0, 1 );
 
-		//List<Point> triVerts1 = new List<Point> { new Point( -6f, floorHeight, 2.0f), new Point( 1.5f, floorHeight, 2.0f ), new Point( -6f, floorHeight, 78.5f ) }; 
-		//List<Point> triVerts2 = new List<Point> { new Point( 1.5f, floorHeight, 2.0f ), new Point( 70.5f, floorHeight, 6.0f ), new Point( -6f, floorHeight, 78.5f ) }; 
-
 		List<Point> triVerts1 = new List<Point> { topLeft, bottomLeft, topRight }; //topLeft, bottomLeft, topRight
 		List<Point> triVerts2 = new List<Point> { bottomRight, topRight2, bottomLeft2 }; // bottomRight, topRight2, bottomLeft2
 

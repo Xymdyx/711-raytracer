@@ -2,6 +2,7 @@
 using System;
 using System.Numerics;
 using System.Collections.Generic;
+using System.Diagnostics; // for stopwatch
 using RayTracer_App.Scene_Objects;
 using RayTracer_App.Illumination_Models;
 using RayTracer_App.Voxels;
@@ -53,6 +54,14 @@ namespace RayTracer_App.World
 			this._bestObj = null;
 		}
 
+		//debug print
+		public void printObjs()
+		{
+			foreach (SceneObject obj in objects)
+			{
+				Console.WriteLine( obj );
+			}
+		}
 
 		// add object to objectlist
 		public void addObject( SceneObject obj )
@@ -79,12 +88,8 @@ namespace RayTracer_App.World
 		public void transformAll( Matrix4x4 camViewMat)
 		{
 			//transforming before and after camera transform gives same results, so long as it is done before the ray shooting
-			Console.WriteLine( "following transforms:" );
 			 foreach (SceneObject obj in objects)
-			{
 				obj.transform( camViewMat ); //converts all objects to camera space
-				Console.WriteLine( obj );
-			}
 
 			return;
 		}
@@ -141,7 +146,7 @@ namespace RayTracer_App.World
 
 			//no kdTree
 
-			if (this.kdTree == null)
+			if (this.kdTree.root == null)
 				bestW = findRayIntersect( ray, this.objects );
 			else
 				bestW = this.kdTree.travelTAB( ray, this );
@@ -229,10 +234,12 @@ namespace RayTracer_App.World
 		public void buildKd()
 		{
 			//time building tree start
+			Stopwatch kdTimer = new Stopwatch();
+			kdTimer.Start();
 			kdTree.maxLeafObjs = this.objects.Count / 2;
 			kdTree.root = kdTree.getNode( this.objects, this.sceneBB, 0 );
-			//time building tree end
-			//print time
+			kdTimer.Stop();
+			Console.WriteLine( "Building the kd tree took " + (kdTimer.ElapsedMilliseconds) + " milliseconds" );
 		}
 	}
 }
