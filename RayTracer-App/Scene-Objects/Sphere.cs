@@ -129,6 +129,75 @@ namespace RayTracer_App.Scene_Objects
 		{
 			center.translate( x, y, z );
 		}
+
+		public void rotateX( float degrees )
+		{
+			center.rotateX( degrees );
+		}
+
+		public void rotateY( float degrees )
+		{
+			center.rotateY( degrees );
+		}
+
+		public void rotateZ( float degrees )
+		{
+			center.rotateZ( degrees );
+		}
+
+		// helper for getting minimum and max points
+		public Point getMaxPt( int axis )
+		{
+			if (axis >= 3 || axis < 0)
+			{
+				Console.WriteLine( $"Axis {axis} is not int range [0-2]" );
+				return null;
+			}
+
+			Vector maxAxisDir = null;
+			if ( axis == 0)
+				maxAxisDir = new Vector( this.radius, 0, 0, false );
+			else if( axis == 1 )
+				maxAxisDir = new Vector( 0, this.radius, 0, false );
+			else
+				maxAxisDir = new Vector( 0, 0, this.radius, false );
+
+
+			return this.center + maxAxisDir;
+		}
+
+		// helper for getting minimum points on sphere
+		public Point getMinPt( int axis )
+		{
+			if (axis >= 3 || axis < 0)
+			{
+				Console.WriteLine( $"Axis {axis} is not int range [0-2]" );
+				return null;
+			}
+
+			Vector minAxisDir = null;
+			if ( axis == 0)
+				minAxisDir = new Vector( this.radius, 0, 0, false );
+			else if( axis == 1 )
+				minAxisDir = new Vector( 0, this.radius, 0, false );
+			else
+				minAxisDir = new Vector( 0, 0, this.radius, false );
+
+			return this.center - minAxisDir;
+		}
+
+		public override bool hasTexCoord()
+		{
+			
+			return ( this.center.texCoord != null );
+		}
+
+		//toString
+		public override string ToString()
+		{
+			String info = "Sphere with center: " + this.center.ToString() + $" and radius: {this.radius}";
+			return info;
+		}
 	}
 
 	// equivalent alternative for C in intersect formula

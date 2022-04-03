@@ -2,9 +2,11 @@
 using System;
 using System.Numerics;
 using System.Collections.Generic;
-
+using System.Diagnostics; // for stopwatch
 using RayTracer_App.Scene_Objects;
 using RayTracer_App.Illumination_Models;
+using RayTracer_App.Voxels;
+using RayTracer_App.Kd_tree;
 //MATRIX 4D -> MATRIX4X4
 
 namespace RayTracer_App.World
@@ -14,12 +16,21 @@ namespace RayTracer_App.World
 		private List<SceneObject> _objects;
 		private List<LightSource> _lights;
 		private CheckerBoardPattern _checkerboard;
+		private AABB _sceneBB;
+		private KdTree _kdTree;
+		private SceneObject _bestObj;
 		private static int MAX_DEPTH = 7; //cp5 max bounces
+
 
 		//private int[] attributes;
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
 		public List<LightSource> lights { get => this._lights ; set => this._lights = value; } // checkpoint 3
 		public CheckerBoardPattern checkerboard { get => this._checkerboard; set => this._checkerboard = value; }
+
+		public AABB sceneBB { get => this._sceneBB; set => this._sceneBB = value; } // advanced checkpoint 1
+		public Kd_tree.KdTree kdTree { get => this._kdTree; set => this._kdTree = value;  }
+		public SceneObject bestObj { get => this._bestObj; set => this._bestObj = value; }
+
 
 
 		//default CONSTRUCTOR
@@ -28,6 +39,9 @@ namespace RayTracer_App.World
 			this._objects = new List<SceneObject>();
 			this._lights = new List<LightSource>();
 			this._checkerboard = new CheckerBoardPattern();
+			this._kdTree = new KdTree();
+			this._sceneBB = null;
+			this._bestObj = null;
 		}
 
 		//parameter CONSTRUCTOR
@@ -36,8 +50,19 @@ namespace RayTracer_App.World
 			this._objects = objects;
 			this._lights = lights;
 			this._checkerboard = new CheckerBoardPattern();
+			this._kdTree = new KdTree();
+			this._sceneBB = null;
+			this._bestObj = null;
 		}
 
+		//debug print
+		public void printObjs()
+		{
+			foreach (SceneObject obj in objects)
+			{
+				Console.WriteLine( obj );
+			}
+		}
 
 		// add object to objectlist
 		public void addObject( SceneObject obj )
@@ -65,9 +90,7 @@ namespace RayTracer_App.World
 		{
 			//transforming before and after camera transform gives same results, so long as it is done before the ray shooting
 			 foreach (SceneObject obj in objects)
-			{
 				obj.transform( camViewMat ); //converts all objects to camera space
-			}
 
 			return;
 		}
@@ -88,8 +111,28 @@ namespace RayTracer_App.World
 					bestW = currW;
 					break;
 				}
-
 			}
+			return bestW;
+		}
+
+		// general function for finding best intersection of ray given a list ob objects
+		public float findRayIntersect( LightRay ray, List<SceneObject> allObjects )
+		{
+			float bestW = float.MaxValue;
+			float currW = float.MaxValue;
+
+			foreach (SceneObject obj in allObjects)
+			{
+				currW = obj.intersect( ray );
+
+				if ((currW != float.MinValue) && (currW != float.NaN) &&
+					(currW != float.MaxValue) && (currW < bestW) && (currW > 0))
+				{
+					bestW = currW;
+					this.bestObj = obj;
+				}
+			}
+			
 			return bestW;
 		}
 
@@ -102,51 +145,115 @@ namespace RayTracer_App.World
 			Color lightRadiance = null;
 			Point intersection = null;
 
-			foreach (SceneObject obj in objects)
+			//no kdTree
+
+			if (this.kdTree.root == null)
+				bestW = findRayIntersect( ray, this.objects );
+			else
+				bestW = this.kdTree.travelTAB( ray, this );
+
+
+			//move this out for efficiency
+			if ((this.bestObj != null) && (bestW != float.MaxValue))
 			{
-				currW = obj.intersect( ray );
+				Sphere s = this.bestObj as Sphere;
+				Polygon t = this.bestObj as Polygon;
+				if (s != null) intersection = s.getRayPoint( ray, bestW );
+				else if (t != null) intersection = t.getRayPoint( ray, bestW );
 
-				if ( (currW != float.MinValue) && (currW != float.NaN) &&
-					(currW != float.MaxValue) && (currW < bestW) && (currW > 0 ) )
+				IlluminationModel bestObjLightModel = this.bestObj.lightModel;
+
+				if ((t != null) && (t.hasTexCoord())) // determine floor triangle point color
+					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
+
+				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj ); //return to irradiance for TR
+
+				//cp5 
+				if (recDepth < MAX_DEPTH)
 				{
-					bestW = currW;
-					currColor = null; //reset the color since we know we're overwriting it
-
-					Sphere s = obj as Sphere;
-					Polygon t = obj as Polygon;
-					if (s != null) intersection = s.getRayPoint( ray, currW );
-					else if (t != null) intersection = t.getRayPoint( ray, currW );
-
-					IlluminationModel objLightModel = obj.lightModel;
-
-					if (t != null) // determine triangle point color
-						obj.diffuse = this.checkerboard.illuminate( t ,CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
-
-					currColor = objLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, obj ); //return to irradiance for TR
-
-					//cp5 
-					if ( recDepth < MAX_DEPTH)
+					if (this.bestObj.kRefl > 0)
 					{
-						if(obj.kRefl > 0)
-						{
-							//importance sampling here if on
-							LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, obj.normal ), intersection );
-							currColor = spawnRay( reflRay, recDepth + 1 );
+						//importance sampling here if on
+						LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, this.bestObj.normal ), intersection );
+						currColor = spawnRay( reflRay, recDepth + 1 );
 
-							if( currColor != null)
-								currColor = currColor.scale( obj.kRefl );
-						}
-						if( obj.kTrans > 0)
-						{
-							//spawn transmission ray
-							//currColor += spawnRay( translRay, recDepth + 1 );
-							;
-						}
-
+						if (currColor != null)
+							currColor = currColor.scale( this.bestObj.kRefl );
+					}
+					if (this.bestObj.kTrans > 0)
+					{
+						//spawn transmission ray
+						//currColor += spawnRay( translRay, recDepth + 1 );
+						;
 					}
 				}
 			}
 			return currColor;
+		}
+
+/* KDTREE METHODS */
+
+		// set a boundibg box
+		// axis.. 0 =x, y =1, 2 =z
+		public void setBB( Point p1, Point p2 , int axis = 0 )
+		{
+			//hardcoded BB that works
+			this._sceneBB = new AABB( p1, p2, axis );
+		}
+
+		// find max and min x,y,z vals for whole scene ( the front upper-left and back bottom-right corners of the AABB
+		// form AABB points from these
+		// pass to aabb		public void findBB( int boxAxis = 0 )
+		public void findBB( int boxAxis = 0)
+		{
+
+			float[] max = new float[3];
+			float[] min = new float[3];
+
+			float[] sceneMax = { float.MinValue, float.MinValue, float.MinValue };
+			float[] sceneMin = { float.MaxValue, float.MaxValue, float.MaxValue };
+
+
+			if (this._sceneBB == null)
+			{
+				foreach (SceneObject obj in objects)
+				{
+					Polygon t = obj as Polygon;
+					Sphere s = obj as Sphere;
+
+					//find the max and min x,y,z vals for each point and compare against scene
+					for (int axis = 0; axis < 3; axis++)
+					{
+						if (t != null)
+						{
+							max[axis] = t.getMaxPt( axis ).getAxisCoord( axis );
+							min[axis] = t.getMinPt( axis ).getAxisCoord( axis );
+						}
+						else if (s != null)
+						{
+							max[axis] = s.getMaxPt( axis ).getAxisCoord( axis );
+							min[axis] = s.getMinPt( axis ).getAxisCoord( axis );
+						}
+
+
+
+				//set AABB for the scene
+				Point minPt = new Point( sceneMin[0], sceneMin[1], sceneMin[2] );
+				Point maxPt = new Point( sceneMax[0], sceneMax[1], sceneMax[2] );
+				this._sceneBB = new AABB( minPt, maxPt, boxAxis );
+			}
+		}
+
+		//builds the kdTree for the world
+		public void buildKd()
+		{
+			//time building tree start
+			Stopwatch kdTimer = new Stopwatch();
+			kdTimer.Start();
+			kdTree.maxLeafObjs = this.objects.Count / 2;
+			kdTree.root = kdTree.getNode( this.objects, this.sceneBB, 0 );
+			kdTimer.Stop();
+			Console.WriteLine( "Building the kd tree took " + (kdTimer.ElapsedMilliseconds) + " milliseconds" );
 		}
 	}
 }

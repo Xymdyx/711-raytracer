@@ -12,6 +12,7 @@ public class Point
 {
     // CONSTANTS
     public static Point floorOrigin = new Point( -6f, 1.25f, 60.5f ); // floor origin for cp4
+    public enum Axes { X, Y, Z }
 
     private float _x;
     private float _y;
@@ -82,6 +83,15 @@ public class Point
     }
 
     //METHODS
+//METHODS
+    public float getAxisCoord( int axis )
+	{
+        if (axis == 0) return this.x;
+        else if (axis == 1) return this.y;
+        else if (axis == 2) return this.z;
+
+        return float.NaN;
+	}
 
     //calculate distance
     public float distance( Point p2)
@@ -151,23 +161,74 @@ public class Point
         this.fromHmgCoords( newScaledVec );
     }
 
+    //rotate a Point about the x via row-major Vector4 transformed with Mat4x4
+    public void rotateX( float degrees )
+    {
+        Vector4 ptHmg = this.toHmgCoords();
+        degrees *= (float) (Math.PI / 180f);
+        float cos = (float) Math.Cos( degrees );
+        float sin = (float)Math.Sin( degrees );
+
+        Matrix4x4 rotX = new Matrix4x4
+            ( 1, 0, 0, 0,
+             0, cos ,-sin, 0,
+             0, sin, cos, 0,
+             0, 0, 0, 1 );
+        Vector4 newScaledVec = Vector4.Transform( ptHmg, rotX );
+        this.fromHmgCoords( newScaledVec );
+    }
+
+    //rotate a Point about the y via row-major Vector4 transformed with Mat4x4
+    public void rotateY( float degrees )
+    {
+        Vector4 ptHmg = this.toHmgCoords();
+        degrees *= (float)(Math.PI / 180f);
+        float cos = (float)Math.Cos( degrees );
+        float sin = (float)Math.Sin( degrees );
+
+        Matrix4x4 rotY = new Matrix4x4
+            ( cos, 0, sin, 0,
+             0, 0, 0, 0,
+             -sin, 0, cos, 0,
+             0, 0, 0, 1 );
+        Vector4 newScaledVec = Vector4.Transform( ptHmg, rotY );
+        this.fromHmgCoords( newScaledVec );
+    }
+
+    //rotate a Point about the z via row-major Vector4 transformed with Mat4x4
+    public void rotateZ( float degrees )
+    {
+        Vector4 ptHmg = this.toHmgCoords();
+        degrees *= (float)(Math.PI / 180);
+        float cos = (float)Math.Cos( degrees );
+        float sin = (float)Math.Sin( degrees );
+
+        Matrix4x4 rotZ = new Matrix4x4
+            ( cos, -sin, 0, 0,
+             sin, cos, 0, 0,
+             0, 0, 0, 0,
+             0, 0, 0, 1 );
+        Vector4 newScaledVec = Vector4.Transform( ptHmg, rotZ );
+        this.fromHmgCoords( newScaledVec );
+    }
+
     //TODO ADD TRANSFORMATIONS SUCH AS ROTATING
 
     // subtract two points to get vector sans normalizing. For Moller-Trumbone ray-triangle
+    // dest - origin
     public Vector ptSub( Point p2)
     {
         return new Vector( this.x - p2.x, this.y - p2.y, this.z - p2.z, false );
     }
 
+	public override string ToString()
+	{
+		return $"Point [{this.x}, {this.y}, {this.z}]";
+    }
 
-	/* Vector4 and Matrix4x4 test:
- Vector4 test1 = new Vector4( 1, 1, 1, 1 );
-		Matrix4x4 mat1 = new Matrix4x4
-			( 1, 2, 3, 4,
-			  5, 6, 7, 8 ,
-			  9, 10, 11, 12,
-			  13, 14, 15, 16);
-		Vector4 result1 = Vector4.Transform( test1, mat1 );
-		Console.WriteLine( test1 + " vector before matrix multiply with:\n" + mat1 );
-		Console.WriteLine("\n" + test1 + " vector after matrix multiply :\n" + result1 ); */
+
+    public Point copy()
+    {
+        return new Point( this.x, this.y, this.z );
+    }
 }

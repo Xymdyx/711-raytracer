@@ -45,7 +45,7 @@ namespace RayTracer_App.Scene_Objects
 			this._normal = null; //TODO calculate normal
 			this._diffuse = diffuse;
 			this._specular = specular;
-			this._lightModel = Phong.floorPhong;
+			this._lightModel = PhongBlinn.floorPhongBlinn;
 
 		}
 
@@ -147,6 +147,108 @@ namespace RayTracer_App.Scene_Objects
 			{
 				vertex.translate( x, y, z );
 			}
+		}
+
+		public void rotateX( float degrees)
+		{
+			foreach (Point vertex in vertices)
+			{
+				vertex.rotateX( degrees );
+			}
+		}
+
+		public void rotateY( float degrees )
+		{
+			foreach (Point vertex in vertices)
+			{
+				vertex.rotateY( degrees );
+			}
+		}
+
+		public void rotateZ( float degrees )
+		{
+			foreach (Point vertex in vertices)
+			{
+				vertex.rotateZ( degrees );
+			}
+		}
+
+		// helper for getting minimum and max points
+		public Point getMaxPt( int axis )
+		{
+			Point maxPt = this.vertices[0];
+			if( axis >= 3 || axis < 0)
+			{
+				Console.WriteLine( $"Axis {axis} is not int range [0-2]" );
+				return null;
+			}
+
+			foreach( Point p in this.vertices)
+			{
+				if( axis == 0)
+				{
+					if (p.x > maxPt.x)
+						maxPt = p;
+				} 
+				else if( axis == 1)
+				{
+					if (p.y > maxPt.y)
+						maxPt = p;
+				}
+				else
+				{
+					if (p.z > maxPt.z)
+						maxPt = p;
+				}
+			}
+
+			return maxPt;
+		}
+
+		// helper for getting minimum and max points
+		public Point getMinPt( int axis )
+		{
+			Point minPt = this.vertices[0];
+			if (axis >= 3 || axis < 0)
+			{
+				Console.WriteLine( $"Axis {axis} is not int range [0-2]" );
+				return null;
+			}
+
+			foreach (Point p in this.vertices)
+			{
+				if (axis == 0)
+				{
+					if (p.x < minPt.x)
+						minPt = p;
+				}
+				else if (axis == 1)
+				{
+					if (p.y < minPt.y)
+						minPt = p;
+				}
+				else
+				{
+					if (p.z < minPt.z)
+						minPt = p;
+				}
+			}
+
+			return minPt;
+		}
+		public override bool hasTexCoord()
+		{
+			foreach( Point vertex in this.vertices)
+			{
+				if (vertex.texCoord == null)
+					return false;
+			}
+			return true;
+		}
+		public override string ToString()
+		{
+			String info = $"Triangle with vertices: {vertices[0]} , {vertices[1]} , {vertices[2]}" ;
+			return info;
 		}
 	}
 

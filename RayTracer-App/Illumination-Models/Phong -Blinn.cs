@@ -16,6 +16,7 @@ namespace RayTracer_App.Illumination_Models
 		//best 0f, .55f, .05f, 20f 
 		public static PhongBlinn regularPhongBlinn = new PhongBlinn ( 0f, .65f, .25f, 12f );
 		public static PhongBlinn floorPhongBlinn = new PhongBlinn( 0f, .45f, .35f, 128f );
+		public static PhongBlinn bunnyBlinn = new PhongBlinn( 0f, .55f, .45f, 128f );
 
 
 		private float _ka; // not going to implement since ambient will be shaved later

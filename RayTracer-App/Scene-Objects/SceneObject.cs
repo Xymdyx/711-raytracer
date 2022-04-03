@@ -1,5 +1,6 @@
 ﻿using RayTracer_App.Illumination_Models;
 using System.Numerics;
+using RayTracer_App.Voxels;
 
 
 //MATRIX 4D -> MATRIX4X4
@@ -81,6 +82,13 @@ namespace RayTracer_App.Scene_Objects
 		{
 			return new Color(); //return the background color
 		}
+
+		public virtual Point getMaxPt( int axis ) { return Point.origin;  }
+
+		public virtual Point getMinPt( int axis ) { return Point.origin; }
+
+		public virtual bool hasTexCoord() { return false; }
+
 
 		//override ToString()
 	}

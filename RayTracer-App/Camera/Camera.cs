@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using System.Diagnostics;
 using RayTracer_App.World;
 
 //MATRIX 4D -> MATRIX4X4
@@ -16,7 +17,6 @@ namespace RayTracer_App.Camera
 		private Point _lookAt;
 		//cameraTransform
 		private Matrix4x4 _camTransformMat;
-
 
 		public Vector up { get => this._up; set => this._up = value; } 
 		public Point eyePoint { get => this._eyePoint; set => this._eyePoint = value; }
@@ -92,10 +92,10 @@ namespace RayTracer_App.Camera
 			Color averageHitColor = null;
 			Color[] hitColors = new Color[4]; //for super-sampling
 			Point[] hitPoints = new Point[4] {
-				new Point( centerPoint.x - pixWidth / 2, centerPoint.y + pixHeight / 2, centerPoint.z), //top-left
-				new Point( centerPoint.x + pixWidth / 2, centerPoint.y + pixHeight / 2, centerPoint.z ), //top-right
-				new Point( centerPoint.x - pixWidth / 2, centerPoint.y - pixHeight / 2, centerPoint.z ), //bottom-left
-				new Point( centerPoint.x + pixWidth /2, centerPoint.y - pixHeight / 2, centerPoint.z ), //bottom-right
+				new Point( centerPoint.x - pixWidth / 2f, centerPoint.y + pixHeight / 2f, centerPoint.z), //top-left
+				new Point( centerPoint.x + pixWidth / 2f, centerPoint.y + pixHeight / 2f, centerPoint.z ), //top-right
+				new Point( centerPoint.x - pixWidth / 2f, centerPoint.y - pixHeight / 2f, centerPoint.z ), //bottom-left
+				new Point( centerPoint.x + pixWidth /2f, centerPoint.y - pixHeight / 2f, centerPoint.z ), //bottom-right
 			};
 			
 			for( int hitIdx = 0; hitIdx < 4; hitIdx ++ )
@@ -141,6 +141,13 @@ namespace RayTracer_App.Camera
 			// this converts everything to camera coords
 			makeCamMat();
 			world.transformAll( this.camTransformMat );
+
+			world.findBB(); //advanced cp 1
+			world.buildKd();
+
+			//time the render here...
+			Stopwatch renderTimer = new Stopwatch();
+			renderTimer.Start();
 
 			float fpHeight = 6f; //smaller the more zoomed in
 			float fpWidth = fpHeight;
@@ -207,7 +214,11 @@ namespace RayTracer_App.Camera
 				fpPoint.y -= pixHeight; // positive y is down
 			}
 
+			renderTimer.Stop();
+			Console.WriteLine( "Rendering the scene took " + (renderTimer.ElapsedMilliseconds) + " milliseconds" );
 			Console.WriteLine( $" There are {hits} non-background colors/ {imageHeight * imageWidth} colors total" );
+			//time render end
+			// print total render time
 			return pixColors ;
 		}
 
