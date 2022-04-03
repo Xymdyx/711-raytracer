@@ -29,7 +29,7 @@ public class RayTracerMain
 		float s1Height = 1.75f;
 		float s2Depth = s1Depth + 1.85f;
 		float sphereRad = 1.5f;
-		float s2Refl = .75f;
+		float s2Refl = 1.0f;
 
 		float floorHeight = 5.5f;
 
@@ -59,7 +59,7 @@ public class RayTracerMain
 		triangle2.translate( -5f, 0, 0 );
 
 		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth ), sphereRad );
-		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad ); //setting the point elsewhere gives translating whole sphere
+		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad, s2Refl ); //setting the point elsewhere gives translating whole sphere
 		sphere2.translate( 1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform
 
 		//adv cp 1... parse Bunny

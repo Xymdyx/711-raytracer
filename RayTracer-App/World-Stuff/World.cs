@@ -175,10 +175,12 @@ namespace RayTracer_App.World
 					{
 						//importance sampling here if on
 						LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, this.bestObj.normal ), intersection );
+						//need this since we recurse and may update bestObj
+						SceneObject localBest = this.bestObj; 
 						currColor = spawnRay( reflRay, recDepth + 1 );
 
 						if (currColor != null)
-							currColor = currColor.scale( this.bestObj.kRefl );
+							currColor = currColor.scale( localBest.kRefl );
 					}
 					if (this.bestObj.kTrans > 0)
 					{
@@ -235,7 +237,14 @@ namespace RayTracer_App.World
 							min[axis] = s.getMinPt( axis ).getAxisCoord( axis );
 						}
 
+						//update scene min and max points if applicable
+						if (max[axis] > sceneMax[axis])
+							sceneMax[axis] = max[axis];
+						if (min[axis] < sceneMin[axis])
+							sceneMin[axis] = min[axis];
+					}
 
+				}
 
 				//set AABB for the scene
 				Point minPt = new Point( sceneMin[0], sceneMin[1], sceneMin[2] );
