@@ -18,13 +18,9 @@ public class RayTracerMain
 	static bool[] valid = new bool[1];
 	static float[] rat = new float[4];
 
-	//OPENGL DRAW CCW order matters. We are in LHS system. +y is down. +x is right. +z into screen. Row major. Postmultiply.
-	//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
-	public static void doRayTracing()
+	public static Camera setupWhitted( World world, bool includeBunny = false )
 	{
 		//initialize objects
-		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25
-
 		float s1Depth = 8.75f; //+z into the scene... I am IN LHS
 		float s1Height = 1.75f;
 		float s2Depth = s1Depth + 1.85f;
@@ -36,12 +32,12 @@ public class RayTracerMain
 		float bunnyDepth = s1Depth - 10f; //s1Depth - 4f;
 
 		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
-		Point topLeft = new Point( -6f, floorHeight, 68.5f ); 
-		Point topRight = new Point( 30f, floorHeight, 68.5f ); 
-		Point topRight2 = new Point( 30f, floorHeight, 68.5f ); 
-		Point bottomLeft = new Point( -6f, floorHeight, 2.0f ); 
-		Point bottomLeft2 = new Point( -6f, floorHeight, 2.0f ); 
-		Point bottomRight = new Point( 30f, floorHeight, 2.0f ); 
+		Point topLeft = new Point( -6f, floorHeight, 68.5f );
+		Point topRight = new Point( 30f, floorHeight, 68.5f );
+		Point topRight2 = new Point( 30f, floorHeight, 68.5f );
+		Point bottomLeft = new Point( -6f, floorHeight, 2.0f );
+		Point bottomLeft2 = new Point( -6f, floorHeight, 2.0f );
+		Point bottomRight = new Point( 30f, floorHeight, 2.0f );
 
 		topLeft.texCoord = new Point( 0, 0, 0 );
 		topRight.texCoord = new Point( 1, 0, 0 );
@@ -50,7 +46,7 @@ public class RayTracerMain
 		bottomLeft2.texCoord = new Point( 0, 0, 1 );
 		bottomRight.texCoord = new Point( 1, 0, 1 );
 
-		List<Point> triVerts1 = new List<Point> { topLeft, bottomLeft, topRight }; 
+		List<Point> triVerts1 = new List<Point> { topLeft, bottomLeft, topRight };
 		List<Point> triVerts2 = new List<Point> { bottomRight, topRight2, bottomLeft2 };
 
 		Polygon triangle1 = new Polygon( triVerts1 );
@@ -63,8 +59,15 @@ public class RayTracerMain
 		sphere2.translate( 1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform
 
 		//adv cp 1... parse Bunny
-		Point bunnyOrigin = new Point( 1.25f, 0f, bunnyDepth );
-		List<Polygon> bunnyTris = PlyParser.parseEdgePly( bunnyOrigin.toVec() );
+		if (includeBunny)
+		{
+			Point bunnyOrigin = new Point( 1.25f, 0f, bunnyDepth );
+			List<Polygon> bunnyTris = PlyParser.parseEdgePly( bunnyOrigin.toVec() );
+
+			//bunny loop
+			foreach (Polygon p in bunnyTris)
+				world.addObject( p );
+		}
 
 		//cp3... place mainLight source above the spheres 	// 1.5f, -1f, -5.0f //.85f, -30.85f, s1Depth - 5.5f , in front and way high
 
@@ -73,26 +76,35 @@ public class RayTracerMain
 		Color mainLightColor = Color.whiteSpecular;
 		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );
 
-		World world = new World();
+		//mandatory Whitted stuff
 		world.addLight( mainLight );
 		world.addObject( triangle1 );
 		world.addObject( triangle2 );
 		world.addObject( sphere1 );
 		world.addObject( sphere2 );
 
-		//bunny loop
-		foreach (Polygon p in bunnyTris)
-			world.addObject( p );
+		Vector up = new Vector( 0f, 1f, 0f );
+		Point eyePos = new Point( 0f, -1f, -5f ); //0f, -1f, -5f
+		Point lookAt = new Point( .5f, .5f, s1Depth + 1f );
+		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
 
+		return cam;
+	}
+
+	//OPENGL DRAW CCW order matters. We are in LHS system. +y is down. +x is right. +z into screen. Row major. Postmultiply.
+	//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
+	public static void doRayTracing()
+	{
+		//initialize objects
+		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25
+
+		World world = new World();
 
 		// initialize camera and render world
 		imageWidth = 1600;
 		imageHeight = imageWidth;
 
-		Vector up = new Vector( 0f, 1f, 0f );
-		Point eyePos = new Point( 0f, -1f, -5f ); //0f, -1f, -5f
-		Point lookAt = new Point( .5f, .5f, s1Depth + 1f ); 
-		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
+		Camera cam = setupWhitted( world, true );
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
 		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen );

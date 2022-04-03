@@ -13,7 +13,8 @@ namespace RayTracer_App.aux_classes
     public static class PlyParser
     {
         //default file has a face list...
-        const string FILENAME = @"C:\Users\Sam\Desktop\CSCLasses\GI\New folder\bunny\reconstruction\bun_zipper_res4.ply"; //treat verbatim...allows for spaces and \s without escape chars
+        const string FILENAME = @"C:\Users\Sam\Desktop\CSCLasses\GI\New folder\bunny\reconstruction\bun_zipper_res4.ply"; //treat verbatim...allows for spaces and \s without escape chars;
+
         const int TRIJUMP = 3;
         const int STARTTRIIDX = 2;
 
