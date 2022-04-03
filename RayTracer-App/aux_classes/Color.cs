@@ -18,6 +18,7 @@ public class Color
     public static Color bgColor = new Color( 0f, 1f, 0f );
     public static Color sphereColor = new Color( 0.0f, 0.0f, 1.0f );
     public static Color floorColor = new Color( 1.0f, 0.0f, 0.0f );
+    public static Color bunnyColor = new Color( 0.770f, 0.590f, 0.354f );
 
 
     private float _r;

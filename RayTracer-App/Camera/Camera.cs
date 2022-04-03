@@ -17,7 +17,6 @@ namespace RayTracer_App.Camera
 		//cameraTransform
 		private Matrix4x4 _camTransformMat;
 
-
 		public Vector up { get => this._up; set => this._up = value; } 
 		public Point eyePoint { get => this._eyePoint; set => this._eyePoint = value; }
 		public Point lookAt { get => this._lookAt; set => this._lookAt = value; }
@@ -145,7 +144,7 @@ namespace RayTracer_App.Camera
 			world.findBB(); //advanced cp 1
 			world.buildKd();
 
-			Console.WriteLine( world.kdTree );
+			//time the render here...
 
 			float fpHeight = 6f; //smaller the more zoomed in
 			float fpWidth = fpHeight;
@@ -175,7 +174,7 @@ namespace RayTracer_App.Camera
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;
 			byte[] hitColorArr = null;
-			bool isSuperSampling = true;
+			bool isSuperSampling = false;
 
 
 			int hits = 0;
@@ -213,6 +212,8 @@ namespace RayTracer_App.Camera
 			}
 
 			Console.WriteLine( $" There are {hits} non-background colors/ {imageHeight * imageWidth} colors total" );
+			//time render end
+			// print total render time
 			return pixColors ;
 		}
 

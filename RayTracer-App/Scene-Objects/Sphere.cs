@@ -167,6 +167,12 @@ namespace RayTracer_App.Scene_Objects
 			return this.center - minAxisDir;
 		}
 
+		public override bool hasTexCoord()
+		{
+			
+			return ( this.center.texCoord != null );
+		}
+
 		//toString
 		public override string ToString()
 		{

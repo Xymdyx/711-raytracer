@@ -78,6 +78,8 @@ namespace RayTracer_App.Scene_Objects
 
 		public virtual Point getMinPt( int axis ) { return Point.origin; }
 
+		public virtual bool hasTexCoord() { return false; }
+
 
 		//override ToString()
 	}

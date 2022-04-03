@@ -5,8 +5,7 @@ using RayTracer_App.World;
 using RayTracer_App.Camera;
 using RayTracer_App.Scene_Objects;
 using System.Collections.Generic;
-using System.Numerics;
-
+using RayTracer_App.aux_classes;
 //DOUBLE -> FLOAT
 
 //https://matrix.reshish.com/multiplication.php 
@@ -21,7 +20,7 @@ public class RayTracerMain
 
 	//OPENGL DRAW CCW order matters. We are in LHS system. +y is down. +x is right. +z into screen. Row major. Postmultiply.
 	//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
-	public static void doRayTracing() 
+	public static void doRayTracing()
 	{
 		//initialize objects
 		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25
@@ -32,6 +31,8 @@ public class RayTracerMain
 		float sphereRad = 1.5f;
 
 		float floorHeight = 5.5f;
+
+		float bunnyDepth = s1Depth - 10f; //s1Depth - 4f;
 
 		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
 		Point topLeft = new Point( -6f, floorHeight, 68.5f ); // -6f, floorHeight, 78.5f 
@@ -59,9 +60,13 @@ public class RayTracerMain
 		triangle1.translate( -5f, 0, 0 );
 		triangle2.translate( -5f, 0, 0 );
 
-		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth) , sphereRad );
+		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth ), sphereRad );
 		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad ); //setting the point elsewhere gives translating whole sphere
-		sphere2.translate(  1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform
+		sphere2.translate( 1.75f, s1Height + 0.5f, 0 ); //doing it here gives same results as after cam transform
+
+		//adv cp 1... parse Bunny
+		Point bunnyOrigin = new Point( 1.25f, 0f, bunnyDepth );
+		List<Polygon> bunnyTris = PlyParser.parseEdgePly( bunnyOrigin.toVec() );
 
 		//cp3... place mainLight source above the spheres 	// 1.5f, -1f, -5.0f //.85f, -30.85f, s1Depth - 5.5f , in front and way high
 
@@ -75,6 +80,11 @@ public class RayTracerMain
 		world.addObject( triangle2 );
 		world.addObject( sphere1 );
 		world.addObject( sphere2 );
+
+		//bunny loop
+		foreach (Polygon p in bunnyTris)
+			world.addObject( p );
+
 
 		// initialize camera and render world
 		imageWidth = 1600;

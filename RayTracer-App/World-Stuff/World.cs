@@ -79,9 +79,11 @@ namespace RayTracer_App.World
 		public void transformAll( Matrix4x4 camViewMat)
 		{
 			//transforming before and after camera transform gives same results, so long as it is done before the ray shooting
+			Console.WriteLine( "following transforms:" );
 			 foreach (SceneObject obj in objects)
 			{
 				obj.transform( camViewMat ); //converts all objects to camera space
+				Console.WriteLine( obj );
 			}
 
 			return;
@@ -112,6 +114,7 @@ namespace RayTracer_App.World
 		{
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
+
 			foreach (SceneObject obj in allObjects)
 			{
 				currW = obj.intersect( ray );
@@ -154,7 +157,7 @@ namespace RayTracer_App.World
 
 				IlluminationModel bestObjLightModel = this.bestObj.lightModel;
 
-				if (t != null) // determine triangle point color
+				if ( (t != null) && (t.hasTexCoord()) ) // determine floor triangle point color
 					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
 
 				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj ); //return to irradiance for TR
@@ -225,7 +228,11 @@ namespace RayTracer_App.World
 		//builds the kdTree for the world
 		public void buildKd()
 		{
+			//time building tree start
+			kdTree.maxLeafObjs = this.objects.Count / 2;
 			kdTree.root = kdTree.getNode( this.objects, this.sceneBB, 0 );
+			//time building tree end
+			//print time
 		}
 	}
 }

@@ -45,7 +45,7 @@ namespace RayTracer_App.Scene_Objects
 			this._normal = null; //TODO calculate normal
 			this._diffuse = diffuse;
 			this._specular = specular;
-			this._lightModel = Phong.floorPhong;
+			this._lightModel = PhongBlinn.floorPhongBlinn;
 
 		}
 
@@ -212,7 +212,15 @@ namespace RayTracer_App.Scene_Objects
 
 			return minPt;
 		}
-
+		public override bool hasTexCoord()
+		{
+			foreach( Point vertex in this.vertices)
+			{
+				if (vertex.texCoord == null)
+					return false;
+			}
+			return true;
+		}
 		public override string ToString()
 		{
 			String info = $"Triangle with vertices: {vertices[0]} , {vertices[1]} , {vertices[2]}" ;
