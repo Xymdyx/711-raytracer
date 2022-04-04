@@ -182,9 +182,10 @@ namespace RayTracer_App.World
 						if (currColor != null)
 							currColor = currColor.scale( localBest.kRefl );
 					}
-					if (this.bestObj.kTrans > 0)
+					if (this.bestObj.kTrans > 0) //cp6 TODO, handle ray passing through an object!
 					{
 						//spawn transmission ray
+						ray.entryPt = intersection; //keep track of if we're in an object or not
 						//currColor += spawnRay( translRay, recDepth + 1 );
 						;
 					}
