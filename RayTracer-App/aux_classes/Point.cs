@@ -11,7 +11,8 @@ using System.Numerics;
 public class Point
 {
     // CONSTANTS
-    public static Point floorOrigin = new Point( -6f, 1.25f, 60.5f ); // floor origin for cp4
+    public static Point DEFAULTEYE = new Point( 0f, -1f, -5f ); //whitted default look at
+
     public enum Axes { X, Y, Z }
 
     private float _x;

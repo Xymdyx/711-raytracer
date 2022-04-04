@@ -9,6 +9,8 @@ using System;
 public class Vector
 {
     private static Vector ZERO_VEC = new Vector( 0, 0, 0 );
+    private static Vector UP_VEC = new Vector( 0, 1F, 0 );
+
 
     // fields
     private float _v1;

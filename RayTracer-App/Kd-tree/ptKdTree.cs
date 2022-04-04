@@ -1,4 +1,10 @@
-﻿using System;
+﻿/*
+desc: kdTree that splits via points and stores photons
+date started: 4/4
+date due: 4/29
+ */
+
+using System;
 using System.Collections.Generic;
 using RayTracer_App.World;
 using RayTracer_App.Voxels;
@@ -6,7 +12,7 @@ using RayTracer_App.Scene_Objects;
 
 namespace RayTracer_App.Kd_tree
 {
-	public class KdTree
+	public class ptKdTree
 	{
 		//fields
 		private KdNode _root;
@@ -18,13 +24,13 @@ namespace RayTracer_App.Kd_tree
 		public int maxLeafObjs { get => this._maxLeafObjs; set => this._maxLeafObjs = value; }
 
 		// constructors
-		public KdTree() 
+		public ptKdTree() 
 		{
 			this._root =  null;
 			this._maxLeafObjs = 2;
 		}
 
-		public KdTree( KdNode root )
+		public ptKdTree( KdNode root )
 		{
 			this._root = root;
 			this._maxLeafObjs = 2;
@@ -69,7 +75,7 @@ namespace RayTracer_App.Kd_tree
 		{
 			//base case
 			if (terminal( objects, vox, depth ))
-				return new KdLeafNode(objects);
+				return new ptKdLeafNode(objects);
 
 			int axis = depth % 3;
 			float partitionVal = vox.center.getAxisCoord( axis );
@@ -116,19 +122,9 @@ namespace RayTracer_App.Kd_tree
 				if (hitsRear) rearObjs.Add( obj );
 			}
 
-			return new KdInteriorNode( axis, partitionVal, vox,
+			return new ptKdInteriorNode( axis, partitionVal, vox,
 				getNode(frontObjs, vFront, depth + 1), getNode( rearObjs, vRear, depth + 1 ) );
 		}
-
-		////helper for traverseTAB
-		//private Point splitPlaneRayIntersection( LightRay ray, Point center, Vector sVec )
-		//{
-		//	//this is the plane defined by a fixed axis value on a major axis. The other two points can have different values that ultimately evaluate to normal vector of 1 in the appropriate axis
-
-		//	//https://web.ma.utexas.edu/users/m408m/Display12-5-4.shtml
-		//	//https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-plane-and-ray-disk-intersection
-		//	return new Point();
-		//}
 		
 		private bool intersectGood( float currW )
 		{

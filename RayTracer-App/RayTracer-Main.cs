@@ -95,7 +95,6 @@ public class RayTracerMain
 	//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
 	public static void doRayTracing()
 	{
-		//initialize objects
 		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25
 
 		World world = new World();
@@ -103,6 +102,19 @@ public class RayTracerMain
 		// initialize camera and render world
 		imageWidth = 1600;
 		imageHeight = imageWidth;
+
+		/* PHOTON MAPPING TODO LIST (page 47 onwards in Jensen's 2008 notes) :
+		* make photon and pointKdTree classes (PM maps are kdTrees)
+		* make Russian roulette
+ 		* setup Cornell box scene with Whitted method
+		* figure out how to shoot photons
+		* figure out how to balance photons in kdTree as we go
+		* photon tracing
+		* collect the k nearest photons and make calculation for global and caustic PMs
+		* What is the tone reproduction formula?
+		* figure out caustics and indirect illumination
+		* implement a cone filter if ambitious
+		*/
 
 		Camera cam = setupWhitted( world, true );
 
