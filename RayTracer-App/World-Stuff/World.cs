@@ -186,16 +186,23 @@ namespace RayTracer_App.World
 						else
 							currColor = recColor;
 					}
+				//https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_en.html
 					if (this.bestObj.kTrans > 0) //cp6 TODO, handle ray passing through an object!
 					{
 						//spawn transmission ray
 						Vector transDir;
+						
+						float transBias = 1e-6f;
+						Vector transDisplacement = -(localBest.normal).scale( transBias );
+						Point transOrigin = intersection + transDisplacement;
+						//Point transOrigin = intersection.displaceMe( -(localBest.normal) ) ;
+
 						if ( this.bestObj.normal.dotProduct( ray.direction) >= 0)
 							transDir = Vector.transmit( ray.direction, this.bestObj.normal, SceneObject.AIR_REF_INDEX, this.bestObj.refIndex );
 						else 
 							transDir = Vector.transmit( ray.direction, -this.bestObj.normal, this.bestObj.refIndex, SceneObject.AIR_REF_INDEX ); // use negative normal, use object refIdx as ni
 
-						LightRay translRay = new LightRay( transDir, intersection );
+						LightRay translRay = new LightRay( transDir, transOrigin );
 						ray.entryPt = intersection; //keep track of if we're in an object or not
 						recColor = spawnRay( translRay, recDepth + 1 );
 						ray.entryPt = null; // we've exited
