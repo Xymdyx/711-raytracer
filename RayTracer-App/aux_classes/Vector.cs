@@ -188,6 +188,38 @@ public class Vector
         return rightTerm - incoming ;
 	}
 
+    //TRANSMIT METHOD
+    // where ni and nt are indexes of refraction
+    // trans = ((ni * (dir - normal*(d dot n))) /nt) + ( n * sqrt( 1 - ( (ni^2* (1- d dot n)^2 )/ ni^2 )
+    public static Vector transmit( Vector dir, Vector normal, float ni, float nt )
+	{
+        //same direction if indices of refraction are the same
+        if (ni == nt) 
+            return dir;
+
+        float dnDP = dir.dotProduct( normal );
+        float nRat = ni / nt;
+
+        Vector leftTerm = ( dir.subVec(normal.scale( dnDP )) ).scale(nRat);
+
+        // the sqrt term is equal to 1 - (ni ( 1 - (d dot n) )/ nt
+        float rightScale = 1 - ( nRat * (1 - dnDP) ) ;
+        Vector rightTerm = normal.scale( rightScale );
+
+        return leftTerm + rightTerm;
+	}
+
+    //FACEFORWARD method
+    // for cp6. Use negative normal for calculations
+    public static Vector faceForward( Vector normal, Vector traveling )
+	{
+        //acute angle, use regular normal
+        if (normal.dotProduct( traveling ) >= 0) return normal;
+
+        //obtuse angle, return reverse of normal
+        return -normal;
+	}
+
     //TOSTRING METHOD
     public override string ToString()
     {

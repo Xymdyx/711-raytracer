@@ -23,6 +23,9 @@ public class RayTracerMain
 		//initialize objects
 		float s1Depth = 8.75f; //+z into the scene... I am IN LHS
 		float s1Height = 1.75f;
+		float s1Refl = 0.0f;
+		float s1Trans = .8f;
+		float s1RefIdx = 1.52f;
 		float s2Depth = s1Depth + 1.85f;
 		float sphereRad = 1.5f;
 		float s2Refl = 1.0f;
@@ -54,7 +57,7 @@ public class RayTracerMain
 		triangle1.translate( -5f, 0, 0 );
 		triangle2.translate( -5f, 0, 0 );
 
-		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth ), sphereRad );
+		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth ), sphereRad, s1Refl, s1Trans, s1RefIdx );
 		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad, s2Refl ); //setting the point elsewhere gives translating whole sphere
 		sphere2.translate( 1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform
 
@@ -104,7 +107,7 @@ public class RayTracerMain
 		imageWidth = 1600;
 		imageHeight = imageWidth;
 
-		Camera cam = setupWhitted( world, true );
+		Camera cam = setupWhitted( world, false );
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
 		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen );

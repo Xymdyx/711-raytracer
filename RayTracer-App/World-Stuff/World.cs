@@ -171,24 +171,42 @@ namespace RayTracer_App.World
 				//cp5 
 				if (recDepth < MAX_DEPTH)
 				{
+					//need this since we recurse and may update bestObj
+					SceneObject localBest = this.bestObj;
+					Color recColor = null;
+
 					if (this.bestObj.kRefl > 0)
 					{
 						//importance sampling here if on
 						LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, this.bestObj.normal ), intersection );
-						//need this since we recurse and may update bestObj
-						SceneObject localBest = this.bestObj; 
-						currColor = spawnRay( reflRay, recDepth + 1 );
+						recColor = spawnRay( reflRay, recDepth + 1 );
 
-						if (currColor != null)
-							currColor = currColor.scale( localBest.kRefl );
+						if (recColor != null)
+							currColor = recColor.scale( localBest.kRefl );
+						else
+							currColor = recColor;
 					}
 					if (this.bestObj.kTrans > 0) //cp6 TODO, handle ray passing through an object!
 					{
 						//spawn transmission ray
+						Vector transDir;
+						if ( this.bestObj.normal.dotProduct( ray.direction) >= 0)
+							transDir = Vector.transmit( ray.direction, this.bestObj.normal, SceneObject.AIR_REF_INDEX, this.bestObj.refIndex );
+						else 
+							transDir = Vector.transmit( ray.direction, -this.bestObj.normal, this.bestObj.refIndex, SceneObject.AIR_REF_INDEX ); // use negative normal, use object refIdx as ni
+
+						LightRay translRay = new LightRay( transDir, intersection );
 						ray.entryPt = intersection; //keep track of if we're in an object or not
-						//currColor += spawnRay( translRay, recDepth + 1 );
-						;
+						recColor = spawnRay( translRay, recDepth + 1 );
+						ray.entryPt = null; // we've exited
+
+						if (recColor != null)
+							currColor = recColor.scale( localBest.kTrans );
+						else
+							currColor = recColor;
+
 					}
+
 				}
 			}
 			return currColor;

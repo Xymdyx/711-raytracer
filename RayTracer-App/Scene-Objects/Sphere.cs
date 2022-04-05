@@ -24,7 +24,7 @@ namespace RayTracer_App.Scene_Objects
 			this._specular = Color.whiteSpecular;
 		}
 
-		public Sphere( Point center, float radius, float kRefl = 0.0f, float kTrans = 0.0f )
+		public Sphere( Point center, float radius, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX )
 		{
 			this._center = center;
 			this._radius = radius;
@@ -34,10 +34,11 @@ namespace RayTracer_App.Scene_Objects
 			this._lightModel = PhongBlinn.regularPhongBlinn; //change iullum model here for now
 			this._kRefl = kRefl;
 			this._kTrans = kTrans;
+			this.refIndex = refIndex;
 
 		}
 
-		public Sphere( Point center, float radius, Color diffuse, Color specular, float kRefl = 0.0f, float kTrans = 0.0f )
+		public Sphere( Point center, float radius, Color diffuse, Color specular, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX )
 		{
 			this._center = center;
 			this._radius = radius;
@@ -46,6 +47,7 @@ namespace RayTracer_App.Scene_Objects
 			this._specular = specular;
 			this._kRefl = kRefl;
 			this._kTrans = kTrans;
+			this.refIndex = refIndex;
 		}
 
 		// function for getting where along ray intersection happens with a sphere
