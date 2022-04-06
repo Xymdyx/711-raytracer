@@ -159,7 +159,7 @@ namespace RayTracer_App.World
 		public Color spawnRay( LightRay ray, int recDepth )
 		{
 
-			Color currColor = null;
+			Color currColor = Color.bgColor;
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
 			Color lightRadiance = null;
@@ -202,9 +202,9 @@ namespace RayTracer_App.World
 						recColor = spawnRay( reflRay, recDepth + 1 );
 
 						if (recColor != null)
-							currColor = recColor.scale( localBest.kRefl );
-						else
-							currColor = recColor;
+							currColor += recColor.scale( localBest.kRefl );
+						//else
+						//	currColor = recColor;
 					}
 				//https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_en.html
 					if (this.bestObj.kTrans > 0) //cp6 TODO, handle ray passing through an object!
@@ -228,9 +228,9 @@ namespace RayTracer_App.World
 						ray.entryPt = null; // we've exited
 
 						if (recColor != null)
-							currColor = recColor.scale( localBest.kTrans );
-						else
-							currColor = recColor;
+							currColor += recColor.scale( localBest.kTrans );
+						//else
+						//	currColor = recColor;
 
 					}
 

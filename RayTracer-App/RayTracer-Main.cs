@@ -23,12 +23,15 @@ public class RayTracerMain
 		//initialize objects
 		float s1Depth = 8.75f; //+z into the scene... I am IN LHS
 		float s1Height = .75f; //1.75f.. 45 is good for lots of sky
-		float s1Refl = 0.0f;
-		float s1Trans = .25f;
-		float s1RefIdx = 1.0125f; // ns > .70625
-		float s2Depth = s1Depth + 1.85f;
+		float s1Trans = .95f;
+		float s1Refl = 0f;
+		float s1RefIdx = 1.05f; // n2 < 1 for TIR
+
+		float s2Depth = s1Depth + 1.85f; //1.85.. like Whitted... 2.75 for far apart
 		float sphereRad = 1.5f;
 		float s2Refl = 1.0f;
+		float s2Trans = 0f;
+		float s2RefIdx = 0f;
 
 		float floorHeight = 5.5f;
 
@@ -58,7 +61,7 @@ public class RayTracerMain
 		triangle2.translate( -5f, 0, 0 );
 
 		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth ), sphereRad, s1Refl, s1Trans, s1RefIdx );
-		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad, s2Refl ); //setting the point elsewhere gives translating whole sphere
+		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad, s2Refl, s2Trans, s2RefIdx ); //setting the point elsewhere gives translating whole sphere
 		sphere2.translate( 1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform
 
 		//adv cp 1... parse Bunny
@@ -83,8 +86,8 @@ public class RayTracerMain
 		world.addLight( mainLight );
 		world.addObject( triangle1 );
 		world.addObject( triangle2 );
-		world.addObject( sphere1 );
 		world.addObject( sphere2 );
+		world.addObject( sphere1 );
 
 		Vector up = new Vector( 0f, 1f, 0f );
 		Point eyePos = new Point( 0f, -1f, -5f ); //0f, -1f, -5f

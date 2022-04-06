@@ -85,7 +85,7 @@ namespace RayTracer_App.Illumination_Models
 					SceneObject blocking = World.World.checkRayIntersectionObj( shadowRay, allObjs );
 					float litPercent = 1.0f;
 
-					if ((blocking != null) && (blocking.kTrans <= 0.0f)) //the shadowRay gets blocked by an object on way to light
+					if ((blocking != null) && (!(transShadows) || (blocking.kTrans <= 0.0f))) //the shadowRay gets blocked by an object on way to light
 						continue;
 
 					else if ((blocking != null) && (transShadows) && (blocking.kTrans > 0.0f))
