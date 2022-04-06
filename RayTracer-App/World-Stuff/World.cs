@@ -115,6 +115,26 @@ namespace RayTracer_App.World
 			return bestW;
 		}
 
+		//helper for checking if a ray intersects with an object in the scene.
+		// added shadowBias displacement for shadowRays so I no longer have to check the current object
+		public static SceneObject checkRayIntersectionObj( LightRay ray, List<SceneObject> allObjects )
+		{
+			float currW = float.MaxValue;
+			SceneObject collided = null;
+			foreach (SceneObject obj in allObjects)
+			{
+				currW = obj.intersect( ray );
+
+				if ((currW != float.MinValue) && (currW != float.NaN) &&
+					(currW != float.MaxValue) && (currW > 0))
+				{
+					collided = obj;
+					break;
+				}
+			}
+			return collided;
+		}
+
 		// general function for finding best intersection of ray given a list ob objects
 		public float findRayIntersect( LightRay ray, List<SceneObject> allObjects )
 		{
@@ -166,7 +186,7 @@ namespace RayTracer_App.World
 				if ((t != null) && (t.hasTexCoord())) // determine floor triangle point color
 					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
 
-				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj ); //return to irradiance for TR
+				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
 
 				//cp5 
 				if (recDepth < MAX_DEPTH)

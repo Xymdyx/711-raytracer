@@ -24,7 +24,7 @@ public class RayTracerMain
 		float s1Depth = 8.75f; //+z into the scene... I am IN LHS
 		float s1Height = .75f; //1.75f.. 45 is good for lots of sky
 		float s1Refl = 0.0f;
-		float s1Trans = 1.0f;
+		float s1Trans = .25f;
 		float s1RefIdx = 1.0125f; // ns > .70625
 		float s2Depth = s1Depth + 1.85f;
 		float sphereRad = 1.5f;

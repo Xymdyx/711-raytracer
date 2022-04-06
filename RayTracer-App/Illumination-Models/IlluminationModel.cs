@@ -10,7 +10,7 @@ namespace RayTracer_App.Illumination_Models
 
 		public abstract Color illuminate( Point intersect, Vector normal, LightRay incoming,
 			Vector mirrorReflect, Vector cameraRay, LightSource light, SceneObject litObj );
-		public abstract Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, float shadowBias = 1e-4f );
+		public abstract Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, bool transShadows = false, float shadowBias = 1e-4f );
 
 	}
 }

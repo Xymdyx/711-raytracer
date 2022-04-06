@@ -190,24 +190,20 @@ public class Vector
 
     //TRANSMIT METHOD
     // where ni and nt are indexes of refraction
-    // trans = ((ni * (dir - normal*(d dot n))) /nt) + ( n * sqrt( 1 - ( (ni^2* (1- d dot n)^2 )/ ni^2 )
+    // t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
+    // cosi = -(i dot n)
+    // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
     // https://www.scratchapixel.com/code.php?id=3&origin=/lessons/3d-basic-rendering/introduction-to-ray-tracing
     public static Vector transmit( Vector dir, Vector normal, float ni, float nt )
 	{
         //same direction if indices of refraction are the same
         if (ni == nt) 
             return dir;
-       
+
+        // t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
         float cosi = -(dir.dotProduct( normal ));
         float nRat = ni / nt;
 
-        //Vector leftTerm = ( dir.subVec(normal.scale( dnDP )) ).scale(nRat);
-        //// the sqrt term is equal to 1 - (ni ( 1 - (d dot n) )/ nt
-        //float rightScale = 1 - ( nRat * (1 - dnDP) ) ;
-        //Vector rightTerm = normal.scale( rightScale );
-
-
-        // t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
         // cosi = -(i dot n)
         // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
         Vector leftTerm = dir.scale( nRat );
