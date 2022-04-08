@@ -201,14 +201,14 @@ public class Vector
             return dir;
 
         // t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
-        float cosi = -(dir.dotProduct( normal ));
+        float cosi =  -(normal.dotProduct(dir)); //this is giving weird behavior
         float nRat = ni / nt;
 
         // cosi = -(i dot n)
         // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
         Vector leftTerm = dir.scale( nRat );
         float sqrtTerm = (float) ( 1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi))) );
-        float rightScale = (float) ( (nRat * cosi) - Math.Sqrt(sqrtTerm) ); 
+        float rightScale = (float) ( (nRat * cosi) - Math.Sqrt(sqrtTerm) );  //getting NAN here
         Vector rightTerm = normal.scale( rightScale );
 
         return leftTerm + rightTerm;

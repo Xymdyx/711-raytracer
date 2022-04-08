@@ -102,7 +102,13 @@ namespace RayTracer_App.Scene_Objects
 			{
 				w1 = (float) (-B + Math.Sqrt( rootTerm )) / 2f;
 				w2 = (float) (-B - Math.Sqrt( rootTerm )) / 2f;
-				return Math.Min( w1, w2 );
+
+				if (w2 < 0)
+					return w1;
+				else if (w1 < 0)
+					return w2;
+				else
+					return Math.Min( Math.Max(w1, 0), Math.Max(w2,0) );
 			}
 		}
 

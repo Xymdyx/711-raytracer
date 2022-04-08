@@ -222,7 +222,10 @@ public class Point
     }
 
     //displace method to prevent acne from floating point round-off
-    public Point displaceMe( Vector along, float bias = 1e-6f)
+    //float transBias = 1e-4f;
+    //Vector transDisplacement = -(localBest.normal).scale( transBias );
+    //Point transOrigin = intersection + transDisplacement;
+    public Point displaceMe( Vector along, float bias = 1e-4f)
 	{
         Vector displaceVec = along.scale( bias );
         return this + displaceVec;

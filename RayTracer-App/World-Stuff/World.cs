@@ -19,7 +19,7 @@ namespace RayTracer_App.World
 		private AABB _sceneBB;
 		private KdTree _kdTree;
 		private SceneObject _bestObj;
-		private static int MAX_DEPTH = 7; //cp5 max bounces
+		private static int MAX_DEPTH = 10; //cp5 max bounces
 
 
 		//private int[] attributes;
@@ -166,7 +166,6 @@ namespace RayTracer_App.World
 			Point intersection = null;
 
 			//no kdTree
-
 			if (this.kdTree.root == null)
 				bestW = findRayIntersect( ray, this.objects );
 			else
@@ -186,7 +185,7 @@ namespace RayTracer_App.World
 				if ((t != null) && (t.hasTexCoord())) // determine floor triangle point color
 					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
 
-				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
+				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, false ); //return to irradiance for TR
 
 				//cp5 
 				if (recDepth < MAX_DEPTH)
@@ -194,33 +193,44 @@ namespace RayTracer_App.World
 					//need this since we recurse and may update bestObj
 					SceneObject localBest = this.bestObj;
 					Color recColor = null;
+					Vector nHit = localBest.normal;
+
+					bool inside = false;
+					float checkDp = nHit.dotProduct( ray.direction );
+					if (checkDp > 0) // issue was using Math.Min for return in sphere intersect
+					{ 
+						nHit = -nHit; 
+						inside = true ;
+					}
 
 					if (this.bestObj.kRefl > 0)
 					{
 						//importance sampling here if on
-						LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, this.bestObj.normal ), intersection );
+						Point reflOrigin = intersection.displaceMe( nHit );
+						LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, nHit ), reflOrigin );
 						recColor = spawnRay( reflRay, recDepth + 1 );
 
 						if (recColor != null)
 							currColor += recColor.scale( localBest.kRefl );
-						//else
-						//	currColor = recColor;
+
 					}
 				//https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_en.html
 					if (this.bestObj.kTrans > 0) //cp6 TODO, handle ray passing through an object!
 					{
 						//spawn transmission ray
 						Vector transDir;
-						
-						float transBias = 1e-6f;
-						Vector transDisplacement = -(localBest.normal).scale( transBias );
-						Point transOrigin = intersection + transDisplacement;
-						//Point transOrigin = intersection.displaceMe( -(localBest.normal) ) ;
+						Point transOrigin = intersection.displaceMe( -nHit ) ;
 
-						if ( (localBest.normal.dotProduct( ray.direction)) > 0)
-							transDir = Vector.transmit( ray.direction, -localBest.normal, SceneObject.AIR_REF_INDEX, localBest.refIndex );
-						else //never gets executed
-							transDir = Vector.transmit( ray.direction, localBest.normal, localBest.refIndex, SceneObject.AIR_REF_INDEX ); // use negative normal, use object refIdx as ni
+						if (inside) //inside... these aren't alternating....
+						{
+							//Console.WriteLine( "in" );
+							transDir = Vector.transmit( ray.direction, nHit, localBest.refIndex, SceneObject.AIR_REF_INDEX );
+						}
+						else
+						{
+							//Console.WriteLine( "out" );
+							transDir = Vector.transmit( ray.direction, nHit, SceneObject.AIR_REF_INDEX, localBest.refIndex );
+						}
 
 						LightRay translRay = new LightRay( transDir, transOrigin );
 						ray.entryPt = intersection; //keep track of if we're in an object or not
@@ -229,8 +239,6 @@ namespace RayTracer_App.World
 
 						if (recColor != null)
 							currColor += recColor.scale( localBest.kTrans );
-						//else
-						//	currColor = recColor;
 
 					}
 
@@ -305,7 +313,7 @@ namespace RayTracer_App.World
 			//time building tree start
 			Stopwatch kdTimer = new Stopwatch();
 			kdTimer.Start();
-			kdTree.maxLeafObjs = this.objects.Count / 2;
+			kdTree.maxLeafObjs = (int) Math.Ceiling( (decimal) this.objects.Count / 2 );
 			kdTree.root = kdTree.getNode( this.objects, this.sceneBB, 0 );
 			kdTimer.Stop();
 			Console.WriteLine( "Building the kd tree took " + (kdTimer.ElapsedMilliseconds) + " milliseconds" );

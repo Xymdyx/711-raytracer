@@ -20,18 +20,19 @@ public class RayTracerMain
 
 	public static Camera setupWhitted( World world, bool includeBunny = false )
 	{
-		//initialize objects
+		//transparent middle sphere
 		float s1Depth = 8.75f; //+z into the scene... I am IN LHS
 		float s1Height = .75f; //1.75f.. 45 is good for lots of sky
-		float s1Trans = .95f;
+		float s1Trans = 1.0f;
 		float s1Refl = 0f;
-		float s1RefIdx = 1.05f; // n2 < 1 for TIR
+		float s1RefIdx = .975f; // n2 < 1 for TIR
 
-		float s2Depth = s1Depth + 1.85f; //1.85.. like Whitted... 2.75 for far apart
+		//reflective right sphere
+		float s2Depth = s1Depth + 1.75f; //1.85.. like Whitted... 2.75 for far apart
 		float sphereRad = 1.5f;
 		float s2Refl = 1.0f;
 		float s2Trans = 0f;
-		float s2RefIdx = 0f;
+		float s2RefIdx = SceneObject.AIR_REF_INDEX;
 
 		float floorHeight = 5.5f;
 
@@ -62,7 +63,7 @@ public class RayTracerMain
 
 		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth ), sphereRad, s1Refl, s1Trans, s1RefIdx );
 		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad, s2Refl, s2Trans, s2RefIdx ); //setting the point elsewhere gives translating whole sphere
-		sphere2.translate( 1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform
+		sphere2.translate( 1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform ... ( 1.75f, s1Height + 1.4f, 0 );
 
 		//adv cp 1... parse Bunny
 		if (includeBunny)
