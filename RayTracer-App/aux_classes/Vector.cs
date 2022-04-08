@@ -176,49 +176,49 @@ public class Vector
         return ((0 == this.v1) && (0 == this.v2) && (0 == this.v3));
     }
 
-    //REFLECT METHOD
-    // reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) ).. i do this weirdly
-    public static Vector reflect( Vector incoming, Vector normal )
+	//   //REFLECT METHOD... https://en.wikipedia.org/wiki/Phong_reflection_model
+	//   // reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) ).. i do this weirdly
+	public static Vector reflect( Vector incoming, Vector normal )
 	{
-        
-        float inNormDp = incoming.dotProduct( normal );
-        Vector rightTerm = normal.scale( 2 * (inNormDp) ) ; //does not normalize here
-        return rightTerm - incoming ;
-	}
 
-    //TRANSMIT METHOD
+		float inNormDp = incoming.dotProduct( normal );
+		Vector rightTerm = normal.scale( 2f * (inNormDp) ); //does not normalize here
+		return rightTerm - incoming;
+	}
+    
+    //RANSMIT METHOD... handles logic in method
     // where ni and nt are indexes of refraction
-    // t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
-    // cosi = -(i dot n)
-    // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
-    // https://www.scratchapixel.com/code.php?id=3&origin=/lessons/3d-basic-rendering/introduction-to-ray-tracing
+    //preconds: dotProduct done before this
     public static Vector transmit( Vector dir, Vector normal, float ni, float nt )
 	{
-        //same direction if indices of refraction are the same
-        if (ni == nt) 
-            return dir;
+		//same direction if indices of refraction are the same
+		if (ni == nt)
+			return dir;
 
-        // t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
-        float cosi =  -(normal.dotProduct(dir)); //this is always positive, which is what we want...
-        float nRat = ni / nt;
+		// t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
+		float cosi = -(normal.dotProduct( dir )); //this is always positive, which is what we want...
+		float nRat = ni / nt;
 
-        // cosi = -(i dot n)
-        // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
-        Vector leftTerm = dir.scale( nRat );
-        float sqrtTerm = (float) ( 1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi)))); //this is sometimes negative...
+		// cosi = -(i dot n)
+		// sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
+		Vector leftTerm = dir.scale( nRat );
+		float sqrtTerm = (float)(1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi)))); //this is sometimes negative...
 
-        if (sqrtTerm < 0)
-            return Vector.ZERO_VEC;
+        if (sqrtTerm < 0 && nRat > 1)
+            Console.WriteLine( "Negative term when inside sphere" );
 
-        float rightScale = (float) ( (nRat * cosi) - Math.Sqrt(sqrtTerm) );  //getting NAN here
-        Vector rightTerm = normal.scale( rightScale );
+		if (sqrtTerm < 0)
+			return Vector.ZERO_VEC;
 
-        return leftTerm + rightTerm;
+		float rightScale = (float)((nRat * cosi) - Math.Sqrt( sqrtTerm ));  //getting NAN here
+		Vector rightTerm = normal.scale( rightScale );
+
+		return leftTerm + rightTerm;
 	}
 
-    //FACEFORWARD method
-    // for cp6. Use negative normal for calculations
-    public static Vector faceForward( Vector normal, Vector traveling )
+	//FACEFORWARD method
+	// for cp6. Use negative normal for calculations
+	public static Vector faceForward( Vector normal, Vector traveling )
 	{
         //acute angle, use regular normal
         if (normal.dotProduct( traveling ) >= 0) return normal;
@@ -238,3 +238,57 @@ public class Vector
         return new Vector( this.v1, this.v2, this.v3, false );
 	}
 }
+
+////// scratch REFLECT METHOD https://en.wikipedia.org/wiki/Phong_reflection_model
+////// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) ).. i do this weirdly
+//public static Vector sReflect( Vector incoming, Vector normal )
+//{
+
+//	float inNormDp = incoming.dotProduct( normal );
+//	Vector rightTerm = normal.scale( 2f * (inNormDp) ); //does not normalize here
+//	return incoming - rightTerm;
+//}
+
+
+//scratch TRANSMIT METHOD... handles logic in method
+// where ni and nt are indexes of refraction
+// t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
+// cosi = -(i dot n)
+// sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
+// https://www.scratchapixel.com/code.php?id=3&origin=/lessons/3d-basic-rendering/introduction-to-ray-tracing
+
+//public static Vector sTransmit( Vector dir, Vector normal, float ni, float nt )
+//   {
+//       //same direction if indices of refraction are the same
+//       if (ni == nt)
+//           return dir;
+
+//       // t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
+//       float cosi = normal.dotProduct( dir ); //this is always positive, which is what we want...
+//       float nRat;
+//       Vector n = normal;
+
+//       if (cosi < 0)
+//       {
+//           cosi = -cosi;
+//           nRat = ni / nt;
+//	}
+//	else 
+//       { 
+//           nRat = nt / ni;
+//           n = normal.scale( -1f );
+//       }
+
+//       // cosi = -(i dot n)
+//       // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
+//       Vector leftTerm = dir.scale( nRat );
+//       float sqrtTerm = (float)(1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi)))); //this is sometimes negative...
+
+//       if (sqrtTerm < 0)
+//           return Vector.ZERO_VEC;
+
+//       float rightScale = (float)((nRat * cosi) - Math.Sqrt( sqrtTerm ));  //getting NAN here
+//       Vector rightTerm = n.scale( rightScale );
+
+//       return leftTerm + rightTerm;
+//   }

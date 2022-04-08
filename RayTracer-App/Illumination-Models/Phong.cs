@@ -75,7 +75,7 @@ namespace RayTracer_App.Illumination_Models
 
 			Color lightIrradiance = Color.defaultBlack;
 
-				foreach( LightSource light in lights ) //TODO - 2/20
+				foreach( LightSource light in lights ) 
 				{
 				//get normal vectors dependent on type of object. spawn shadow ray
 					Vector shadowDisplacement = litObj.normal.scale( shadowBias );

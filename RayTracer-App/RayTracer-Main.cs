@@ -23,9 +23,9 @@ public class RayTracerMain
 		//transparent middle sphere
 		float s1Depth = 8.75f; //+z into the scene... I am IN LHS
 		float s1Height = .75f; //1.75f.. 45 is good for lots of sky
-		float s1Trans = 1f;
+		float s1Trans = .75f;
 		float s1Refl = 0f;
-		float s1RefIdx = .935f; // n2 < 1 for TIR
+		float s1RefIdx = .99f; // ni > nt for TIR
 
 		//reflective right sphere
 		float s2Depth = s1Depth + 1.75f; //1.85.. like Whitted... 2.75 for far apart

@@ -19,7 +19,7 @@ namespace RayTracer_App.World
 		private AABB _sceneBB;
 		private KdTree _kdTree;
 		private SceneObject _bestObj;
-		private static int MAX_DEPTH = 7; //cp6 max bounces
+		private static int MAX_DEPTH = 20; //cp6 max bounces
 
 
 		//private int[] attributes;
@@ -156,6 +156,8 @@ namespace RayTracer_App.World
 			return bestW;
 		}
 
+		//method for finding the color when a ray hits an object. Whitted method
+		// TODO: Decompose into smaller methods
 		public Color spawnRay( LightRay ray, int recDepth )
 		{
 
@@ -187,54 +189,64 @@ namespace RayTracer_App.World
 
 				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, false ); //return to irradiance for TR
 
-				//cp5 
 				if (recDepth < MAX_DEPTH)
 				{
 					//need this since we recurse and may update bestObj
 					SceneObject localBest = this.bestObj;
 					Color recColor = null;
-					Vector nHit = localBest.normal;
 
+					//refraction check
+					Vector nHit = localBest.normal;
 					bool inside = false;
 					float checkDp = nHit.dotProduct( ray.direction );
+
 					if (checkDp > 0) // issue was using Math.Min for return in sphere intersect
-					{ 
-						nHit = -nHit; 
-						inside = true ;
+					{
+						nHit = -nHit;
+						inside = true;
 					}
 
+					//reflection
 					if (this.bestObj.kRefl > 0)
 					{
 						//importance sampling here if on
-						Point reflOrigin = intersection.displaceMe( nHit );
-						//LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, nHit ), reflOrigin );
-						LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, nHit ), reflOrigin );
+						Point reflOrigin;
+						Vector reflDir = Vector.reflect( -ray.direction, localBest.normal );
+
+						if (reflDir.dotProduct( localBest.normal ) < 0)
+							reflOrigin = intersection.displaceMe( -localBest.normal );
+						else
+							reflOrigin = intersection.displaceMe( localBest.normal );
+
+						LightRay reflRay = new LightRay( reflDir, reflOrigin );
 						recColor = spawnRay( reflRay, recDepth + 1 );
 
 						if (recColor != null)
 							currColor += recColor.scale( localBest.kRefl );
 
 					}
-				//https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_en.html
-				//https://www.scratchapixel.com/code.php?id=8&origin=/lessons/3d-basic-rendering/ray-tracing-overview... better
+
+					//refraction - cp6
+					//https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_en.html... app
+					//https://www.scratchapixel.com/code.php?id=8&origin=/lessons/3d-basic-rendering/ray-tracing-overview... better
 					if (this.bestObj.kTrans > 0) //cp6 TODO, handle ray passing through an object!
 					{
 						//spawn transmission ray
 						Vector transDir;
-						Point transOrigin = intersection.displaceMe( -nHit );
+						Point transOrigin;
 
-						if (inside) //inside... these alternate now in a way that makes sense
+						if (inside) //these do alternate
 						{
-							Console.WriteLine( "in" );
+							//Console.WriteLine( "in" );
 							transDir = Vector.transmit( ray.direction, nHit, localBest.refIndex, SceneObject.AIR_REF_INDEX );
 						}
 						else
 						{
-							Console.WriteLine( "out" );
+							//Console.WriteLine( "out" );
 							transDir = Vector.transmit( ray.direction, nHit, SceneObject.AIR_REF_INDEX, localBest.refIndex );
 						}
 
-						if( transDir.dotProduct( localBest.normal) < 0 )
+						if ( transDir.dotProduct( localBest.normal) < 0 )
 							transOrigin = intersection.displaceMe( -localBest.normal );
 						else
 							transOrigin = intersection.displaceMe( localBest.normal );
