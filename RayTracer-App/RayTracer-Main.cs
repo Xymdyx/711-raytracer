@@ -23,15 +23,15 @@ public class RayTracerMain
 		//transparent middle sphere
 		float s1Depth = 8.75f; //+z into the scene... I am IN LHS
 		float s1Height = .75f; //1.75f.. 45 is good for lots of sky
-		float s1Trans = 1.0f;
+		float s1Trans = 1f;
 		float s1Refl = 0f;
-		float s1RefIdx = .975f; // n2 < 1 for TIR
+		float s1RefIdx = .935f; // n2 < 1 for TIR
 
 		//reflective right sphere
 		float s2Depth = s1Depth + 1.75f; //1.85.. like Whitted... 2.75 for far apart
 		float sphereRad = 1.5f;
-		float s2Refl = 1.0f;
-		float s2Trans = 0f;
+		float s2Refl = 1f;
+		float s2Trans = 1- s2Refl;
 		float s2RefIdx = SceneObject.AIR_REF_INDEX;
 
 		float floorHeight = 5.5f;
@@ -78,7 +78,7 @@ public class RayTracerMain
 
 		//cp3... place mainLight source above the spheres 	// 1.5f, -1f, -5.0f //.85f, -30.85f, s1Depth - 5.5f , in front and way high
 
-		Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // the z was originally s1Depth + .75
+		Point mainLightPos = new Point( .85f, -30.85f, s1Depth - .75f ); // .85f, -30.85f, s1Depth + .75f
 
 		Color mainLightColor = Color.whiteSpecular;
 		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );

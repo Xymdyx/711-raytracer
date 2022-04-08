@@ -19,7 +19,7 @@ namespace RayTracer_App.World
 		private AABB _sceneBB;
 		private KdTree _kdTree;
 		private SceneObject _bestObj;
-		private static int MAX_DEPTH = 10; //cp5 max bounces
+		private static int MAX_DEPTH = 7; //cp6 max bounces
 
 
 		//private int[] attributes;
@@ -207,6 +207,7 @@ namespace RayTracer_App.World
 					{
 						//importance sampling here if on
 						Point reflOrigin = intersection.displaceMe( nHit );
+						//LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, nHit ), reflOrigin );
 						LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, nHit ), reflOrigin );
 						recColor = spawnRay( reflRay, recDepth + 1 );
 
@@ -215,22 +216,28 @@ namespace RayTracer_App.World
 
 					}
 				//https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_en.html
+				//https://www.scratchapixel.com/code.php?id=8&origin=/lessons/3d-basic-rendering/ray-tracing-overview... better
 					if (this.bestObj.kTrans > 0) //cp6 TODO, handle ray passing through an object!
 					{
 						//spawn transmission ray
 						Vector transDir;
-						Point transOrigin = intersection.displaceMe( -nHit ) ;
+						Point transOrigin = intersection.displaceMe( -nHit );
 
-						if (inside) //inside... these aren't alternating....
+						if (inside) //inside... these alternate now in a way that makes sense
 						{
-							//Console.WriteLine( "in" );
+							Console.WriteLine( "in" );
 							transDir = Vector.transmit( ray.direction, nHit, localBest.refIndex, SceneObject.AIR_REF_INDEX );
 						}
 						else
 						{
-							//Console.WriteLine( "out" );
+							Console.WriteLine( "out" );
 							transDir = Vector.transmit( ray.direction, nHit, SceneObject.AIR_REF_INDEX, localBest.refIndex );
 						}
+
+						if( transDir.dotProduct( localBest.normal) < 0 )
+							transOrigin = intersection.displaceMe( -localBest.normal );
+						else
+							transOrigin = intersection.displaceMe( localBest.normal );
 
 						LightRay translRay = new LightRay( transDir, transOrigin );
 						ray.entryPt = intersection; //keep track of if we're in an object or not

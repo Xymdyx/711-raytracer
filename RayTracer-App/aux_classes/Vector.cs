@@ -8,7 +8,7 @@ using System;
 //CONVERTED DOUBLE -> FLOAT!
 public class Vector
 {
-    private static Vector ZERO_VEC = new Vector( 0, 0, 0 );
+    public static Vector ZERO_VEC = new Vector( 0, 0, 0 );
 
     // fields
     private float _v1;
@@ -177,13 +177,11 @@ public class Vector
     }
 
     //REFLECT METHOD
-    // reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
+    // reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) ).. i do this weirdly
     public static Vector reflect( Vector incoming, Vector normal )
 	{
         
         float inNormDp = incoming.dotProduct( normal );
-       // float len = normal.getLen(); //should be 1
-       // float divisor = len * len; //fixed
         Vector rightTerm = normal.scale( 2 * (inNormDp) ) ; //does not normalize here
         return rightTerm - incoming ;
 	}
@@ -201,13 +199,17 @@ public class Vector
             return dir;
 
         // t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
-        float cosi =  -(normal.dotProduct(dir)); //this is giving weird behavior
+        float cosi =  -(normal.dotProduct(dir)); //this is always positive, which is what we want...
         float nRat = ni / nt;
 
         // cosi = -(i dot n)
         // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
         Vector leftTerm = dir.scale( nRat );
-        float sqrtTerm = (float) ( 1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi))) );
+        float sqrtTerm = (float) ( 1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi)))); //this is sometimes negative...
+
+        if (sqrtTerm < 0)
+            return Vector.ZERO_VEC;
+
         float rightScale = (float) ( (nRat * cosi) - Math.Sqrt(sqrtTerm) );  //getting NAN here
         Vector rightTerm = normal.scale( rightScale );
 
