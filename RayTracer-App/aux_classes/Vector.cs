@@ -176,8 +176,9 @@ public class Vector
         return ((0 == this.v1) && (0 == this.v2) && (0 == this.v3));
     }
 
-	//   //REFLECT METHOD... https://en.wikipedia.org/wiki/Phong_reflection_model
-	//   // reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) ).. i do this weirdly
+	///REFLECT METHOD... https://en.wikipedia.org/wiki/Phong_reflection_model
+	//reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) ).. i do this weirdly when i is negative cam ray
+    // an equivalent form is: r = i + 2(-i dot n) * n for positive cam ray
 	public static Vector reflect( Vector incoming, Vector normal )
 	{
 
@@ -185,10 +186,21 @@ public class Vector
 		Vector rightTerm = normal.scale( 2f * (inNormDp) ); //does not normalize here
 		return rightTerm - incoming;
 	}
-    
-    //RANSMIT METHOD... handles logic in method
+
+    // an equivalent form is: r = i + 2(-i dot n) * n for positive cam ray
+    // reflect 2    
+    public static Vector reflect2( Vector incoming, Vector normal )
+    {
+
+        float inNormDp = -incoming.dotProduct( normal );
+        Vector rightTerm = normal.scale( 2f * (inNormDp) ); //does not normalize here
+        return rightTerm + incoming;
+    }
+
+    //TRANSMIT METHOD... handles logic in method
     // where ni and nt are indexes of refraction
     //preconds: dotProduct done before this
+    //https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
     public static Vector transmit( Vector dir, Vector normal, float ni, float nt )
 	{
 		//same direction if indices of refraction are the same
@@ -199,15 +211,17 @@ public class Vector
 		float cosi = -(normal.dotProduct( dir )); //this is always positive, which is what we want...
 		float nRat = ni / nt;
 
-		// cosi = -(i dot n)
-		// sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
-		Vector leftTerm = dir.scale( nRat );
+        // cosi = -(i dot n)
+        // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
+        //CritAngle = arcsin (n2/n1) <=> n1 > n2
+
+        Vector leftTerm = dir.scale( nRat );
 		float sqrtTerm = (float)(1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi)))); //this is sometimes negative...
 
-        if (sqrtTerm < 0 && nRat > 1)
-            Console.WriteLine( "Negative term when inside sphere" );
+        //if (sqrtTerm < 0 && nRat > 1)
+        //    Console.WriteLine( "Negative term when inside sphere" );
 
-		if (sqrtTerm < 0)
+		if (sqrtTerm < 0) //transmission direction doesn't exist
 			return Vector.ZERO_VEC;
 
 		float rightScale = (float)((nRat * cosi) - Math.Sqrt( sqrtTerm ));  //getting NAN here

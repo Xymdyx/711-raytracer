@@ -64,6 +64,7 @@ public class RayTracerMain
 		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth ), sphereRad, s1Refl, s1Trans, s1RefIdx );
 		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad, s2Refl, s2Trans, s2RefIdx ); //setting the point elsewhere gives translating whole sphere
 		sphere2.translate( 1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform ... ( 1.75f, s1Height + 1.4f, 0 );
+		//sphere1.translate( 1.75f, +2.0f, 0 ); //sphere 1 experiments
 
 		//adv cp 1... parse Bunny
 		if (includeBunny)
@@ -78,7 +79,7 @@ public class RayTracerMain
 
 		//cp3... place mainLight source above the spheres 	// 1.5f, -1f, -5.0f //.85f, -30.85f, s1Depth - 5.5f , in front and way high
 
-		Point mainLightPos = new Point( .85f, -30.85f, s1Depth - .75f ); // .85f, -30.85f, s1Depth + .75f
+		Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // .85f, -30.85f, s1Depth + .75f
 
 		Color mainLightColor = Color.whiteSpecular;
 		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );

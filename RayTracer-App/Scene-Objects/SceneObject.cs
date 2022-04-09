@@ -10,7 +10,7 @@ namespace RayTracer_App.Scene_Objects
 	public class SceneObject
 	{
 		//CONSTANTS
-		public const float AIR_REF_INDEX = 1.0f;
+		public const float AIR_REF_INDEX = 1.00f;
 
 		//fields
 		protected string _material;

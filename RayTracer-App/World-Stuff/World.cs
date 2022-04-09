@@ -211,7 +211,8 @@ namespace RayTracer_App.World
 					{
 						//importance sampling here if on
 						Point reflOrigin;
-						Vector reflDir = Vector.reflect( -ray.direction, localBest.normal );
+						//Vector reflDir = Vector.reflect( -ray.direction, localBest.normal );
+						Vector reflDir = Vector.reflect2( ray.direction, localBest.normal ); //equivalent way with what I did for Phong. But this is just reflecting back the same ray
 
 						if (reflDir.dotProduct( localBest.normal ) < 0)
 							reflOrigin = intersection.displaceMe( -localBest.normal );
@@ -253,7 +254,9 @@ namespace RayTracer_App.World
 
 						LightRay translRay = new LightRay( transDir, transOrigin );
 						ray.entryPt = intersection; //keep track of if we're in an object or not
+
 						recColor = spawnRay( translRay, recDepth + 1 );
+
 						ray.entryPt = null; // we've exited
 
 						if (recColor != null)
@@ -339,3 +342,13 @@ namespace RayTracer_App.World
 		}
 	}
 }
+
+/* issue...
+ // gives more or less same direction back...
+Vector reflDir = Vector.reflect2( ray.direction, localBest.normal );
+{Vector (u1, u2, u3) = (0.12933731, 0.3664578 , 0.92140144)
+}
+
+Vector reflDir = Vector.reflect( -ray.direction, localBest.normal );
+{Vector (u1, u2, u3) = (0.12933731, 0.3664578 , 0.92140144)
+ */

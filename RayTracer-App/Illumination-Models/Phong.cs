@@ -93,7 +93,7 @@ namespace RayTracer_App.Illumination_Models
 
 				// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )
 				// kd * (litObj.illuminate() * light.color * (shadowRay.dotProduct( Normal) ) + 
-				Vector shadowRayVec = shadowRay.direction;
+					Vector shadowRayVec = shadowRay.direction;
 					Vector reflect = Vector.reflect( shadowRayVec, litObj.normal );
 
 					Color diffuseTerm = litObj.diffuse * light.lightColor;
