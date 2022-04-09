@@ -1,6 +1,7 @@
 ﻿using RayTracer_App.Illumination_Models;
 using System.Numerics;
 using RayTracer_App.Voxels;
+using System;
 
 
 //MATRIX 4D -> MATRIX4X4
@@ -8,6 +9,9 @@ namespace RayTracer_App.Scene_Objects
 {
 	public class SceneObject
 	{
+		//CONSTANTS
+		public const float AIR_REF_INDEX = 1.00f;
+
 		//fields
 		protected string _material;
 		protected Vector _normal;
@@ -16,6 +20,8 @@ namespace RayTracer_App.Scene_Objects
 		protected Color _specular;
 		protected float _kRefl;
 		protected float _kTrans;
+		protected float _refIndex;
+		
 
 		//properties 
 		public string material {get => this._material; set => this._material = value; }
@@ -23,11 +29,9 @@ namespace RayTracer_App.Scene_Objects
 		public IlluminationModel lightModel { get => this._lightModel; set => this._lightModel = value; }
 		public Color diffuse { get => this._diffuse; set => this._diffuse = value; }
 		public Color specular { get => this._specular; set => this._specular = value; }
-		public float kRefl { get => this._kRefl; set => this._kRefl = value; }
-		public float kTrans { get => this._kTrans; set => this._kTrans = value; }
-
-
-
+		public float kRefl { get => this._kRefl; set => this._kRefl = Math.Min( value, 1.0f - kTrans ); }
+		public float kTrans { get => this._kTrans; set => this._kTrans = Math.Min( value, 1.0f - kRefl); }
+		public float refIndex { get => this._refIndex; set => this._refIndex = value; }
 
 		//constructors
 		public SceneObject() { 
@@ -38,6 +42,7 @@ namespace RayTracer_App.Scene_Objects
 			this._specular = Color.whiteSpecular;
 			this._kRefl = 0.0f;
 			this._kTrans = 0.0f;
+			this.refIndex = AIR_REF_INDEX;
 		}
 
 		public SceneObject( string material, IlluminationModel lightModel, Vector normal = null )
@@ -49,6 +54,8 @@ namespace RayTracer_App.Scene_Objects
 			this._specular = Color.whiteSpecular;
 			this._kRefl = 0.0f;
 			this._kTrans = 0.0f;
+			this.refIndex = AIR_REF_INDEX;
+
 		}
 
 		//now with k Coefficients
@@ -61,6 +68,7 @@ namespace RayTracer_App.Scene_Objects
 			this._specular = specular;
 			this._kRefl = kRefl;
 			this._kTrans = kTrans;
+			this.refIndex = AIR_REF_INDEX;
 		}
 
 

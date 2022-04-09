@@ -173,6 +173,7 @@ namespace RayTracer_App.Camera
 			}
 
 			// originally had (-fpHeight/2 + pixHeight/2.. was positive y upward...
+			//focalLen + eyePoint.z if I want to move relative to my z
 			Point fpPoint = new Point ( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen); //gldrawPixels starts drawing lower-left corner at raster positions
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;

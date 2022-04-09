@@ -19,7 +19,7 @@ namespace RayTracer_App.World
 		private AABB _sceneBB;
 		private KdTree _kdTree;
 		private SceneObject _bestObj;
-		private static int MAX_DEPTH = 7; //cp5 max bounces
+		private static int MAX_DEPTH = 20; //cp6 max bounces
 
 
 		//private int[] attributes;
@@ -115,6 +115,26 @@ namespace RayTracer_App.World
 			return bestW;
 		}
 
+		//helper for checking if a ray intersects with an object in the scene.
+		// added shadowBias displacement for shadowRays so I no longer have to check the current object
+		public static SceneObject checkRayIntersectionObj( LightRay ray, List<SceneObject> allObjects )
+		{
+			float currW = float.MaxValue;
+			SceneObject collided = null;
+			foreach (SceneObject obj in allObjects)
+			{
+				currW = obj.intersect( ray );
+
+				if ((currW != float.MinValue) && (currW != float.NaN) &&
+					(currW != float.MaxValue) && (currW > 0))
+				{
+					collided = obj;
+					break;
+				}
+			}
+			return collided;
+		}
+
 		// general function for finding best intersection of ray given a list ob objects
 		public float findRayIntersect( LightRay ray, List<SceneObject> allObjects )
 		{
@@ -136,17 +156,18 @@ namespace RayTracer_App.World
 			return bestW;
 		}
 
+		//method for finding the color when a ray hits an object. Whitted method
+		// TODO: Decompose into smaller methods
 		public Color spawnRay( LightRay ray, int recDepth )
 		{
 
-			Color currColor = null;
+			Color currColor = Color.bgColor;
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
 			Color lightRadiance = null;
 			Point intersection = null;
 
 			//no kdTree
-
 			if (this.kdTree.root == null)
 				bestW = findRayIntersect( ray, this.objects );
 			else
@@ -166,28 +187,83 @@ namespace RayTracer_App.World
 				if ((t != null) && (t.hasTexCoord())) // determine floor triangle point color
 					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
 
-				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj ); //return to irradiance for TR
+				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, false ); //return to irradiance for TR
 
-				//cp5 
 				if (recDepth < MAX_DEPTH)
 				{
+					//need this since we recurse and may update bestObj
+					SceneObject localBest = this.bestObj;
+					Color recColor = null;
+
+					//refraction check
+					Vector nHit = localBest.normal;
+					bool inside = false;
+					float checkDp = nHit.dotProduct( ray.direction );
+
+					if (checkDp > 0) // issue was using Math.Min for return in sphere intersect
+					{
+						nHit = -nHit;
+						inside = true;
+					}
+
+					//reflection
 					if (this.bestObj.kRefl > 0)
 					{
 						//importance sampling here if on
-						LightRay reflRay = new LightRay( Vector.reflect( -ray.direction, this.bestObj.normal ), intersection );
-						//need this since we recurse and may update bestObj
-						SceneObject localBest = this.bestObj; 
-						currColor = spawnRay( reflRay, recDepth + 1 );
+						Point reflOrigin;
+						//Vector reflDir = Vector.reflect( -ray.direction, localBest.normal );
+						Vector reflDir = Vector.reflect2( ray.direction, localBest.normal ); //equivalent way with what I did for Phong. But this is just reflecting back the same ray
 
-						if (currColor != null)
-							currColor = currColor.scale( localBest.kRefl );
+						if (reflDir.dotProduct( localBest.normal ) < 0)
+							reflOrigin = intersection.displaceMe( -localBest.normal );
+						else
+							reflOrigin = intersection.displaceMe( localBest.normal );
+
+						LightRay reflRay = new LightRay( reflDir, reflOrigin );
+						recColor = spawnRay( reflRay, recDepth + 1 );
+
+						if (recColor != null)
+							currColor += recColor.scale( localBest.kRefl );
+
 					}
-					if (this.bestObj.kTrans > 0)
+
+					//refraction - cp6
+					//https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_en.html... app
+					//https://www.scratchapixel.com/code.php?id=8&origin=/lessons/3d-basic-rendering/ray-tracing-overview... better
+					if (this.bestObj.kTrans > 0) //cp6 TODO, handle ray passing through an object!
 					{
 						//spawn transmission ray
-						//currColor += spawnRay( translRay, recDepth + 1 );
-						;
+						Vector transDir;
+						Point transOrigin;
+
+						if (inside) //these do alternate
+						{
+							//Console.WriteLine( "in" );
+							transDir = Vector.transmit( ray.direction, nHit, localBest.refIndex, SceneObject.AIR_REF_INDEX );
+						}
+						else
+						{
+							//Console.WriteLine( "out" );
+							transDir = Vector.transmit( ray.direction, nHit, SceneObject.AIR_REF_INDEX, localBest.refIndex );
+						}
+
+						if ( transDir.dotProduct( localBest.normal) < 0 )
+							transOrigin = intersection.displaceMe( -localBest.normal );
+						else
+							transOrigin = intersection.displaceMe( localBest.normal );
+
+						LightRay translRay = new LightRay( transDir, transOrigin );
+						ray.entryPt = intersection; //keep track of if we're in an object or not
+
+						recColor = spawnRay( translRay, recDepth + 1 );
+
+						ray.entryPt = null; // we've exited
+
+						if (recColor != null)
+							currColor += recColor.scale( localBest.kTrans );
+
 					}
+
 				}
 			}
 			return currColor;
@@ -259,10 +335,20 @@ namespace RayTracer_App.World
 			//time building tree start
 			Stopwatch kdTimer = new Stopwatch();
 			kdTimer.Start();
-			kdTree.maxLeafObjs = this.objects.Count / 2;
+			kdTree.maxLeafObjs = (int) Math.Ceiling( (decimal) this.objects.Count / 2 );
 			kdTree.root = kdTree.getNode( this.objects, this.sceneBB, 0 );
 			kdTimer.Stop();
 			Console.WriteLine( "Building the kd tree took " + (kdTimer.ElapsedMilliseconds) + " milliseconds" );
 		}
 	}
 }
+
+/* issue...
+ // gives more or less same direction back...
+Vector reflDir = Vector.reflect2( ray.direction, localBest.normal );
+{Vector (u1, u2, u3) = (0.12933731, 0.3664578 , 0.92140144)
+}
+
+Vector reflDir = Vector.reflect( -ray.direction, localBest.normal );
+{Vector (u1, u2, u3) = (0.12933731, 0.3664578 , 0.92140144)
+ */
