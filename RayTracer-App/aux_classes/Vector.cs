@@ -218,11 +218,8 @@ public class Vector
         Vector leftTerm = dir.scale( nRat );
 		float sqrtTerm = (float)(1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi)))); //this is sometimes negative...
 
-        //if (sqrtTerm < 0 && nRat > 1)
-        //    Console.WriteLine( "Negative term when inside sphere" );
-
 		if (sqrtTerm < 0) //transmission direction doesn't exist
-			return Vector.ZERO_VEC;
+			return reflect2( dir, normal );
 
 		float rightScale = (float)((nRat * cosi) - Math.Sqrt( sqrtTerm ));  //getting NAN here
 		Vector rightTerm = normal.scale( rightScale );

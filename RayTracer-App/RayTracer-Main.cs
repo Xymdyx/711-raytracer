@@ -25,7 +25,7 @@ public class RayTracerMain
 		float s1Height = .75f; //1.75f.. 45 is good for lots of sky
 		float s1Trans = .75f;
 		float s1Refl = 0f;
-		float s1RefIdx = .99f; // ni > nt for TIR
+		float s1RefIdx = .98f; // ni > nt for TIR
 
 		//reflective right sphere
 		float s2Depth = s1Depth + 1.75f; //1.85.. like Whitted... 2.75 for far apart
