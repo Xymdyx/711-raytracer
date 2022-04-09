@@ -161,24 +161,13 @@ namespace RayTracer_App.Camera
 			byte[] bgArr = bgColor.asByteArr();
 			byte[] pixColors = new byte[imageHeight * imageWidth * 3];
 
-
-			int modIdx = 0;
-			for (int add = 0; add < imageHeight * imageWidth * 3 ; add++)
-			{
-				modIdx = add % 3;
-
-				if (modIdx == 0) pixColors[add] = bgArr[0]; //red
-				else if (modIdx == 1) pixColors[add] = bgArr[1]; //green
-				else pixColors[add] = bgArr[2]; //blue
-			}
-
 			// originally had (-fpHeight/2 + pixHeight/2.. was positive y upward...
+			//focalLen + eyePoint.z if I want to move relative to my z
 			Point fpPoint = new Point ( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen); //gldrawPixels starts drawing lower-left corner at raster positions
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;
 			byte[] hitColorArr = null;
 			bool isSuperSampling = false;
-
 
 			int hits = 0;
 			for ( int y = 0; y < imageHeight; y++) // positive x ->, positive y V
@@ -196,7 +185,6 @@ namespace RayTracer_App.Camera
 
 					if (hitColor != null)
 					{
-						//TODO need to change to 0 -> 1 floats
 						//run tone reproduction function on hitColor and then do the following
 						hitColor = runTR( hitColor );
 						hitColorArr = hitColor.asByteArr();
@@ -204,7 +192,8 @@ namespace RayTracer_App.Camera
 						pixColors[pos] = hitColorArr[0]; //try 0-1.0 floats instead of 255
 						pixColors[pos + 1] = hitColorArr[1]; //try 0-1.0 floats instead of 255
 						pixColors[pos + 2] = hitColorArr[2]; //try 0-1.0 floats instead of 255
-						hits++;
+
+						if( hitColor != Color.bgColor) hits++;
 					}
 
 					fpPoint.x += pixWidth;
@@ -217,8 +206,6 @@ namespace RayTracer_App.Camera
 			renderTimer.Stop();
 			Console.WriteLine( "Rendering the scene took " + (renderTimer.ElapsedMilliseconds) + " milliseconds" );
 			Console.WriteLine( $" There are {hits} non-background colors/ {imageHeight * imageWidth} colors total" );
-			//time render end
-			// print total render time
 			return pixColors ;
 		}
 

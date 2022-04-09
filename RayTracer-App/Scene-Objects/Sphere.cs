@@ -24,7 +24,7 @@ namespace RayTracer_App.Scene_Objects
 			this._specular = Color.whiteSpecular;
 		}
 
-		public Sphere( Point center, float radius, float kRefl = 0.0f, float kTrans = 0.0f )
+		public Sphere( Point center, float radius, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX )
 		{
 			this._center = center;
 			this._radius = radius;
@@ -34,10 +34,11 @@ namespace RayTracer_App.Scene_Objects
 			this._lightModel = PhongBlinn.regularPhongBlinn; //change iullum model here for now
 			this._kRefl = kRefl;
 			this._kTrans = kTrans;
+			this.refIndex = refIndex;
 
 		}
 
-		public Sphere( Point center, float radius, Color diffuse, Color specular, float kRefl = 0.0f, float kTrans = 0.0f )
+		public Sphere( Point center, float radius, Color diffuse, Color specular, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX )
 		{
 			this._center = center;
 			this._radius = radius;
@@ -46,6 +47,7 @@ namespace RayTracer_App.Scene_Objects
 			this._specular = specular;
 			this._kRefl = kRefl;
 			this._kTrans = kTrans;
+			this.refIndex = refIndex;
 		}
 
 		// function for getting where along ray intersection happens with a sphere
@@ -100,7 +102,13 @@ namespace RayTracer_App.Scene_Objects
 			{
 				w1 = (float) (-B + Math.Sqrt( rootTerm )) / 2f;
 				w2 = (float) (-B - Math.Sqrt( rootTerm )) / 2f;
-				return Math.Min( w1, w2 );
+
+				if (w2 < 0)
+					return w1;
+				else if (w1 < 0)
+					return w2;
+				else
+					return Math.Min( Math.Max(w1, 0), Math.Max(w2,0) );
 			}
 		}
 

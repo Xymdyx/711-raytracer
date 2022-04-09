@@ -222,6 +222,15 @@ public class Point
         return new Vector( this.x - p2.x, this.y - p2.y, this.z - p2.z, false );
     }
 
+    //displace method to prevent acne from floating point round-off
+    //float transBias = 1e-4f;
+    //Vector transDisplacement = -(localBest.normal).scale( transBias );
+    //Point transOrigin = intersection + transDisplacement;
+    public Point displaceMe( Vector along, float bias = 1e-4f)
+	{
+        Vector displaceVec = along.scale( bias );
+        return this + displaceVec;
+    }
 	public override string ToString()
 	{
 		return $"Point [{this.x}, {this.y}, {this.z}]";

@@ -20,12 +20,19 @@ public class RayTracerMain
 
 	public static Camera setupWhitted( World world, bool includeBunny = false )
 	{
-		//initialize objects
+		//transparent middle sphere
 		float s1Depth = 8.75f; //+z into the scene... I am IN LHS
-		float s1Height = 1.75f;
-		float s2Depth = s1Depth + 1.85f;
+		float s1Height = .75f; //1.75f.. 45 is good for lots of sky
+		float s1Trans = .75f;
+		float s1Refl = 0f;
+		float s1RefIdx = .98f; // ni > nt for TIR
+
+		//reflective right sphere
+		float s2Depth = s1Depth + 1.75f; //1.85.. like Whitted... 2.75 for far apart
 		float sphereRad = 1.5f;
-		float s2Refl = 1.0f;
+		float s2Refl = 1f;
+		float s2Trans = 1- s2Refl;
+		float s2RefIdx = SceneObject.AIR_REF_INDEX;
 
 		float floorHeight = 5.5f;
 
@@ -54,9 +61,10 @@ public class RayTracerMain
 		triangle1.translate( -5f, 0, 0 );
 		triangle2.translate( -5f, 0, 0 );
 
-		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth ), sphereRad );
-		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad, s2Refl ); //setting the point elsewhere gives translating whole sphere
-		sphere2.translate( 1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform
+		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth ), sphereRad, s1Refl, s1Trans, s1RefIdx );
+		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad, s2Refl, s2Trans, s2RefIdx ); //setting the point elsewhere gives translating whole sphere
+		sphere2.translate( 1.75f, s1Height + 1.4f, 0 ); //doing it here gives same results as after cam transform ... ( 1.75f, s1Height + 1.4f, 0 );
+		//sphere1.translate( 1.75f, +2.0f, 0 ); //sphere 1 experiments
 
 		//adv cp 1... parse Bunny
 		if (includeBunny)
@@ -71,7 +79,7 @@ public class RayTracerMain
 
 		//cp3... place mainLight source above the spheres 	// 1.5f, -1f, -5.0f //.85f, -30.85f, s1Depth - 5.5f , in front and way high
 
-		Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // the z was originally s1Depth + .75
+		Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // .85f, -30.85f, s1Depth + .75f
 
 		Color mainLightColor = Color.whiteSpecular;
 		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );
@@ -80,8 +88,8 @@ public class RayTracerMain
 		world.addLight( mainLight );
 		world.addObject( triangle1 );
 		world.addObject( triangle2 );
-		world.addObject( sphere1 );
 		world.addObject( sphere2 );
+		world.addObject( sphere1 );
 
 		Vector up = new Vector( 0f, 1f, 0f );
 		Point eyePos = new Point( 0f, -1f, -5f ); //0f, -1f, -5f
@@ -116,7 +124,7 @@ public class RayTracerMain
 		* implement a cone filter if ambitious
 		*/
 
-		Camera cam = setupWhitted( world, true );
+		Camera cam = setupWhitted( world, false );
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
 		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen );

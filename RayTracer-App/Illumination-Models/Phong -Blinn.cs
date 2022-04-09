@@ -70,7 +70,7 @@ namespace RayTracer_App.Illumination_Models
 
 		//precondiiton: the negative of the cameraRay gets passed so it is going TO the viewer's eye, not from
 		//TODO IMPLEMENT ILLUMINATE... this returns an irradiance triplet, which will be converted by the camera via TR to a color.
-		public override Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, float shadowBias = 1e-6f ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
+		public override Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, bool transShadows = false, float shadowBias = 1e-6f ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
 		{
 
 			Color lightIrradiance = Color.defaultBlack;
@@ -81,10 +81,14 @@ namespace RayTracer_App.Illumination_Models
 					Vector shadowDisplacement = litObj.normal.scale( shadowBias );
 					Point displacedOrigin = intersect + shadowDisplacement;
 					LightRay shadowRay = new LightRay( light.position - displacedOrigin, displacedOrigin );
-					float shadowW = World.World.checkRayIntersection( shadowRay, allObjs );
+					SceneObject blocking = World.World.checkRayIntersectionObj( shadowRay, allObjs );
+					float litPercent = 1.0f;
 			
-					if (shadowW != float.MaxValue) //the shadowRay gets blocked by an object on way to light
+					if ( (blocking != null) && ( !(transShadows) || (blocking.kTrans <= 0.0f) ) ) //the shadowRay gets blocked by an object on way to light
 						continue;
+
+					else if ((blocking != null) && (transShadows) && (blocking.kTrans > 0.0f))
+						litPercent = blocking.kTrans;
 
 					// kd * (litObj.illuminate() * light.color * (shadowRay.dotProduct( Normal) ) + 
 					Vector shadowRayVec = shadowRay.direction;
@@ -105,7 +109,7 @@ namespace RayTracer_App.Illumination_Models
 
 					specTerm = specTerm.scale( this.ks * totalSpecRefl );
 					//( this.ks * litObj.specular * light.lightColor * mirrorReflect.dotProduct( cameraRay ) );
-					lightIrradiance += diffuseTerm + specTerm;
+					lightIrradiance += (diffuseTerm + specTerm).scale( litPercent);
 				}
 
 			return lightIrradiance;
