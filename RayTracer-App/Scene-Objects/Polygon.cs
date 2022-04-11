@@ -39,14 +39,16 @@ namespace RayTracer_App.Scene_Objects
 
 		}
 
-		public Polygon( List<Point> vertices, Color diffuse, Color specular )
+		public Polygon( List<Point> vertices, Color diffuse, Color specular = null )
 		{
 			this._vertices = vertices;
 			this._normal = null; //TODO calculate normal
 			this._diffuse = diffuse;
-			this._specular = specular;
-			this._lightModel = PhongBlinn.floorPhongBlinn;
+			this._specular = Color.whiteSpecular;
+			this._lightModel = Phong.floorPhong;
 
+			if (specular != null)
+				this._specular = specular;
 		}
 
 

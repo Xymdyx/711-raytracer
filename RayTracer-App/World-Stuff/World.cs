@@ -19,7 +19,7 @@ namespace RayTracer_App.World
 		private AABB _sceneBB;
 		private KdTree _kdTree;
 		private SceneObject _bestObj;
-		private static int MAX_DEPTH = 20; //cp6 max bounces
+		private static int MAX_DEPTH = 10; //cp6 max bounces
 
 
 		//private int[] attributes;
@@ -92,6 +92,9 @@ namespace RayTracer_App.World
 			 foreach (SceneObject obj in objects)
 				obj.transform( camViewMat ); //converts all objects to camera space
 
+			foreach (LightSource ls in lights)
+				ls.transform( camViewMat);
+
 			return;
 		}
 
@@ -117,16 +120,17 @@ namespace RayTracer_App.World
 
 		//helper for checking if a ray intersects with an object in the scene.
 		// added shadowBias displacement for shadowRays so I no longer have to check the current object
-		public static SceneObject checkRayIntersectionObj( LightRay ray, List<SceneObject> allObjects )
+		public static SceneObject checkRayIntersectionObj( LightRay ray, List<SceneObject> allObjects, LightSource light = null )
 		{
 			float currW = float.MaxValue;
+			float litW = ray.origin.distance( light.position );
 			SceneObject collided = null;
 			foreach (SceneObject obj in allObjects)
 			{
 				currW = obj.intersect( ray );
 
 				if ((currW != float.MinValue) && (currW != float.NaN) &&
-					(currW != float.MaxValue) && (currW > 0))
+					(currW != float.MaxValue) && (currW > 0) && (currW < litW) )
 				{
 					collided = obj;
 					break;

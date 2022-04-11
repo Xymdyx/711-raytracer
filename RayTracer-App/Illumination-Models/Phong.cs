@@ -82,7 +82,7 @@ namespace RayTracer_App.Illumination_Models
 					Point displacedOrigin = intersect + shadowDisplacement;
 					LightRay shadowRay = new LightRay( light.position - displacedOrigin, displacedOrigin );
 
-					SceneObject blocking = World.World.checkRayIntersectionObj( shadowRay, allObjs );
+					SceneObject blocking = World.World.checkRayIntersectionObj( shadowRay, allObjs, light );
 					float litPercent = 1.0f;
 
 					if ((blocking != null) && (!(transShadows) || (blocking.kTrans <= 0.0f))) //the shadowRay gets blocked by an object on way to light

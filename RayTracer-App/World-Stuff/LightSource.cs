@@ -4,6 +4,7 @@ desc: class that reps light source in world
 date started: 2/19/2021
  */
 using System;
+using System.Numerics; //for Matrix4x4 float
 
 namespace RayTracer_App.World
 {
@@ -31,6 +32,15 @@ namespace RayTracer_App.World
 			this._position = position;
 			this._lightColor = lightColor;
 			this._power = power; 
+		}
+
+		public void transform( Matrix4x4 camViewMat )
+		{
+			// MATRIX MULTI WORKS DEFINITELY
+			Vector4 posHmg = position.toHmgCoords(); // 1x4 Vector
+			Vector4 newVertVec = Vector4.Transform( posHmg, camViewMat ); // we postMultiply since we are is LHS w Row-major.. Vnew = Vold * A * B
+			position.fromHmgCoords( newVertVec ); // [x y z w] => (x/w, y/w, z/w) CP form
+			return;
 		}
 	}
 }
