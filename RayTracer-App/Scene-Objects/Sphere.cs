@@ -38,13 +38,13 @@ namespace RayTracer_App.Scene_Objects
 
 		}
 
-		public Sphere( Point center, float radius, Color diffuse, Color specular, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX )
+		public Sphere( Point center, float radius, Color diffuse, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX )
 		{
 			this._center = center;
 			this._radius = radius;
 			this._normal = null;
 			this._diffuse = diffuse;
-			this._specular = specular;
+			this._specular = Color.whiteSpecular; ;
 			this._kRefl = kRefl;
 			this._kTrans = kTrans;
 			this.refIndex = refIndex;

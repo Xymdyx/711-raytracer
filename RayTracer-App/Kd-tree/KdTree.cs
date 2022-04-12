@@ -13,7 +13,7 @@ namespace RayTracer_App.Kd_tree
 
 		private int _maxLeafObjs;
 
-		private static int MAX_KD_DEPTH = 5 * 4;
+		private static int MAX_KD_DEPTH = 999;
 		public KdNode root { get => this._root; set => this._root = value; }
 		public int maxLeafObjs { get => this._maxLeafObjs; set => this._maxLeafObjs = value; }
 
@@ -33,6 +33,7 @@ namespace RayTracer_App.Kd_tree
 		//methods
 
 		//helper for finding Vector to translate points along split plane for an AABB
+		// currently zeroes out the splitting axis for shifting the center instead... likely where the bug is
 		private Vector findSplitVec( AABB vox, int axis )
 		{
 			Vector splitVec = vox.extents.copy();
@@ -54,7 +55,7 @@ namespace RayTracer_App.Kd_tree
 
 		public bool terminal( List<SceneObject> objects, AABB vox, int depth )
 		{
-			return ( objects.Count <= maxLeafObjs ); //the spheres are in the same voxel...
+			return ( objects.Count <= maxLeafObjs || depth >= MAX_KD_DEPTH ); //the spheres are in the same voxel...
 		}
 
 		/*get node... starts as //getNode( allObjects, sceneBoundingBox)

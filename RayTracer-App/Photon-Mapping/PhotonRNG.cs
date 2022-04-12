@@ -11,6 +11,14 @@ namespace RayTracer_App.Photon_Mapping
 {
 	public class PhotonRNG
 	{
+		public enum RR_OUTCOMES
+		{
+			ERROR = -1,
+			DIFFUSE = 0,
+			SPECULAR = 1,
+			ABSORB = 2
+		}
+
 		private Random rand;
 
 		public PhotonRNG( int seed = 1 )
@@ -18,11 +26,31 @@ namespace RayTracer_App.Photon_Mapping
 			this.rand = new Random( seed );
 		}
 
+		// for grabbing a random number between [min, max)
+		public float randomRange( float min = -1, float max = 1)
+		{
+			float diff = max - min;
+			float ranPercent = random01();
+
+			return (float)(diff * ranPercent) + min;
+		}
+
+		// for grabbing a random number between [0, 1)
 		public float random01() { return (float) rand.NextDouble(); }
 
-		public float RussianRoulette()
+		//Monte Carlo for determining if a Photon gets absorbed, reflected diffusely, or reflected specularly
+		public RR_OUTCOMES RussianRoulette( float diffuse, float spec )
 		{
-			return 0.0f;
+			float chance = random01();
+
+			if (0 <= chance && chance <= diffuse)
+				return RR_OUTCOMES.DIFFUSE;
+			else if (diffuse < chance && chance <= spec + diffuse)
+				return RR_OUTCOMES.SPECULAR;
+			else if (spec + diffuse < chance && chance <= 1.0f)
+				return RR_OUTCOMES.ABSORB;
+			else
+				return RR_OUTCOMES.ABSORB;
 		}
 	}
 }

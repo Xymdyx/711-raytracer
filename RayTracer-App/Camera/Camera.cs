@@ -136,7 +136,7 @@ namespace RayTracer_App.Camera
 
 
 //tried list of float[] and float[]...
-		public byte[] render( World.World world, int imageHeight, int imageWidth, float focalLen, bool makeKd = false )
+		public byte[] render( World.World world, int imageHeight, int imageWidth, float focalLen, bool makeKd = false, bool doPM = false )
 		{
 			// this converts everything to camera coords
 			makeCamMat();
@@ -146,6 +146,12 @@ namespace RayTracer_App.Camera
 			{
 				world.findBB(); //advanced cp 1
 				world.buildKd();
+			}
+
+			else if(doPM)
+			{
+				world.findBB(); //advanced cp 2
+				//world.beginPM();
 			}
 
 			//time the render here...

@@ -7,29 +7,38 @@ using RayTracer_App.Scene_Objects;
 using RayTracer_App.Illumination_Models;
 using RayTracer_App.Voxels;
 using RayTracer_App.Kd_tree;
+using RayTracer_App.Photon_Mapping;
 //MATRIX 4D -> MATRIX4X4
 
 namespace RayTracer_App.World
 {
 	public class World
 	{
+		private static int MAX_DEPTH = 10; //cp6 max bounces
+
+		//fields
 		private List<SceneObject> _objects;
 		private List<LightSource> _lights;
 		private CheckerBoardPattern _checkerboard;
 		private AABB _sceneBB;
 		private KdTree _kdTree;
 		private SceneObject _bestObj;
-		private static int MAX_DEPTH = 10; //cp6 max bounces
-
+		private PhotonRNG _photonMapper;
 
 		//private int[] attributes;
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
 		public List<LightSource> lights { get => this._lights ; set => this._lights = value; } // checkpoint 3
 		public CheckerBoardPattern checkerboard { get => this._checkerboard; set => this._checkerboard = value; }
 
+		//advCP1
 		public AABB sceneBB { get => this._sceneBB; set => this._sceneBB = value; } // advanced checkpoint 1
 		public Kd_tree.KdTree kdTree { get => this._kdTree; set => this._kdTree = value;  }
+		
+		//refactor in cp6
 		public SceneObject bestObj { get => this._bestObj; set => this._bestObj = value; }
+
+		//advCp2 Pm
+		public PhotonRNG photonMapper { get => this._photonMapper; set => this._photonMapper = value; }
 
 
 
@@ -98,6 +107,18 @@ namespace RayTracer_App.World
 			return;
 		}
 
+		// helper for getting ray intersection point.. used by PM
+		public Point grabIntersectPt( LightRay ray, float w )
+		{
+			Point intersection = null;
+			Sphere s = this.bestObj as Sphere;
+			Polygon t = this.bestObj as Polygon;
+			if (s != null) intersection = s.getRayPoint( ray, w );
+			else if (t != null) intersection = t.getRayPoint( ray, w );
+
+			return intersection;
+		}
+
 		//helper for checking if a ray intersects with an object in the scene.
 		// added shadowBias displacement for shadowRays so I no longer have to check the current object
 		public static float checkRayIntersection( LightRay ray, List<SceneObject> allObjects )
@@ -140,12 +161,16 @@ namespace RayTracer_App.World
 		}
 
 		// general function for finding best intersection of ray given a list ob objects
-		public float findRayIntersect( LightRay ray, List<SceneObject> allObjects )
+		public float findRayIntersect( LightRay ray, List<SceneObject> allObjs = null )
 		{
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
+			List<SceneObject> objs = allObjs;
 
-			foreach (SceneObject obj in allObjects)
+			if (allObjs == null)
+				objs = this.objects;
+
+			foreach (SceneObject obj in objs)
 			{
 				currW = obj.intersect( ray );
 
@@ -173,7 +198,7 @@ namespace RayTracer_App.World
 
 			//no kdTree
 			if (this.kdTree.root == null)
-				bestW = findRayIntersect( ray, this.objects );
+				bestW = findRayIntersect( ray );
 			else
 				bestW = this.kdTree.travelTAB( ray, this );
 
@@ -191,7 +216,7 @@ namespace RayTracer_App.World
 				if ((t != null) && (t.hasTexCoord())) // determine floor triangle point color
 					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
 
-				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, false ); //return to irradiance for TR
+				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
 
 				if (recDepth < MAX_DEPTH)
 				{
@@ -336,13 +361,67 @@ namespace RayTracer_App.World
 		//builds the kdTree for the world
 		public void buildKd()
 		{
-			//time building tree start
+			//time building tree start.... this sometimes still has issues...
 			Stopwatch kdTimer = new Stopwatch();
 			kdTimer.Start();
 			kdTree.maxLeafObjs = (int) Math.Ceiling( (decimal) this.objects.Count / 2 );
 			kdTree.root = kdTree.getNode( this.objects, this.sceneBB, 0 );
 			kdTimer.Stop();
 			Console.WriteLine( "Building the kd tree took " + (kdTimer.ElapsedMilliseconds) + " milliseconds" );
+		}
+
+		//PHOTON-MAPPING METHODS
+		//called by lightsources in the scene when shooting photons. 
+		// uses Russian roulette to determine photons' fates. Stores photons in the PhotonMapper
+		public void tracePhoton( LightRay photonRay, int depth )
+		{
+			float bestW = float.MaxValue;
+			Color flux = null;
+			Point intersection = null;
+			PhotonRNG.RR_OUTCOMES rrOutcome;
+			//no kdTree
+			bestW = findRayIntersect( photonRay );
+
+			//move this out for efficiency
+			if ((this.bestObj != null) && (bestW != float.MaxValue))
+			{
+				intersection = grabIntersectPt( photonRay, bestW );
+				if (intersection == null)
+				{
+					Console.WriteLine( " Null intersection return... Aborting!" );
+					Environment.Exit( -1 );
+				}
+
+				IlluminationModel bestObjLightModel = this.bestObj.lightModel;
+				Polygon t = this.bestObj as Polygon;
+				if ((t != null) && (t.hasTexCoord())) // determine floor triangle point color
+					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
+
+				flux = bestObjLightModel.illuminate( intersection, -photonRay.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
+
+				//Russian roulette to determine if we go again or not...
+				rrOutcome = this.photonMapper.RussianRoulette(bestObjLightModel.kd, bestObjLightModel.ks);
+				Vector travelDir;
+				switch(rrOutcome)
+				{
+					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
+						//diffuse reflection via Monte Carlo
+						break;
+					case PhotonRNG.RR_OUTCOMES.SPECULAR:
+						travelDir = Vector.reflect2( photonRay.direction, this.bestObj.normal );
+						break;
+					case PhotonRNG.RR_OUTCOMES.ABSORB:
+						// stop tracing
+						break;
+					default:
+						break;
+				}
+			}
+
+			/*photonW = world.findRayIntersect( photonRay );
+			photonPos = world.grabIntersectPt( photonRay, photonW );
+			Photon photon = new Photon( photonPos, photonPow, )*/
+			return;
 		}
 	}
 }
