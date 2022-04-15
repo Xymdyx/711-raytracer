@@ -66,8 +66,6 @@ namespace RayTracer_App.Voxels
 		}
 
 
-
-		
 		// intersects with ray
 		public override bool intersect( LightRay ray )
 		{
@@ -145,6 +143,8 @@ namespace RayTracer_App.Voxels
 				return true;
 		}
 
+		//from slide deck on kd-tree implementation
+		// try this one too: https://stackoverflow.com/questions/4578967/cube-sphere-intersection-test
 		public bool sphereIntersect( Point center, float radius )
 		{
 			float d = 0;

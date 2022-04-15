@@ -23,8 +23,6 @@ namespace RayTracer_App.Camera
 		public Point lookAt { get => this._lookAt; set => this._lookAt = value; }
 		public Matrix4x4 camTransformMat { get => this._camTransformMat; set => this._camTransformMat = value; }
 
-
-
 		//default constructor... TODO define world origin as default
 		public Camera()
 		{
@@ -151,7 +149,7 @@ namespace RayTracer_App.Camera
 			else if(doPM)
 			{
 				world.findBB(); //advanced cp 2
-				//world.beginPM();
+				world.beginpmPassOne();
 			}
 
 			//time the render here...

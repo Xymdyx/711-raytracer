@@ -17,7 +17,7 @@ namespace RayTracer_App.Kd_tree
 		//fields
 		private KdNode _root;
 
-		private int _maxLeafObjs;
+		private int _maxLeafObjs; //will be removed for points
 
 		private static int MAX_KD_DEPTH = 5 * 4;
 		public KdNode root { get => this._root; set => this._root = value; }
@@ -76,7 +76,7 @@ namespace RayTracer_App.Kd_tree
 		algorithm converts the unordered list of photons into a balanced kd-tree
 		by recursively selecting the root node among the data-set as the median
 element in the direction which represents the largest interval.*/
-		public KdNode getNode( List<SceneObject> objects, AABB vox, int depth )
+		public KdNode balance( List<SceneObject> objects, AABB vox, int depth ) //just points and depth soon...
 		{
 			//base case
 			if (terminal( objects, vox, depth ))
@@ -86,7 +86,7 @@ element in the direction which represents the largest interval.*/
 			float partitionVal = vox.center.getAxisCoord( axis );
 			Vector splitVec = findSplitVec( vox, axis );
 
-			/* to split an AABB:
+			/* to split an AABB ( the biggest points on the cube we find):
 			keep min and max
 			translate center point by the extents that aren't the axis we are splitting along
 			for x split:
@@ -128,7 +128,7 @@ element in the direction which represents the largest interval.*/
 			}
 
 			return new ptKdInteriorNode( axis, partitionVal, vox,
-				getNode(frontObjs, vFront, depth + 1), getNode( rearObjs, vRear, depth + 1 ) );
+				balance(frontObjs, vFront, depth + 1), balance( rearObjs, vRear, depth + 1 ) );
 		}
 		
 		private bool intersectGood( float currW )
@@ -215,12 +215,6 @@ element in the direction which represents the largest interval.*/
 			}
 
 			return bestW; //error
-		}
-
-		// if time permits
-		public float doSAH()
-		{
-			return 0.0f;
 		}
 
 		public override string ToString()

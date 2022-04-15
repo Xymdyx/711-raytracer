@@ -19,13 +19,12 @@ namespace RayTracer_App.Illumination_Models
 		public static Phong floorPhong = new Phong( 0f, .45f, .35f, 128f );
 
 		private float _ka; // not going to implement since ambient will be shaved later
-		private float _kd; // Lambertian diffuse
-		private float _ks; // specular
+		//private float _kd; // Lambertian diffuse
+		//private float _ks; // specular
 		private float _ke;// specular exponent, determines size of specular highlight
 
 		public float ka { get => this._ka; set => this._ka = value; }
-		public float kd { get => this._kd; set => this._kd = value; }
-		public float ks { get => this._ks; set => this._ks = value; }
+
 		public float ke { get => this._ke; set => this._ke = value; }
 
 		public Phong()
@@ -34,6 +33,7 @@ namespace RayTracer_App.Illumination_Models
 			this.kd = .65f;
 			this.ks = .35f;
 			this.ke = 1f;
+			this.modelID = 0;
 		}
 
 		public Phong( float ka, float kd, float ks, float ke ) 
@@ -42,6 +42,7 @@ namespace RayTracer_App.Illumination_Models
 			this.kd = kd;
 			this.ks = ks;
 			this.ke = ke;
+			this.modelID = 0;
 		}
 
 

@@ -16,7 +16,8 @@ namespace RayTracer_App.Photon_Mapping
 			ERROR = -1,
 			DIFFUSE = 0,
 			SPECULAR = 1,
-			ABSORB = 2
+			TRANSMIT = 2,
+			ABSORB = 3
 		}
 
 		//RNG
@@ -47,8 +48,6 @@ namespace RayTracer_App.Photon_Mapping
 		public ptKdTree globalPM { get => this._globalPM; set => this._globalPM = value; }
 		public ptKdTree causticPM { get => this._causticPM; set => this._causticPM = value; }
 		public ptKdTree volumePM { get => this._volumePM; set => this._volumePM = value; }
-
-
 
 		public PhotonRNG( int seed = 1 )
 		{
@@ -105,14 +104,24 @@ namespace RayTracer_App.Photon_Mapping
 		public float random01() { return (float) rand.NextDouble(); }
 
 		//Monte Carlo for determining if a Photon gets absorbed, reflected diffusely, or reflected specularly
-		public RR_OUTCOMES RussianRoulette( float diffuse, float spec )
+		//https://github.com/ningfengh/SC_Tracer/blob/master/source/photon_map.cpp
+		// http://www.cs.cmu.edu/afs/cs.cmu.edu/academic/class/15864-s04/www/assignment4/pm.pdf
+		// Schlick's approximation? https://en.wikipedia.org/wiki/Schlick%27s_approximation
+		public RR_OUTCOMES RussianRoulette( float diffuse, float spec, float refl , float trans )
 		{
 			float chance = random01();
 
 			if (0 <= chance && chance <= diffuse)
 				return RR_OUTCOMES.DIFFUSE;
 			else if (diffuse < chance && chance <= spec + diffuse)
-				return RR_OUTCOMES.SPECULAR;
+			{
+				//do we reflect or transmit?
+				chance = random01();
+				if ( (0 <= chance && chance <= trans) )
+					return RR_OUTCOMES.TRANSMIT;
+				else
+					return RR_OUTCOMES.SPECULAR;
+			}
 			else if (spec + diffuse < chance && chance <= 1.0f)
 				return RR_OUTCOMES.ABSORB;
 			else

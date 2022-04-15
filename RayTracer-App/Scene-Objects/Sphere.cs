@@ -36,7 +36,7 @@ namespace RayTracer_App.Scene_Objects
 			this._normal = null;
 			this._diffuse = Color.sphereColor;
 			this._specular = Color.whiteSpecular;
-			this._lightModel = PhongBlinn.regularPhongBlinn; //change iullum model here for now
+			this._lightModel = Phong.regularPhong; //change iullum model here for now
 			this._kRefl = kRefl;
 			this._kTrans = kTrans;
 			this.refIndex = refIndex;

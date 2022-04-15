@@ -184,6 +184,15 @@ namespace RayTracer_App.World
 			return bestW;
 		}
 
+		//helper for offsetting intersection for next ray
+		public Point offsetIntersect( Point intersection, Vector outgoing, Vector normal )
+		{
+			if (outgoing.dotProduct( normal ) < 0)
+				return intersection.displaceMe( -normal );
+			else
+				return intersection.displaceMe( normal );
+		}
+
 		//method for finding the color when a ray hits an object. Whitted method
 		// TODO: Decompose into smaller methods
 		public Color spawnRay( LightRay ray, int recDepth )
@@ -242,11 +251,12 @@ namespace RayTracer_App.World
 						//Vector reflDir = Vector.reflect( -ray.direction, localBest.normal );
 						Vector reflDir = Vector.reflect2( ray.direction, localBest.normal ); //equivalent way with what I did for Phong. But this is just reflecting back the same ray
 
-						if (reflDir.dotProduct( localBest.normal ) < 0)
-							reflOrigin = intersection.displaceMe( -localBest.normal );
-						else
-							reflOrigin = intersection.displaceMe( localBest.normal );
+						//if (reflDir.dotProduct( localBest.normal ) < 0)
+						//	reflOrigin = intersection.displaceMe( -localBest.normal );
+						//else
+						//	reflOrigin = intersection.displaceMe( localBest.normal );
 
+						reflOrigin = offsetIntersect( intersection, reflDir, localBest.normal );
 						LightRay reflRay = new LightRay( reflDir, reflOrigin );
 						recColor = spawnRay( reflRay, recDepth + 1 );
 
@@ -275,10 +285,11 @@ namespace RayTracer_App.World
 							transDir = Vector.transmit( ray.direction, nHit, SceneObject.AIR_REF_INDEX, localBest.refIndex );
 						}
 
-						if ( transDir.dotProduct( localBest.normal) < 0 )
-							transOrigin = intersection.displaceMe( -localBest.normal );
-						else
-							transOrigin = intersection.displaceMe( localBest.normal );
+						//if ( transDir.dotProduct( localBest.normal) < 0 )
+						//	transOrigin = intersection.displaceMe( -localBest.normal );
+						//else
+						//	transOrigin = intersection.displaceMe( localBest.normal );
+						transOrigin = offsetIntersect( intersection, transDir, localBest.normal );
 
 						LightRay translRay = new LightRay( transDir, transOrigin );
 						ray.entryPt = intersection; //keep track of if we're in an object or not
@@ -370,15 +381,44 @@ namespace RayTracer_App.World
 		}
 
 		//PHOTON-MAPPING METHODS
+
+		//called by the camera to start Photon mapping
+		public void beginpmPassOne()
+		{
+			this.photonMapper = new PhotonRNG();
+			foreach (LightSource l in this.lights)
+				l.emitPhotonsFromDPLS( this, 500 );
+		}
+
+		//helper for finding correct diffuse direction for Monte Carlo sampling
+		private Vector getRightDiffuse( IlluminationModel model, float u1, float u2 )
+		{
+			Phong p = model as Phong;
+			PhongBlinn pb = model as PhongBlinn;
+
+			if (p == null && pb == null) //error
+			{
+				Console.WriteLine( "No illumination model aborting..." );
+				Environment.Exit( -1 );
+			}
+
+			if (p != null)
+				return p.mcDiffuseDir( u1, u2 );
+			else if (pb != null)
+				return pb.mcDiffuseDir( u1, u2 );
+
+			return Vector.ZERO_VEC;
+		}
+
 		//called by lightsources in the scene when shooting photons. 
 		// uses Russian roulette to determine photons' fates. Stores photons in the PhotonMapper
-		// we don't focus our shoots like we do for the caustic pass
-		public void tracePhoton( LightRay photonRay, int depth, bool fromSpec = false )
+		// we don't focus our shoots like we do for the caustic pass		
+		public void tracePhoton( LightRay photonRay, int depth, bool fromSpec = false, bool transmitting = false )
 		{
 			float bestW = float.MaxValue;
 			Color flux = null;
 			Point intersection = null;
-			PhotonRNG.RR_OUTCOMES rrOutcome;
+			PhotonRNG.RR_OUTCOMES rrOutcome = PhotonRNG.RR_OUTCOMES.TRANSMIT; //assume we're transmitting for simplicity.
 			//no kdTree
 			bestW = findRayIntersect( photonRay );
 
@@ -393,42 +433,65 @@ namespace RayTracer_App.World
 				}
 
 				IlluminationModel bestObjLightModel = this.bestObj.lightModel;
+				Phong p = bestObjLightModel as Phong;
+				PhongBlinn pb = bestObjLightModel as PhongBlinn;
 
-				//we only store photons on diffuse surfaces
-				if (bestObjLightModel.ks >= 1 || bestObj.kRefl >= 1)
-					return; 
+				if (p == null && pb == null) //error
+				{
+					Console.WriteLine( "No illumination model aborting..." );
+					Environment.Exit( -1 );
+				}
 
-				//Russian roulette to determine if we go again or not...
-				rrOutcome = this.photonMapper.RussianRoulette( bestObjLightModel.kd, bestObjLightModel.ks );
+				//Russian roulette to determine if we go again or not...Only when we are outside objects for now
+				if (!transmitting)
+					rrOutcome = this.photonMapper.RussianRoulette( bestObjLightModel.kd, bestObjLightModel.ks, bestObj.kRefl, bestObj.kTrans );
+
+				//debug
+				if (bestObj as Sphere != null)
+					Console.WriteLine( "Hit sphere" );
+
 				float u1 = this.photonMapper.random01();
 				float u2 = this.photonMapper.random01();
 				Vector travelDir = Vector.ZERO_VEC;
 				bool causticsMark = fromSpec;
+				bool transMark = transmitting;
 				switch (rrOutcome)
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
-						travelDir = bestObjLightModel.mcDiffuseDir( u1, u2 );
-						this.photonMapper.addGlobal( intersection, travelDir.v1, travelDir.v2, 1.0f );
+						travelDir = getRightDiffuse( bestObjLightModel, u1, u2 );
+						this.photonMapper.addGlobal( intersection, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
+						if (causticsMark)
+						{
+							this.photonMapper.addGlobal( intersection, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
+							causticsMark = false; //do we add the photon to the caustic map?
+						}
 						break;
 					case PhotonRNG.RR_OUTCOMES.SPECULAR:
 						travelDir = Vector.reflect2( photonRay.direction, this.bestObj.normal );
 						causticsMark = true;
 						break;
+					case PhotonRNG.RR_OUTCOMES.TRANSMIT: //handles logic for negating normal and cos term inside method
+						travelDir = Vector.transmit2( photonRay.direction, this.bestObj.normal, SceneObject.AIR_REF_INDEX, bestObj.refIndex );
+						transMark = !transMark; //toggle current transmission setting since we're only doing single refraction
+						causticsMark = true;
+						break;
 					case PhotonRNG.RR_OUTCOMES.ABSORB:
-						this.photonMapper.addGlobal( intersection, travelDir.v1, travelDir.v2, 1.0f );
+						this.photonMapper.addGlobal( intersection, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
 						if (causticsMark)
-							this.photonMapper.addCaustic( intersection, travelDir.v1, travelDir.v2, 1.0f );
+							this.photonMapper.addCaustic( intersection, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
 						break;
 					default:
 						break;
 				}
 
-				if (!travelDir.isZeroVector()) { //we survived
-					LightRay pRay = new LightRay( travelDir, intersection);
-					tracePhoton( pRay, depth + 1, causticsMark );
+				if (!travelDir.isZeroVector())
+				{ //we survived
+					Point pOrigin = offsetIntersect( intersection, travelDir, bestObj.normal );
+					LightRay pRay = new LightRay( travelDir, pOrigin);
+					tracePhoton( pRay, depth + 1, causticsMark, transMark );
 				}
 
-				return; // end
+				return; // end of path for this photon
 			}
 
 			/*photonW = world.findRayIntersect( photonRay );
@@ -447,4 +510,6 @@ Vector reflDir = Vector.reflect2( ray.direction, localBest.normal );
 
 Vector reflDir = Vector.reflect( -ray.direction, localBest.normal );
 {Vector (u1, u2, u3) = (0.12933731, 0.3664578 , 0.92140144)
+
+//Old code archive:
  */

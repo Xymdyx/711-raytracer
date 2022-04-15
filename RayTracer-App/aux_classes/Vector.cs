@@ -229,9 +229,46 @@ public class Vector
 		return leftTerm + rightTerm;
 	}
 
-	//FACEFORWARD method
-	// for cp6. Use negative normal for calculations
-	public static Vector faceForward( Vector normal, Vector traveling )
+    // scratchapixel method that handles logic for flipping normal inside of the method
+    public static Vector transmit2( Vector dir, Vector normal, float ni, float nt )
+    {
+        //same direction if indices of refraction are the same
+        if (ni == nt)
+            return dir;
+
+        // t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
+        float cosi = normal.dotProduct( dir ); //this is always positive, which is what we want...
+        float nRat;
+        Vector n = normal;
+
+        if (cosi < 0)
+        {
+            cosi = -cosi;
+            nRat = ni / nt;
+        }
+        else
+        {
+            nRat = nt / ni;
+            n = normal.scale( -1f );
+        }
+
+        // cosi = -(i dot n)
+        // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
+        Vector leftTerm = dir.scale( nRat );
+        float sqrtTerm = (float)(1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi)))); //this is sometimes negative...
+
+        if (sqrtTerm < 0) //transmission direction doesn't exist
+            return reflect2( dir, normal );
+
+        float rightScale = (float)((nRat * cosi) - Math.Sqrt( sqrtTerm ));  //getting NAN here
+        Vector rightTerm = n.scale( rightScale );
+
+        return leftTerm + rightTerm;
+    }
+
+    //FACEFORWARD method
+    // for cp6. Use negative normal for calculations
+    public static Vector faceForward( Vector normal, Vector traveling )
 	{
         //acute angle, use regular normal
         if (normal.dotProduct( traveling ) >= 0) return normal;
@@ -270,38 +307,4 @@ public class Vector
 // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
 // https://www.scratchapixel.com/code.php?id=3&origin=/lessons/3d-basic-rendering/introduction-to-ray-tracing
 
-//public static Vector sTransmit( Vector dir, Vector normal, float ni, float nt )
-//   {
-//       //same direction if indices of refraction are the same
-//       if (ni == nt)
-//           return dir;
 
-//       // t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
-//       float cosi = normal.dotProduct( dir ); //this is always positive, which is what we want...
-//       float nRat;
-//       Vector n = normal;
-
-//       if (cosi < 0)
-//       {
-//           cosi = -cosi;
-//           nRat = ni / nt;
-//	}
-//	else 
-//       { 
-//           nRat = nt / ni;
-//           n = normal.scale( -1f );
-//       }
-
-//       // cosi = -(i dot n)
-//       // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
-//       Vector leftTerm = dir.scale( nRat );
-//       float sqrtTerm = (float)(1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi)))); //this is sometimes negative...
-
-//       if (sqrtTerm < 0)
-//           return Vector.ZERO_VEC;
-
-//       float rightScale = (float)((nRat * cosi) - Math.Sqrt( sqrtTerm ));  //getting NAN here
-//       Vector rightTerm = n.scale( rightScale );
-
-//       return leftTerm + rightTerm;
-//   }

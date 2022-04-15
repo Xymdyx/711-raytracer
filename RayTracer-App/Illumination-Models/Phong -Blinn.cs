@@ -35,6 +35,7 @@ namespace RayTracer_App.Illumination_Models
 			this.kd = .65f;
 			this.ks = .35f;
 			this.ke = 1f;
+			this.modelID = 1;
 		}
 
 		public PhongBlinn( float ka, float kd, float ks, float ke ) 
@@ -43,6 +44,7 @@ namespace RayTracer_App.Illumination_Models
 			this.kd = kd;
 			this.ks = ks;
 			this.ke = ke;
+			this.modelID = 1;
 		}
 
 
