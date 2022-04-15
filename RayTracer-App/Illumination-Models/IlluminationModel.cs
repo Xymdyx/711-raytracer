@@ -20,5 +20,17 @@ namespace RayTracer_App.Illumination_Models
 			Vector mirrorReflect, Vector cameraRay, LightSource light, SceneObject litObj );
 		public abstract Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, bool transShadows = false, float shadowBias = 1e-4f );
 
+		//consider asking sampling over a unit disc... the Nusselt Analog https://en.wikipedia.org/wiki/View_factor#Nusselt_analog
+		public virtual Vector mcDiffuseDir( float u1, float u2 )
+		{
+			return null;
+		}
+
+		// specular direction for PHONG BRDF for Monte Carlo.. picks random specular direction on unit hemisphere
+		//u1 and u2 are random variables between 0 and 1 passed as variables
+		public virtual Vector mcSpecDir( float u1, float u2 )
+		{
+			return null;
+		}
 	}
 }

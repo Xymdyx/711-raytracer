@@ -113,5 +113,61 @@ namespace RayTracer_App.Illumination_Models
 
 			return lightIrradiance;
 		}
+
+		// BRDF used for Monte Carlo Distributed Ray Tracing as described in 9-2 slide deck
+		//https://www.cs.princeton.edu/courses/archive/fall16/cos526/papers/importance.pdf
+		//https://www.cs.princeton.edu/courses/archive/fall03/cs526/papers/lafortune94.pdf
+		public float mcBRDF( Vector incoming, Vector outgoing, Vector normal )
+		{
+			// fr( x, Oi, Oo) = kd * (1/pi) + ks * ( (n+2)/(2pi)) * cos^n alpha
+			// Oi = incoming, Oo = outgoing, x = intersection pt with object
+			// kd, ks, n are all here... n = specular exponent
+			// alpha = angle between reflective direction and outgoing ray direction... (their dot product raised to the n) max is pi/2
+			// kd + ks <= 1
+			Vector refl = Vector.reflect( outgoing, normal );
+			float cos = refl.dotProduct( outgoing );
+			float diffTerm = (float) (this.kd / Math.PI);
+			float specTerm = (float) ( (this.ks) * ((this.ke + 2) / (2 * Math.PI)) * cos );
+
+			return diffTerm + specTerm;
+		}
+
+		public Vector mcDiffuseDir( float u1, float u2 )
+		{
+			float u1Sqrt = (float) Math.Sqrt( u1 );
+			float sqrtScaler = (float) Math.Sqrt( 1 - u1 );
+
+			float theta = (float) Math.Acos( u1Sqrt );
+			float azithumal = (float) (2 * Math.PI * u2);
+
+			//from princeton... sopherical -> vector // sintheta * cosazi, sintheta * sizazi, costheta
+			float x = (float) (sqrtScaler * Math.Cos( azithumal )); // sqrt( 1-u1) * cosazi
+			float y = (float)(sqrtScaler * Math.Sin( azithumal )); // sqrt(1-u) *sinazi
+			float z = u1Sqrt; // sqrt(u1)
+
+			return new Vector( x, y, z ); //normalized
+		}
+
+		// specular direction for PHONG BRDF for Monte Carlo.. picks random specular direction on unit hemisphere
+		//u1 and u2 are random variables between 0 and 1 passed as variables
+		public Vector mcSpecDir( float u1, float u2 )
+		{
+			//from princeton... sopherical -> vector // sintheta * cosazi, sintheta * sizazi, costheta
+			float u1Pow = (float) Math.Pow( u1, (1/ (this.ke + 1 )) ); // u1^ 1/ (n +1)
+
+			float sqrtScaler = (float)Math.Sqrt( 1 -
+				Math.Pow( u1, (2 / (this.ke + 1))) ); // sqrt( u1^ 2/ (n +1) )
+
+
+			float alpha = (float) Math.Acos( u1Pow );
+			float azithumal = (float)(2 * Math.PI * u2);
+
+			//from princeton... sopherical -> vector // sintheta * cosazi, sintheta * sizazi, costheta
+			float x = (float)(sqrtScaler * Math.Cos( azithumal )); // sqrtScaler * cosazi
+			float y = (float)(sqrtScaler * Math.Sin( azithumal )); // sqrtScaler *sinazi
+			float z = u1Pow; 
+
+			return new Vector( x, y, z ); //normalized
+		}
 	}
 }

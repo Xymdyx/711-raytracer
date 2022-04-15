@@ -41,7 +41,6 @@ namespace RayTracer_App.World
 		public PhotonRNG photonMapper { get => this._photonMapper; set => this._photonMapper = value; }
 
 
-
 		//default CONSTRUCTOR
 		public World()
 		{
@@ -373,7 +372,8 @@ namespace RayTracer_App.World
 		//PHOTON-MAPPING METHODS
 		//called by lightsources in the scene when shooting photons. 
 		// uses Russian roulette to determine photons' fates. Stores photons in the PhotonMapper
-		public void tracePhoton( LightRay photonRay, int depth )
+		// we don't focus our shoots like we do for the caustic pass
+		public void tracePhoton( LightRay photonRay, int depth, bool fromSpec = false )
 		{
 			float bestW = float.MaxValue;
 			Color flux = null;
@@ -393,29 +393,42 @@ namespace RayTracer_App.World
 				}
 
 				IlluminationModel bestObjLightModel = this.bestObj.lightModel;
-				Polygon t = this.bestObj as Polygon;
-				if ((t != null) && (t.hasTexCoord())) // determine floor triangle point color
-					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
 
-				flux = bestObjLightModel.illuminate( intersection, -photonRay.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
+				//we only store photons on diffuse surfaces
+				if (bestObjLightModel.ks >= 1 || bestObj.kRefl >= 1)
+					return; 
 
 				//Russian roulette to determine if we go again or not...
-				rrOutcome = this.photonMapper.RussianRoulette(bestObjLightModel.kd, bestObjLightModel.ks);
-				Vector travelDir;
-				switch(rrOutcome)
+				rrOutcome = this.photonMapper.RussianRoulette( bestObjLightModel.kd, bestObjLightModel.ks );
+				float u1 = this.photonMapper.random01();
+				float u2 = this.photonMapper.random01();
+				Vector travelDir = Vector.ZERO_VEC;
+				bool causticsMark = fromSpec;
+				switch (rrOutcome)
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
-						//diffuse reflection via Monte Carlo
+						travelDir = bestObjLightModel.mcDiffuseDir( u1, u2 );
+						this.photonMapper.addGlobal( intersection, travelDir.v1, travelDir.v2, 1.0f );
 						break;
 					case PhotonRNG.RR_OUTCOMES.SPECULAR:
 						travelDir = Vector.reflect2( photonRay.direction, this.bestObj.normal );
+						causticsMark = true;
 						break;
 					case PhotonRNG.RR_OUTCOMES.ABSORB:
-						// stop tracing
+						this.photonMapper.addGlobal( intersection, travelDir.v1, travelDir.v2, 1.0f );
+						if (causticsMark)
+							this.photonMapper.addCaustic( intersection, travelDir.v1, travelDir.v2, 1.0f );
 						break;
 					default:
 						break;
 				}
+
+				if (!travelDir.isZeroVector()) { //we survived
+					LightRay pRay = new LightRay( travelDir, intersection);
+					tracePhoton( pRay, depth + 1, causticsMark );
+				}
+
+				return; // end
 			}
 
 			/*photonW = world.findRayIntersect( photonRay );

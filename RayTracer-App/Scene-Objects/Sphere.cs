@@ -5,6 +5,11 @@ using RayTracer_App.Illumination_Models;
 
 //MATRIX 4D -> MATRIX4X4
 
+/*https://en.wikipedia.org/wiki/Spherical_coordinate_system#In_astronomy
+ * Spherical -> Cart:
+ x = r cosazi sintheta
+y = r sinazi sintheta
+z = r costheta*/
 namespace RayTracer_App.Scene_Objects
 {
 	public class Sphere : SceneObject

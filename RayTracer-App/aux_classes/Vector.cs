@@ -8,7 +8,7 @@ using System;
 //CONVERTED DOUBLE -> FLOAT!
 public class Vector
 {
-    private static Vector ZERO_VEC = new Vector( 0, 0, 0 );
+    public static Vector ZERO_VEC = new Vector( 0, 0, 0 );
     public static Vector UP_VEC = new Vector( 0, 1F, 0 );
 
 

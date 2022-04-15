@@ -35,6 +35,19 @@ namespace RayTracer_App.World
 			this._power = power; 
 		}
 
+		
+		//transform light with the camera..
+		public void transform( Matrix4x4 camViewMat )
+		{
+			// MATRIX MULTI WORKS DEFINITELY
+			Vector4 posHmg = position.toHmgCoords(); // 1x4 Vector
+			Vector4 newVertVec = Vector4.Transform( posHmg, camViewMat ); // we postMultiply since we are is LHS w Row-major.. Vnew = Vold * A * B
+			position.fromHmgCoords( newVertVec ); // [x y z w] => (x/w, y/w, z/w) CP form
+			return;
+		}
+
+		// for square light -- https://www.cs.princeton.edu/courses/archive/fall16/cos526/lectures/03-photonmapping.pdf
+
 		//emit photons from diffuse point light source
 		public void emitPhotonsFromDPLS( World world, int totalPhotons = 1000 )
 		{
@@ -45,14 +58,14 @@ namespace RayTracer_App.World
 			int ne = 0;
 			Point photonPos;
 			float photonPow = this.power * (1 / totalPhotons);
-			while( ne != totalPhotons)
+			while (ne != totalPhotons)
 			{
 				do
 				{
 					x = world.photonMapper.randomRange();
 					y = world.photonMapper.randomRange();
 					z = world.photonMapper.randomRange();
-				} while ( (x * x) + ( y * y) + (z * z) > 1);
+				} while ((x * x) + (y * y) + (z * z) > 1);
 
 				Vector dir = new Vector( x, y, z );
 				LightRay photonRay = new LightRay( dir, this.position );
@@ -61,15 +74,7 @@ namespace RayTracer_App.World
 				ne++;
 			}
 			//scale stored phtons by 1/ne
-		}
-		//transform light with the camera..
-		public void transform( Matrix4x4 camViewMat )
-		{
-			// MATRIX MULTI WORKS DEFINITELY
-			Vector4 posHmg = position.toHmgCoords(); // 1x4 Vector
-			Vector4 newVertVec = Vector4.Transform( posHmg, camViewMat ); // we postMultiply since we are is LHS w Row-major.. Vnew = Vold * A * B
-			position.fromHmgCoords( newVertVec ); // [x y z w] => (x/w, y/w, z/w) CP form
-			return;
+			world.photonMapper.scaleStored( power );
 		}
 	}
 }

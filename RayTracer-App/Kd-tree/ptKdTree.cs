@@ -71,6 +71,11 @@ namespace RayTracer_App.Kd_tree
 		* return new interior node (P, getNode(LFRONT, VFRONT),
 		*  getNode(LREAR, VREAR))
 		*/
+
+		/* FOR PM: The balancing http://graphics.ucsd.edu/~henrik/papers/rendering_caustics/rendering_caustics_gi96.pdf
+		algorithm converts the unordered list of photons into a balanced kd-tree
+		by recursively selecting the root node among the data-set as the median
+element in the direction which represents the largest interval.*/
 		public KdNode getNode( List<SceneObject> objects, AABB vox, int depth )
 		{
 			//base case
