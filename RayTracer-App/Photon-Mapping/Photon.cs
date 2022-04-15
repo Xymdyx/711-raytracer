@@ -42,5 +42,11 @@ namespace RayTracer_App.Photon_Mapping
 			this._theta = (float) (255 * Math.Acos( dx ) / Math.PI) ;
 			this._kdFlag = float.MaxValue; // this is for the splitting plane axis in the kd-tree),
 		}
+
+		//ray intersect formula is simply if the photon lies on a ray's path
+		public float rayPhotonIntersect( LightRay ray )
+		{
+			return this.pos.ptRayIntersect( ray );
+		}
 	}
 }

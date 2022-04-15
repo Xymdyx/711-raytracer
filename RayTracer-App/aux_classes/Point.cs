@@ -235,10 +235,22 @@ public class Point
 	{
 		return $"Point [{this.x}, {this.y}, {this.z}]";
     }
-
-
+    
+    //meeded so multiple objects don't share same point value
     public Point copy()
     {
         return new Point( this.x, this.y, this.z );
     }
+
+    //does a point lie in a ray's path? If the DP is 0 then it's parallel, meaning on the same line here
+    public float ptRayIntersect( LightRay ray )
+	{
+        Vector ptRay = this - ray.origin;
+        float dp = ptRay.dotProduct( ray.direction );
+
+        if (dp >= -1e-6f && dp <= 1e-6f) // point is in path of ray... as the DP is 0
+            return distance( ray.origin );
+        
+        return float.MaxValue; 
+	}
 }

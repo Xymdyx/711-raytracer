@@ -11,6 +11,7 @@ namespace RayTracer_App.Photon_Mapping
 {
 	public class PhotonRNG
 	{
+		//russian roulette enum for more readable code
 		public enum RR_OUTCOMES
 		{
 			ERROR = -1,
@@ -20,9 +21,16 @@ namespace RayTracer_App.Photon_Mapping
 			ABSORB = 3
 		}
 
+		// map type enum to facilitate accessing proper photon maps
+		public enum MAP_TYPE
+		{
+			GLOBAL = 0,
+			CAUSTIC = 1,
+			VOLUME = 2,
+		}
+
 		//RNG
 		private Random rand;
-
 
 		//PHOTON ARRAYS TO BE MADE INTO KDTREES/ PMs
 		private List<Photon> _globalPL;
@@ -64,6 +72,53 @@ namespace RayTracer_App.Photon_Mapping
 			this.volumePM= null; //over summer.
 		}
 
+		// getter for each photon list depending on desired type
+		public List<Photon> getPLbyType( MAP_TYPE listType = MAP_TYPE.GLOBAL )
+		{
+			switch (listType)
+			{
+				case MAP_TYPE.GLOBAL:
+					return this.globalPL;
+				case MAP_TYPE.CAUSTIC:
+					return this.causticPL;
+				case MAP_TYPE.VOLUME:
+					return this.volumePL;
+				default:
+					return null;
+			}
+		}
+
+		// getter for each photon map depending on desired type
+		public ptKdTree getPMbyType( MAP_TYPE mapType = MAP_TYPE.GLOBAL )
+		{
+			switch (mapType)
+			{
+				case MAP_TYPE.GLOBAL:
+					return this.globalPM;
+				case MAP_TYPE.CAUSTIC:
+					return this.causticPM;
+				case MAP_TYPE.VOLUME:
+					return this.volumePM;
+				default:
+					return null;
+			}
+		}
+
+		// getter for colors for each photon map
+		public Color getPColorbyType( MAP_TYPE listType = MAP_TYPE.GLOBAL )
+		{
+			switch (listType)
+			{
+				case MAP_TYPE.GLOBAL:
+					return Color.photonColor;
+				case MAP_TYPE.CAUSTIC:
+					return Color.causticColor;
+				case MAP_TYPE.VOLUME:
+					return Color.volumetricColor;
+				default:
+					return Color.defaultBlack;
+			}
+		}
 
 		//MANAGING PLs
 		//makes a new photon and adds it to the global photon list...
@@ -89,6 +144,47 @@ namespace RayTracer_App.Photon_Mapping
 				c.power *= powerScale;
 		}
 
+		//intersection testing for Photon Visualizing.
+		// Go through all photons in the map and return closest w
+		public float intersectListFull( LightRay ray, MAP_TYPE mapType = MAP_TYPE.GLOBAL )
+		{
+			List<Photon> desired = getPLbyType( mapType) ;
+			float bestW = float.MaxValue;
+			float currW = float.MaxValue;
+			Photon closest;
+			foreach( Photon p in desired)
+			{
+				currW = p.rayPhotonIntersect( ray );
+				if ((currW != float.MinValue) && (currW != float.NaN) &&
+					(currW != float.MaxValue) && (currW < bestW) && (currW > 0))
+				{
+					bestW = currW;
+					closest = p;
+				}
+			}
+
+			return bestW; //Color.photonColor
+		}
+
+		// quick version of the above
+		// intersection testing for Photon Visualizing.
+		// we hit a photon, light it up no matter what
+		public bool intersectListQuick( LightRay ray, MAP_TYPE mapType = MAP_TYPE.GLOBAL )
+		{
+			List<Photon> desired = getPLbyType( mapType );
+			float bestW = float.MaxValue;
+			float currW = float.MaxValue;
+			Photon closest;
+			foreach (Photon p in desired)
+			{
+				currW = p.rayPhotonIntersect( ray );
+				if ((currW != float.MinValue) && (currW != float.NaN) &&
+					(currW != float.MaxValue) && (currW < bestW) && (currW > 0))
+					return true;
+			}
+
+			return false; //Color.photonColor
+		}
 
 		//MONTE CARLO STUFF
 		// for grabbing a random number between [min, max)

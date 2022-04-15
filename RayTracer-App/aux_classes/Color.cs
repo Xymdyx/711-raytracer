@@ -24,6 +24,11 @@ public class Color
     public static Color cbGrey = new Color( 0.810f, 0.802f, 0.803f );
     public static Color cbChrome = new Color( 0.690f, 0.669f, 0.669f );
 
+    // photon colors
+    public static Color causticColor = new Color( 0.890f, 0.877f, 0.080f ); //yellow
+    public static Color photonColor = new Color( 0.254f, 0.940f, 0.437f ); //green
+    public static Color volumetricColor = new Color( 0.871f, 0.254f, 0.940f ); //purple
+
     private float _r;
     private float _g;
     private float _b;
