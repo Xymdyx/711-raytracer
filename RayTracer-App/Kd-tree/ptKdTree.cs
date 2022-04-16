@@ -20,9 +20,12 @@ namespace RayTracer_App.Kd_tree
 
 		private int _maxLeafObjs; //will be removed for points
 
+		private int _kdSize;
+		
 		private static int MAX_KD_DEPTH = 5 * 4;
 		public KdNode root { get => this._root; set => this._root = value; }
 		public int maxLeafObjs { get => this._maxLeafObjs; set => this._maxLeafObjs = value; }
+		public int kdSize { get => this._kdSize; set => this._kdSize = value; }
 
 		// constructors
 		public ptKdTree() 
@@ -104,17 +107,17 @@ element in the direction which represents the largest interval.*/
 			{
 				Photon stored = null;
 
-				if( points.Count != 0 )
+				if (points.Count != 0)
 					stored = mapper.grabPhotonByPos( points[0], sampleList ); //grab proper photon from photon list we're building from
+				else Console.WriteLine( " Leaf node with no photon" );
 
 				return new ptKdLeafNode( stored, prevAxis );
 			}
 
 			AABB vox = AABB.boxAroundPoints( points ); // form box from points
 			int axis = getLongestAxis( vox ); // choose dim of cube with biggest difference betw points.
-			float partitionVal = vox.center.getAxisCoord( axis );
 
-			//use lambda to sort points by longest axis value 
+			//use lambda to sort points by longest axis value .. Tried sorting the y axis by descending FAILED.
 			points.Sort( ( p1, p2 ) => p1.getAxisCoord( axis ).CompareTo(p2.getAxisCoord( axis )) ); 
 
 			int size = points.Count;
@@ -129,12 +132,13 @@ element in the direction which represents the largest interval.*/
 			//this will give median index of sorted list.. median https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/median/
 			int amount = size - (midIdx + 1) ; //23 for 46 elements
 
+			float partitionVal = medianPt.getAxisCoord( axis ); //we split along median...
 			List<Point> frontPts = points.GetRange( midIdx + 1 , amount); //skip over middle for odd-sized sets
 			List<Point> rearPts = points.GetRange( 0, amount );
 
 			return new ptKdInteriorNode( axis, partitionVal, vox,
 				balance(frontPts, depth + 1, mapper, axis, sampleList),
-				balance( rearPts, depth + 1, mapper, axis, sampleList ), medianPt );
+				balance( rearPts, depth + 1, mapper, axis, sampleList ), medianPt ); //swapping rear and front pts didn't seem to work
 		}
 		
 		private bool intersectGood( float currW )
@@ -142,10 +146,11 @@ element in the direction which represents the largest interval.*/
 			if (currW < 0)
 				Console.WriteLine( " Negative distance evaluated in ptKdTree intersect..." );
 			return (currW != float.MinValue) && (currW != float.NaN) &&
-					(currW != float.MaxValue) && (currW > 0); //the distance cannot be negative, must be positive(?)
+					(currW != float.MaxValue); //the distance cannot be negative, must be positive(?)
 		}
 
 		// a given ray traverses the tree and gets the closest intersection
+		// There's a problem with this traversal method. Building the map works well
 		public float travelTAB( LightRay ray, World.World world ,KdNode node = null )
 		{
 			// a[coord] = proper coord of entry pt

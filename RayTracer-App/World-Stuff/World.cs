@@ -24,6 +24,8 @@ namespace RayTracer_App.World
 		private KdTree _kdTree;
 		private SceneObject _bestObj;
 		private PhotonRNG _photonMapper;
+		private int _photoHits;
+		private int _causticHits;
 
 		//private int[] attributes;
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
@@ -39,6 +41,10 @@ namespace RayTracer_App.World
 
 		//advCp2 Pm
 		public PhotonRNG photonMapper { get => this._photonMapper; set => this._photonMapper = value; }
+
+		// advCp2 debug
+		public int photoHits { get => this._photoHits; set => this._photoHits = value; }
+		public int causticHits { get => this._causticHits; set => this._causticHits = value; }
 
 
 		//default CONSTRUCTOR
@@ -501,15 +507,23 @@ namespace RayTracer_App.World
 		}
 
 		//helper to call PhotonMapper to find photon intersections
-		public Color overlayPhotons( LightRay ray)
+		public Color overlayPhotons( LightRay ray, bool kdMode = false)
 		{
 			PhotonRNG.MAP_TYPE mapVal = PhotonRNG.MAP_TYPE.NONE;
 
 			//ascending order of preference
-			if (photonMapper.intersectListQuick( ray, PhotonRNG.MAP_TYPE.GLOBAL ))
+			if (!kdMode && photonMapper.intersectListQuick( ray, PhotonRNG.MAP_TYPE.GLOBAL ))
 				mapVal = PhotonRNG.MAP_TYPE.GLOBAL;
-			if (photonMapper.intersectListQuick( ray, PhotonRNG.MAP_TYPE.CAUSTIC ) )
+			else if (kdMode && ( photonMapper.intersectPMFull( ray, this, PhotonRNG.MAP_TYPE.GLOBAL ) != float.MaxValue) )
+				mapVal = PhotonRNG.MAP_TYPE.GLOBAL;
+
+			if (!kdMode && photonMapper.intersectListQuick( ray, PhotonRNG.MAP_TYPE.CAUSTIC ) )
 				mapVal = PhotonRNG.MAP_TYPE.CAUSTIC;
+			else if (kdMode && (photonMapper.intersectPMFull( ray, this, PhotonRNG.MAP_TYPE.CAUSTIC ) != float.MaxValue))
+				mapVal = PhotonRNG.MAP_TYPE.CAUSTIC;
+
+			if (mapVal != PhotonRNG.MAP_TYPE.NONE) photoHits++;
+			if (mapVal == PhotonRNG.MAP_TYPE.CAUSTIC) causticHits++;
 
 			return photonMapper.getPColorbyType( mapVal ); // nothing if black
 		}

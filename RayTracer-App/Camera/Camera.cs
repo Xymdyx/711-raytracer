@@ -135,8 +135,8 @@ namespace RayTracer_App.Camera
 		//helper for photon visualizing
 		public Color renderPhotons(Color orig, LightRay fire, World.World world, bool blackout = false)
 		{
-			Color photonColor = world.overlayPhotons( fire );
-
+			Color photonColor = world.overlayPhotons( fire, true ); //22 minutes w raw intersection for 1000 photons... 46 caustics. 139 total
+			//23 with kd, 109 total
 			if (photonColor == Color.defaultBlack && !blackout) // if we aren't blacking out the scene...
 				return orig;
 
@@ -150,7 +150,7 @@ namespace RayTracer_App.Camera
 			makeCamMat();
 			world.transformAll( this.camTransformMat );
 			bool photonOverlay = false;
-			bool justPhotons = false;
+			bool justPhotons = true;
 
 			if (makeKd)
 			{
@@ -231,6 +231,9 @@ namespace RayTracer_App.Camera
 			renderTimer.Stop();
 			Console.WriteLine( "Rendering the scene took " + (renderTimer.ElapsedMilliseconds) + " milliseconds" );
 			Console.WriteLine( $" There are {hits} non-background colors/ {imageHeight * imageWidth} colors total" );
+			if (photonOverlay || justPhotons)
+				Console.WriteLine( $"Lit caustics: {world.causticHits}\n Total hits {world.photoHits}" );
+
 			return pixColors ;
 		}
 

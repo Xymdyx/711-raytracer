@@ -6,6 +6,7 @@ date due: 4/29
 using System;
 using System.Collections.Generic;
 using RayTracer_App.Kd_tree;
+using RayTracer_App.World;
 
 //if photons get manipulated in anyway during Pass 2, need to return copies...
 namespace RayTracer_App.Photon_Mapping
@@ -32,7 +33,7 @@ namespace RayTracer_App.Photon_Mapping
 		}
 
 		//RNG
-		private Random rand;
+		private Random rand; //Random rand = new Random(Guid.NewGuid().GetHashCode()); really random seed
 
 		//PHOTON ARRAYS TO BE MADE INTO KDTREES/ PMs
 		private List<Photon> _globalPL;
@@ -218,7 +219,7 @@ namespace RayTracer_App.Photon_Mapping
 		}
 
 
-		//intersection testing for Photon Visualizing.
+//intersection testing for Photon Visualizing.
 		// Go through all photons in the map and return closest w
 		public float intersectListFull( LightRay ray, MAP_TYPE mapType = MAP_TYPE.GLOBAL )
 		{
@@ -265,6 +266,16 @@ namespace RayTracer_App.Photon_Mapping
 			}
 
 			return false; //Color.photonColor
+		}
+
+		//intersection testing for Photon Visualizing.
+		// Go through all photons in the map and return closest w
+		public float intersectPMFull( LightRay ray, World.World world, MAP_TYPE mapType = MAP_TYPE.GLOBAL )
+		{
+			ptKdTree desired = getPMbyType( mapType );
+			float bestW = desired.travelTAB( ray, world );
+
+			return bestW; //Color.photonColor
 		}
 
 		//MONTE CARLO STUFF
