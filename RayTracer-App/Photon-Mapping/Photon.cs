@@ -47,6 +47,17 @@ namespace RayTracer_App.Photon_Mapping
 			this.litFlag = false;
 		}
 
+		//full constructor used by copy in the event I must store separate photons in the lists and maps
+		public Photon( Point pos, float power, float phi, float theta, float _kdFlag, bool litFlag )
+		{
+			this._pos = pos;
+			this._power = power;
+			this._phi = phi; //from Cartesian -> Spherical
+			this._theta = theta;
+			this._kdFlag = kdFlag; // this is for the splitting plane axis in the kd-tree),
+			this.litFlag = litFlag;
+		}
+
 		//ray intersect formula is simply if the photon lies on a ray's path
 		public float rayPhotonIntersect( LightRay ray )
 		{
@@ -57,6 +68,23 @@ namespace RayTracer_App.Photon_Mapping
 		public bool rayPhotonIntersectQuick( LightRay ray )
 		{
 			return this.pos.ptRayIntersectQuick( ray );
+		}
+
+		//check if this photon is in a photon map (aka ptKdTree)
+		public bool inPM()
+		{
+			return kdFlag == float.MaxValue;
+		}
+
+		//return a new object with this Photon's exact info
+		public Photon copy()
+		{
+			return new Photon( this.pos, this.power, this.phi, this.theta, this.kdFlag, this.litFlag );
+		}
+
+		public override string ToString()
+		{
+			return $" Photon w pos {pos} , phi = {phi}, theta = {theta}, {power} watts ";
 		}
 	}
 }

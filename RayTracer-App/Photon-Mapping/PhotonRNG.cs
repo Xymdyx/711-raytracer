@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using RayTracer_App.Kd_tree;
 
+//if photons get manipulated in anyway during Pass 2, need to return copies...
 namespace RayTracer_App.Photon_Mapping
 {
 	public class PhotonRNG
@@ -70,10 +71,23 @@ namespace RayTracer_App.Photon_Mapping
 			this.globalPM = new ptKdTree();
 			//Spec n times and then Diffuse
 			this.causticPM = new ptKdTree();
-			this.volumePM= null; //over summer.
+			this.volumePM = null; //over summer.
 		}
 
-		// getter for each photon list depending on desired type
+//STATIC METHODS
+		//grab a photon with a matching position from a given photon list
+		public static Photon findPhotonByPos( Point pos, List<Photon> targetPhotons )
+		{
+			foreach (Photon p in targetPhotons)
+			{
+				if (pos == p.pos)
+					return p;
+			}
+
+			return null;
+		}
+
+// getter for each photon list depending on desired type
 		public List<Photon> getPLbyType( MAP_TYPE listType = MAP_TYPE.GLOBAL )
 		{
 			switch (listType)
@@ -121,6 +135,18 @@ namespace RayTracer_App.Photon_Mapping
 			}
 		}
 
+		// helper for getting photon positions of a given type
+		public List<Point> grabPosByType( MAP_TYPE desired = MAP_TYPE.GLOBAL )
+		{
+			List<Point> photoPoses = new List<Point>();
+			List<Photon> targetList = getPLbyType( desired );
+
+			foreach (Photon p in targetList)
+				photoPoses.Add( p.pos );
+
+			return photoPoses;
+		}
+
 		//MANAGING PLs
 		//makes a new photon and adds it to the global photon list...
 		public void addGlobal( Point intersection, float dx, float dy, float power = 0 )
@@ -137,23 +163,70 @@ namespace RayTracer_App.Photon_Mapping
 		}
 
 		//after photon emission and tracing is complete, scale all stored by 1/phontonNum
+		//currently some of these get manipulated twice
 		public void scaleStored( float powerScale )
 		{
-			foreach( Photon g in this.globalPL)
+			foreach (Photon g in this.globalPL)
 				g.power *= powerScale;
 			foreach (Photon c in this.causticPL)
 				c.power *= powerScale;
 		}
 
+		//MAKE THE PMS
+		public void makeGlobalPM()
+		{
+			List<Point> globalPoses = grabPosByType( MAP_TYPE.GLOBAL );
+			this.globalPM.root = globalPM.balance( globalPoses, 0, this );
+			return;
+		}
+
+		public void makeCausticPM()
+		{
+			List<Point> causticPoses = grabPosByType( MAP_TYPE.CAUSTIC );
+			this.causticPM.root = causticPM.balance( causticPoses, 0, this );
+			return;
+		}
+
+		public void makeVolumePM()
+		{
+			List<Point> volumePoses = grabPosByType( MAP_TYPE.VOLUME );
+			this.volumePM.root = volumePM.balance( volumePoses, 0, this );
+			return;
+		}
+
+		// make all pms
+		public void makePMs()
+		{
+			makeGlobalPM();
+			makeCausticPM();
+			//makeVolumePM();
+			return;
+		}
+
+		//grab a photon from a particular photon list with a matching position that isn't in the kdTree yet
+		public Photon grabPhotonByPos( Point pos, MAP_TYPE targetList = MAP_TYPE.GLOBAL )
+		{
+			List<Photon> targetPhotons = getPLbyType( targetList );
+
+			foreach (Photon p in targetPhotons)
+			{
+				if (pos == p.pos)
+					return p;
+			}
+
+			return null;
+		}
+
+
 		//intersection testing for Photon Visualizing.
 		// Go through all photons in the map and return closest w
 		public float intersectListFull( LightRay ray, MAP_TYPE mapType = MAP_TYPE.GLOBAL )
 		{
-			List<Photon> desired = getPLbyType( mapType) ;
+			List<Photon> desired = getPLbyType( mapType );
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
 			Photon closest;
-			foreach( Photon p in desired)
+			foreach (Photon p in desired)
 			{
 				if (!p.litFlag)
 				{
@@ -196,7 +269,7 @@ namespace RayTracer_App.Photon_Mapping
 
 		//MONTE CARLO STUFF
 		// for grabbing a random number between [min, max)
-		public float randomRange( float min = -1, float max = 1)
+		public float randomRange( float min = -1, float max = 1 )
 		{
 			float diff = max - min;
 			float ranPercent = random01();
@@ -205,13 +278,13 @@ namespace RayTracer_App.Photon_Mapping
 		}
 
 		// for grabbing a random number between [0, 1)
-		public float random01() { return (float) rand.NextDouble(); }
+		public float random01() { return (float)rand.NextDouble(); }
 
 		//Monte Carlo for determining if a Photon gets absorbed, reflected diffusely, or reflected specularly
 		//https://github.com/ningfengh/SC_Tracer/blob/master/source/photon_map.cpp
 		// http://www.cs.cmu.edu/afs/cs.cmu.edu/academic/class/15864-s04/www/assignment4/pm.pdf
 		// Schlick's approximation? https://en.wikipedia.org/wiki/Schlick%27s_approximation
-		public RR_OUTCOMES RussianRoulette( float diffuse, float spec, float refl , float trans )
+		public RR_OUTCOMES RussianRoulette( float diffuse, float spec, float refl, float trans )
 		{
 			float chance = random01();
 
@@ -221,7 +294,7 @@ namespace RayTracer_App.Photon_Mapping
 			{
 				//do we reflect or transmit?
 				chance = random01();
-				if ( (0 <= chance && chance <= trans) )
+				if ((0 <= chance && chance <= trans))
 					return RR_OUTCOMES.TRANSMIT;
 				else
 					return RR_OUTCOMES.SPECULAR;
@@ -231,5 +304,6 @@ namespace RayTracer_App.Photon_Mapping
 			else
 				return RR_OUTCOMES.ABSORB;
 		}
+
 	}
 }

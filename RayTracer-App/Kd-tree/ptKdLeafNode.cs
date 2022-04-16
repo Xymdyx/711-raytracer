@@ -7,32 +7,34 @@ date due: 4/29
 using System;
 using System.Collections.Generic;
 using RayTracer_App.Scene_Objects;
+using RayTracer_App.Photon_Mapping;
 using RayTracer_App.World;
 
 namespace RayTracer_App.Kd_tree
 {
 	public class ptKdLeafNode : KdNode
 	{
-		private List<SceneObject> _objectPtrs;
+		private Photon _stored;
 
-		public List<SceneObject> objectPtrs { get => this._objectPtrs; set => this._objectPtrs = value; }
+		public Photon stored { get => this._stored; set => this._stored = value; }
 
 		public ptKdLeafNode()
 		{
-			this._objectPtrs = new List<SceneObject>();
+			this._stored = null;
 		}
 
-		public ptKdLeafNode( List<SceneObject> objectPtrs )
+		public ptKdLeafNode( Photon stored, float splitAxisVal )
 		{
-			this._objectPtrs = objectPtrs;
+			this._stored = stored;
+			stored.kdFlag = splitAxisVal;
+
 		}
 
 		public override string ToString()
 		{
-			String info = $"Kd-Leaf with {objectPtrs.Count} objects: ";
+			String info = $"PM Kd-Leaf with {stored}: ";
 			int objNum = 1;
-			foreach( SceneObject obj in objectPtrs)
-				info += $"Object {objNum}:" + obj.ToString() + "\t";
+
 
 			return info;
 		}

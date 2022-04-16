@@ -133,8 +133,11 @@ namespace RayTracer_App.Kd_tree
 		
 		private bool intersectGood( float currW )
 		{
+			if (currW < 0)
+				Console.WriteLine( " Negative distance evaluated in kdTree intersect..." );
+
 			return (currW != float.MinValue) && (currW != float.NaN) &&
-					(currW != float.MaxValue);
+					(currW != float.MaxValue); //should this intersection be negative?
 		}
 
 		// a given ray traverses the tree and gets the closest intersection

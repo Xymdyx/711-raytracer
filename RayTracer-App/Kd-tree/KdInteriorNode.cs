@@ -43,7 +43,7 @@ namespace RayTracer_App.Kd_tree
 		public override string ToString()
 		{
 			String axisInfo = $"{ this.axisVal} along { (Point.Axes)this.axis} axis" ;
-			String info = $"\nKd-Interior split on " + axisInfo + "\n" +
+			String info = $"\nPM Kd-Interior split on " + axisInfo + "\n" +
 				$" Front of {axisInfo}: {this.front} \n " +
 				$"Rear of {axisInfo}: {this.rear}\n "; //retrieve axis String by value; (int) Axes.X; //convert enum val to string
 

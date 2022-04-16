@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using RayTracer_App.World;
 using RayTracer_App.Voxels;
 using RayTracer_App.Scene_Objects;
+using RayTracer_App.Photon_Mapping;
 
 namespace RayTracer_App.Kd_tree
 {
@@ -58,9 +59,28 @@ namespace RayTracer_App.Kd_tree
 			return splitVec;
 		}
 
-		public bool terminal( List<SceneObject> objects, AABB vox, int depth )
+		public bool terminal( List<Point> points, int depth )
 		{
-			return ( objects.Count <= maxLeafObjs ); //the spheres are in the same voxel...
+			return ( points.Count <= 1 ); //the spheres are in the same voxel...
+		}
+
+		// find longest axis of bounding box
+		public int getLongestAxis( AABB vox )
+		{
+			float xDiff = vox.max.x - vox.min.x;
+			float yDiff = vox.max.y - vox.min.y;
+			float zDiff = vox.max.z - vox.min.z;
+
+			float maxDiff = (float)Math.Max( xDiff, Math.Max( yDiff, zDiff ) );
+
+			if (xDiff == maxDiff)
+				return 0;
+			else if (yDiff == maxDiff)
+				return 1;
+			else if( zDiff == maxDiff)
+				return 2;
+
+			return -1;
 		}
 
 		/*get node... starts as //getNode( allObjects, sceneBoundingBox)
@@ -76,65 +96,53 @@ namespace RayTracer_App.Kd_tree
 		algorithm converts the unordered list of photons into a balanced kd-tree
 		by recursively selecting the root node among the data-set as the median
 element in the direction which represents the largest interval.*/
-		public KdNode balance( List<SceneObject> objects, AABB vox, int depth ) //just points and depth soon...
+		public KdNode balance( List<Point> points, int depth, PhotonRNG mapper,
+			float prevAxis = float.MaxValue, PhotonRNG.MAP_TYPE sampleList = PhotonRNG.MAP_TYPE.GLOBAL ) //need two extra defaults for initial purposes
 		{
 			//base case
-			if (terminal( objects, vox, depth ))
-				return new ptKdLeafNode(objects);
-
-			int axis = depth % 3;
-			float partitionVal = vox.center.getAxisCoord( axis );
-			Vector splitVec = findSplitVec( vox, axis );
-
-			/* to split an AABB ( the biggest points on the cube we find):
-			keep min and max
-			translate center point by the extents that aren't the axis we are splitting along
-			for x split:
-			axisVal = center.X
-			new vox(minpt, center + [0, yExt, zExt]
-			new vox( maxpt, center - [0, yExtm zExt]
-
-			alternatively: translate the min and max pts along by the plane extent we're splitting along:
-			i.e. new vox( minPt, maxPt - [xExt,0, ]
-				new vox( maxpt, minPt + [xExt,0, ])
-			*/
-
-			AABB vFront = new AABB( vox.max, vox.center - splitVec , axis );
-			AABB vRear = new AABB( vox.min, vox.center + splitVec, axis );
-			List<SceneObject> frontObjs = new List<SceneObject>();
-			List<SceneObject> rearObjs = new List<SceneObject>();
-
-			//check if new voxels contain these objects
-			foreach (SceneObject obj in objects)
+			if (terminal( points, depth ))
 			{
-				Sphere s = obj as Sphere;
-				Polygon t = obj as Polygon;
-				bool hitsFront = false;
-				bool hitsRear = false;
+				Photon stored = null;
 
-				if( s != null)
-				{
-					hitsFront = vFront.sphereIntersect( s.center, s.radius );
-					hitsRear = vRear.sphereIntersect( s.center, s.radius );
-				}
-				else if( t != null)
-				{
-					hitsFront = vFront.triangleIntersect( t );
-					hitsRear = vRear.triangleIntersect( t );
-				}
+				if( points.Count != 0 )
+					stored = mapper.grabPhotonByPos( points[0], sampleList ); //grab proper photon from photon list we're building from
 
-				if (hitsFront) frontObjs.Add( obj );
-				if (hitsRear) rearObjs.Add( obj );
+				return new ptKdLeafNode( stored, prevAxis );
 			}
 
+			AABB vox = AABB.boxAroundPoints( points ); // form box from points
+			int axis = getLongestAxis( vox ); // choose dim of cube with biggest difference betw points.
+			float partitionVal = vox.center.getAxisCoord( axis );
+
+			//use lambda to sort points by longest axis value 
+			points.Sort( ( p1, p2 ) => p1.getAxisCoord( axis ).CompareTo(p2.getAxisCoord( axis )) ); 
+
+			int size = points.Count;
+			int midIdx = (size - 1) / 2;
+			Point medianPt;
+
+			// if median is odd.. list[n/2]
+			if (size % 2 == 1)
+				medianPt = points[midIdx];
+			else //22 is mid of 46
+				medianPt = (points[midIdx] + points[midIdx + 1].toVec()) * .5f; 
+			//this will give median index of sorted list.. median https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/median/
+			int amount = size - (midIdx + 1) ; //23 for 46 elements
+
+			List<Point> frontPts = points.GetRange( midIdx + 1 , amount); //skip over middle for odd-sized sets
+			List<Point> rearPts = points.GetRange( 0, amount );
+
 			return new ptKdInteriorNode( axis, partitionVal, vox,
-				balance(frontObjs, vFront, depth + 1), balance( rearObjs, vRear, depth + 1 ) );
+				balance(frontPts, depth + 1, mapper, axis, sampleList),
+				balance( rearPts, depth + 1, mapper, axis, sampleList ), medianPt );
 		}
 		
 		private bool intersectGood( float currW )
 		{
+			if (currW < 0)
+				Console.WriteLine( " Negative distance evaluated in ptKdTree intersect..." );
 			return (currW != float.MinValue) && (currW != float.NaN) &&
-					(currW != float.MaxValue);
+					(currW != float.MaxValue) && (currW > 0); //the distance cannot be negative, must be positive(?)
 		}
 
 		// a given ray traverses the tree and gets the closest intersection
@@ -157,11 +165,11 @@ element in the direction which represents the largest interval.*/
 			if (node == null)
 				node = this.root;
 
-			KdLeafNode leaf = node as KdLeafNode;
-			KdInteriorNode inner = node as KdInteriorNode;
+			ptKdLeafNode leaf = node as ptKdLeafNode;
+			ptKdInteriorNode inner = node as ptKdInteriorNode;
 
 			if (leaf != null)
-				return world.findRayIntersect( ray, leaf.objectPtrs ) ;// test all intersections with objects and return the closest;
+				return leaf.stored.rayPhotonIntersect( ray ) ;// test ray photon intersection;
 			
 			// N = negative, P = positive, Z = along splitting plane
 			else if( inner != null)
@@ -210,8 +218,6 @@ element in the direction which represents the largest interval.*/
 						bestW = travelTAB( ray, world, inner.rear ); //P4
 					}
 				}
-
-
 			}
 
 			return bestW; //error

@@ -98,4 +98,9 @@ public class Color
         Color c = (Color) obj;
         return (c.r == this.r && c.g == this.g && c.b == this.b);
 	}
+
+	public override string ToString()
+	{
+		return $"Color({r}, {g}, {b})";
+	}
 }

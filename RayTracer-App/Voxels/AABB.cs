@@ -283,5 +283,46 @@ namespace RayTracer_App.Voxels
 			return true;
 		}
 
+		// create a box from a list of points by finding max and min extents
+		public static AABB boxAroundPoints( List<Point> points )
+		{
+			float[] max = new float[3];
+			float[] min = new float[3];
+
+			foreach (Point pt in points)
+			{
+				//compare point values to max and min so far
+				for (int axis = 0; axis < 3; axis++)
+				{
+					float axisVal = pt.getAxisCoord( axis );
+					//update scene min and max points if applicable
+					if (axisVal > max[axis])
+						max[axis] = axisVal;
+					if (axisVal < min[axis])
+						min[axis] = axisVal;
+				}
+
+			}
+
+			//make box around points
+			Point minPt = new Point( min[0], min[1], min[2] );
+			Point maxPt = new Point( max[0], max[1], max[2] );
+
+			return new AABB( minPt, maxPt, -1 );	
+		}
+
 	}
 }
+
+/* to split an AABB ( the biggest points on the cube we find):
+keep min and max
+translate center point by the extents that aren't the axis we are splitting along
+for x split:
+axisVal = center.X
+new vox(minpt, center + [0, yExt, zExt]
+new vox( maxpt, center - [0, yExtm zExt]
+
+alternatively: translate the min and max pts along by the plane extent we're splitting along:
+i.e. new vox( minPt, maxPt - [xExt,0, ]
+	new vox( maxpt, minPt + [xExt,0, ])
+*/

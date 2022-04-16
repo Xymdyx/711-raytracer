@@ -386,8 +386,12 @@ namespace RayTracer_App.World
 		public void beginpmPassOne()
 		{
 			this.photonMapper = new PhotonRNG();
+
 			foreach (LightSource l in this.lights)
 				l.emitPhotonsFromDPLS( this, 1000 );
+
+			//construct photon maps from lists
+			photonMapper.makePMs();
 		}
 
 		//helper for finding correct diffuse direction for Monte Carlo sampling
@@ -462,7 +466,7 @@ namespace RayTracer_App.World
 						this.photonMapper.addGlobal( intersection, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
 						if (causticsMark)
 						{
-							this.photonMapper.addGlobal( intersection, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
+							this.photonMapper.addCaustic( intersection, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
 							causticsMark = false; //do we add the photon to the caustic map?
 						}
 						break;
