@@ -380,14 +380,14 @@ namespace RayTracer_App.World
 			Console.WriteLine( "Building the kd tree took " + (kdTimer.ElapsedMilliseconds) + " milliseconds" );
 		}
 
-		//PHOTON-MAPPING METHODS
+//PHOTON-MAPPING METHODS
 
 		//called by the camera to start Photon mapping
 		public void beginpmPassOne()
 		{
 			this.photonMapper = new PhotonRNG();
 			foreach (LightSource l in this.lights)
-				l.emitPhotonsFromDPLS( this, 500 );
+				l.emitPhotonsFromDPLS( this, 1000 );
 		}
 
 		//helper for finding correct diffuse direction for Monte Carlo sampling
@@ -493,11 +493,21 @@ namespace RayTracer_App.World
 
 				return; // end of path for this photon
 			}
-
-			/*photonW = world.findRayIntersect( photonRay );
-			photonPos = world.grabIntersectPt( photonRay, photonW );
-			Photon photon = new Photon( photonPos, photonPow, )*/
 			return;
+		}
+
+		//helper to call PhotonMapper to find photon intersections
+		public Color overlayPhotons( LightRay ray)
+		{
+			PhotonRNG.MAP_TYPE mapVal = PhotonRNG.MAP_TYPE.NONE;
+
+			//ascending order of preference
+			if (photonMapper.intersectListQuick( ray, PhotonRNG.MAP_TYPE.GLOBAL ))
+				mapVal = PhotonRNG.MAP_TYPE.GLOBAL;
+			if (photonMapper.intersectListQuick( ray, PhotonRNG.MAP_TYPE.CAUSTIC ) )
+				mapVal = PhotonRNG.MAP_TYPE.CAUSTIC;
+
+			return photonMapper.getPColorbyType( mapVal ); // nothing if black
 		}
 	}
 }

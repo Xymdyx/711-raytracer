@@ -27,6 +27,7 @@ namespace RayTracer_App.Photon_Mapping
 			GLOBAL = 0,
 			CAUSTIC = 1,
 			VOLUME = 2,
+			NONE = 3
 		}
 
 		//RNG
@@ -154,12 +155,15 @@ namespace RayTracer_App.Photon_Mapping
 			Photon closest;
 			foreach( Photon p in desired)
 			{
-				currW = p.rayPhotonIntersect( ray );
-				if ((currW != float.MinValue) && (currW != float.NaN) &&
-					(currW != float.MaxValue) && (currW < bestW) && (currW > 0))
+				if (!p.litFlag)
 				{
-					bestW = currW;
-					closest = p;
+					currW = p.rayPhotonIntersect( ray );
+					if ((currW != float.MinValue) && (currW != float.NaN) &&
+						(currW != float.MaxValue) && (currW < bestW) && (currW > 0))
+					{
+						bestW = currW;
+						closest = p;
+					}
 				}
 			}
 
@@ -177,10 +181,14 @@ namespace RayTracer_App.Photon_Mapping
 			Photon closest;
 			foreach (Photon p in desired)
 			{
-				currW = p.rayPhotonIntersect( ray );
-				if ((currW != float.MinValue) && (currW != float.NaN) &&
-					(currW != float.MaxValue) && (currW < bestW) && (currW > 0))
-					return true;
+				if (!p.litFlag)
+				{
+					if (p.rayPhotonIntersectQuick( ray ))
+					{
+						p.litFlag = true;
+						return true;
+					}
+				}
 			}
 
 			return false; //Color.photonColor

@@ -242,15 +242,43 @@ public class Point
         return new Point( this.x, this.y, this.z );
     }
 
+    // needed for Photon Visualization
     //does a point lie in a ray's path? If the DP is 0 then it's parallel, meaning on the same line here
     public float ptRayIntersect( LightRay ray )
 	{
         Vector ptRay = this - ray.origin;
         float dp = ptRay.dotProduct( ray.direction );
+        float rayMagn = ray.direction.getLen();
+        rayMagn *= rayMagn;
+        // two vectors are in the same direction if they're scaler multiples of each other..
+        // same unit vector, basically.
 
-        if (dp >= -1e-6f && dp <= 1e-6f) // point is in path of ray... as the DP is 0
-            return distance( ray.origin );
-        
+        if ((dp == rayMagn) || (ptRay == ray.direction)) // point is in path of ray
+        {
+            Console.WriteLine( "Photon along path of ray!" );
+            return distance( ray.origin ); //sqrt is expensive...
+        }
+
         return float.MaxValue; 
 	}
+
+    // needed for Photon Visualization
+    //does a point lie in a ray's path? If the DP is 0 then it's parallel, meaning on the same line here
+    public bool ptRayIntersectQuick( LightRay ray )
+    {
+        Vector ptRay = this - ray.origin;
+        float dp = ptRay.dotProduct( ray.direction );
+        float rayMagn = ray.direction.getLen();
+        rayMagn *= rayMagn;
+        // two vectors are in the same direction if they're scaler multiples of each other..
+        // same unit vector, basically.
+
+        if ((dp == rayMagn) || (ptRay == ray.direction)) // point is in path of ray
+        {
+            Console.WriteLine( "Photon along path of ray!" );
+            return true;
+        }
+
+        return false;
+    }
 }

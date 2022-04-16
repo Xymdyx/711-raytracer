@@ -15,12 +15,15 @@ namespace RayTracer_App.Photon_Mapping
 		private float _power; //the power
 		private float _theta, _phi; //incident direction as spherical coords 
 		private float _kdFlag;
+		private bool _litFlag; //for photon visualization
 
 		public Point pos { get => this._pos; set => this._pos = value; }
 		public float power { get => this._power; set => this._power = value; }
 		public float theta { get => this._theta; set => this._theta = value; }
 		public float phi { get => this._phi; set => this._phi = value; }
 		public float kdFlag { get => this._kdFlag; set => this._kdFlag = value; }
+		public bool litFlag { get => this._litFlag; set => this._litFlag = value; }
+
 
 		// dy and dx are Cartesian points... unit vectors' x and y of incident direction.
 		/*
@@ -41,12 +44,19 @@ namespace RayTracer_App.Photon_Mapping
 			this._phi = (float) (255 * (  Math.Atan2( dy, dx ) + Math.PI) / (2 * Math.PI)); //from Cartesian -> Spherical
 			this._theta = (float) (255 * Math.Acos( dx ) / Math.PI) ;
 			this._kdFlag = float.MaxValue; // this is for the splitting plane axis in the kd-tree),
+			this.litFlag = false;
 		}
 
 		//ray intersect formula is simply if the photon lies on a ray's path
 		public float rayPhotonIntersect( LightRay ray )
 		{
 			return this.pos.ptRayIntersect( ray );
+		}
+
+		//ray intersect formula bool version
+		public bool rayPhotonIntersectQuick( LightRay ray )
+		{
+			return this.pos.ptRayIntersectQuick( ray );
 		}
 	}
 }

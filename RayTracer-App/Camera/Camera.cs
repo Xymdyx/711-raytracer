@@ -132,13 +132,25 @@ namespace RayTracer_App.Camera
 			return trColor;
 		}
 
+		//helper for photon visualizing
+		public Color renderPhotons(Color orig, LightRay fire, World.World world, bool blackout = false)
+		{
+			Color photonColor = world.overlayPhotons( fire );
 
-//tried list of float[] and float[]...
+			if (photonColor == Color.defaultBlack && !blackout) // if we aren't blacking out the scene...
+				return orig;
+
+			return photonColor;
+		}
+
+		//tried list of float[] and float[]...
 		public byte[] render( World.World world, int imageHeight, int imageWidth, float focalLen, bool makeKd = false, bool doPM = false )
 		{
 			// this converts everything to camera coords
 			makeCamMat();
 			world.transformAll( this.camTransformMat );
+			bool photonOverlay = false;
+			bool justPhotons = false;
 
 			if (makeKd)
 			{
@@ -150,6 +162,7 @@ namespace RayTracer_App.Camera
 			{
 				world.findBB(); //advanced cp 2
 				world.beginpmPassOne();
+				//photonOverlay = true;
 			}
 
 			//time the render here...
@@ -181,17 +194,22 @@ namespace RayTracer_App.Camera
 			{
 				for ( int x = 0; x < imageWidth; x++)
 				{
+					fire.direction = fpPoint - this.eyePoint;
 					//supersample branch here... have an array of hitcolors... average them then pass to TR below
-					if (!isSuperSampling)
+					if (!isSuperSampling && !justPhotons)
 					{
-						fire.direction = fpPoint - this.eyePoint;
 						hitColor = world.spawnRay( fire, 1 ); //this will be irradiance.... CP5	
 					}
+					else if (!isSuperSampling && justPhotons) //quick PM debug
+						hitColor = renderPhotons( hitColor, fire, world, true );
 					else
 						hitColor = superSamplePixel( fpPoint, pixHeight, pixWidth, world );
 
 					if (hitColor != null)
 					{
+						if (photonOverlay && !justPhotons) //if we're visualizing the Photon Maps
+							hitColor = renderPhotons( hitColor, fire, world, false) ; 
+
 						//run tone reproduction function on hitColor and then do the following
 						hitColor = runTR( hitColor );
 						hitColorArr = hitColor.asByteArr();
