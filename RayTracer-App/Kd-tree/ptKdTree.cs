@@ -125,12 +125,14 @@ element in the direction which represents the largest interval.*/
 			Point medianPt;
 
 			// if median is odd.. list[n/2]
+			// 22 is mid of 46
+			//23 for 46 elements
 			if (size % 2 == 1)
 				medianPt = points[midIdx];
-			else //22 is mid of 46
-				medianPt = (points[midIdx] + points[midIdx + 1].toVec()) * .5f; 
+			else
+				medianPt = (points[midIdx] + points[midIdx + 1].toVec()) * .5f; //works
 			//this will give median index of sorted list.. median https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/median/
-			int amount = size - (midIdx + 1) ; //23 for 46 elements
+			int amount = size - (midIdx + 1) ;
 
 			float partitionVal = medianPt.getAxisCoord( axis ); //we split along median...
 			List<Point> frontPts = points.GetRange( midIdx + 1 , amount); //skip over middle for odd-sized sets
@@ -149,9 +151,15 @@ element in the direction which represents the largest interval.*/
 					(currW != float.MaxValue); //the distance cannot be negative, must be positive(?)
 		}
 
+		//private Point recomputeS( int axis, float sCoord, LightRay ray )
+		//{
+		//	Point newS = new Point( 0, 0, 0 );
+		//	newS.setAxisCoord( axis, sCoord );
+		//}
+
 		// a given ray traverses the tree and gets the closest intersection
 		// There's a problem with this traversal method. Building the map works well
-		public float travelTAB( LightRay ray, World.World world ,KdNode node = null )
+		public float travelTAB( LightRay ray, World.World world ,KdNode node = null, Point s = null, int flag = 0  )
 		{
 			// a[coord] = proper coord of entry pt
 			// b[coord] = proper coord of exit point
@@ -186,41 +194,47 @@ element in the direction which represents the largest interval.*/
 
 				entryPt = ray.entryPt.copy();
 				exitPt = ray.exitPt.copy();
+
+				// need this to account for N4 and P4, where we recompute s to sub into a or b in children
+				if (flag == 1) entryPt = s.copy();
+				else if (flag == 2) exitPt = s.copy();
+
 				aCoord = entryPt.getAxisCoord( inner.axis );
 				bCoord = exitPt.getAxisCoord( inner.axis );
-				splitOffset = inner.axisVal;
+				splitOffset = inner.axisVal; // - ray.origin.getAxisCoord(inner.axis);
 
 				if( aCoord <= splitOffset)
 				{
-					if (bCoord < splitOffset)
+					if (bCoord < splitOffset) //visit leftnode
 						bestW = travelTAB( ray, world, inner.rear ); //N1, N2, N3, P5, Z3
 					else
 					{
 						if (bCoord == splitOffset)
 							bestW = travelTAB( ray, world, inner.front ); //traverse arbitrary child node.. Z2
 						else
-						{
-							//compute and store location of splitOffset....I believe this is already done(?)
-							bestW = travelTAB( ray, world, inner.rear );
+						{ // visit left then right (lower -> upper)
+							//compute and store COMPLETE location of splitOffset....this means that the offset's full point is needed...replace a or b?
+							//recommends a stack since the newly computer s is used later
+							bestW = travelTAB( ray, world, inner.rear, inner.partitionPt, 2 ); //tried: 12 both, 21 both, 21 12, 12 21
 
 							if ( intersectGood( bestW ) ) return bestW; //return here since we know first check will def be closer
 
-							bestW = travelTAB( ray, world, inner.front ); //N4
+							bestW = travelTAB( ray, world, inner.front, inner.partitionPt, 1 ); //N4
 						}
 					}
 				}
 				else // aCoord > splitOffset
 				{
-					if (bCoord > splitOffset)
+					if (bCoord > splitOffset) //visit right
 						bestW = travelTAB( ray, world, inner.front ); // P1, P2, P3, N5, Z1
 					else
-					{
+					{ //visit right then left (upper -> lower)
 						//compute and store location of splitOffset....I believe this is already done(?)
-						bestW = travelTAB( ray, world,  inner.front );
+						bestW = travelTAB( ray, world,  inner.front, inner.partitionPt, 2 );
 
 						if ( intersectGood( bestW ) ) return bestW; //return here since we know first check will def be closer
 
-						bestW = travelTAB( ray, world, inner.rear ); //P4
+						bestW = travelTAB( ray, world, inner.rear, inner.partitionPt, 1 ); //P4
 					}
 				}
 			}

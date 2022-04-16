@@ -211,7 +211,7 @@ namespace RayTracer_App.Photon_Mapping
 
 			foreach (Photon p in targetPhotons)
 			{
-				if (pos == p.pos)
+				if (pos == p.pos && !p.litFlag )
 					return p;
 			}
 

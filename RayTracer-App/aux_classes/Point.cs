@@ -94,6 +94,15 @@ public class Point
         return float.NaN;
 	}
 
+    public void setAxisCoord( int axis, float val )
+    {
+        if (axis == 0) this.x = val;
+        else if (axis == 1) this.y = val;
+        else if (axis == 2) this.z = val;
+
+        return;
+    }
+
     //calculate distance
     public float distance( Point p2)
     {
