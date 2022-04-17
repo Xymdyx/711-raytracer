@@ -81,18 +81,30 @@ public class RayTracerMain
 		Point rearBL = new Point( -cbXLim, cbYLim, cbZLim );
 		Point rearBR = new Point( cbXLim, cbYLim, cbZLim );
 
+
 		List<Point> rearVerts1 = new List<Point> { rearTL, rearBL, rearTR };
 		List<Point> rearVerts2 = new List<Point> { rearBR.copy(), rearTR.copy(), rearBL.copy() };
 		Polygon rearTri1 = new Polygon( rearVerts1, Color.cbGrey );
 		Polygon rearTri2 = new Polygon( rearVerts2, Color.cbGrey );
 
+		//front wall border param. 2 triangles... intersection of left&top, right&top, left&bot, right&bot at higher z
+		//left border param. 2 triangles... Color is blue
+		Point frontTL = new Point( -cbXLim, -cbYLim, -cbZLim );
+		Point frontTR = new Point( cbXLim, -cbYLim, -cbZLim );
+		Point frontBL = new Point( -cbXLim, cbYLim, -cbZLim );
+		Point frontBR = new Point( cbXLim, cbYLim, -cbZLim );
+
+		List<Point> frontVerts1 = new List<Point> { frontTR, frontBL, frontTL };
+		List<Point> frontVerts2 = new List<Point> { frontBL.copy(), frontTR.copy(),frontBR.copy() };
+		Polygon frontTri1 = new Polygon( frontVerts1, Color.cbGrey );
+		Polygon frontTri2 = new Polygon( frontVerts2, Color.cbGrey );
 		// finally make spheres
 		//left sphere params
 		float sphereRad = 1.25f;
 
 		float s1Depth = cbZLim/4f; ; //+z into the scene... I am IN LHS
 		float s1Height = .75f; //1.75f.. 45 is good for lots of sky
-		float s1Trans = .5f;
+		float s1Trans = 0f;
 		float s1Refl = 1- s1Trans;
 		float s1RefIdx = SceneObject.AIR_REF_INDEX; // ni > nt for TIR
 
@@ -118,7 +130,7 @@ public class RayTracerMain
 		}
 
 		//place mainLight on top wall near its center
-		Point ceilLightPos = new Point( 0f, -cbYLim + .5f, 0f ); // .85f, -30.85f, s1Depth + .75f
+		Point ceilLightPos = new Point( 0f, -cbYLim + .5f, s1Depth ); // 0f, -cbYLim + .5f, 0f 
 		Color ceilLightColor = Color.whiteSpecular;
 		LightSource ceilLight = new LightSource( ceilLightPos, ceilLightColor );
 
@@ -134,6 +146,8 @@ public class RayTracerMain
 		world.addObject( leftTri2 );
 		world.addObject( rearTri1 );
 		world.addObject( rearTri2 );
+		world.addObject( frontTri1 );
+		world.addObject( frontTri2 );
 		world.addObject( sphere1 );
 		//world.addObject( sphere2 );
 

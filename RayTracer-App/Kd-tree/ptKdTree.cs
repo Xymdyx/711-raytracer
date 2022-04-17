@@ -111,6 +111,8 @@ element in the direction which represents the largest interval.*/
 					stored = mapper.grabPhotonByPos( points[0], sampleList ); //grab proper photon from photon list we're building from
 					if( stored != null)
 						this.photonNum++;
+					else 
+						Console.WriteLine( "Leaf with no photon" );
 				}
 				else Console.WriteLine( " Leaf node with no photon" );
 
@@ -122,7 +124,7 @@ element in the direction which represents the largest interval.*/
 
 			//use lambda to sort points by longest axis value .. Tried sorting the y axis by descending FAILED.
 			points.Sort( ( p1, p2 ) => p1.getAxisCoord( axis ).CompareTo(p2.getAxisCoord( axis )) ); 
-
+	
 			int size = points.Count;
 			int midIdx = (size - 1) / 2;
 			Point medianPt;
@@ -140,6 +142,8 @@ element in the direction which represents the largest interval.*/
 			float partitionVal = medianPt.getAxisCoord( axis ); //we split along median...
 			List<Point> frontPts = points.GetRange( midIdx + 1 , amount); //skip over middle for odd-sized sets
 			List<Point> rearPts = points.GetRange( 0, amount );
+
+			if (frontPts.Count != rearPts.Count) Console.WriteLine("uneven list sizes in build");
 
 			this._kdSize += 2;
 			return new ptKdInteriorNode( axis, partitionVal, vox,
@@ -236,6 +240,8 @@ element in the direction which represents the largest interval.*/
 					aCoord = stack[entIdx].pb.getAxisCoord( currAxis );
 					bCoord = stack[extIdx].pb.getAxisCoord( currAxis ); //the exit point should remain the same...
 
+					if (aDist > bDist) Console.Write( " Larger a coord" );
+
 					//if (aCoord > bCoord) //a must be smaller than b
 					//{
 					//	(aCoord, bCoord) = (bCoord, aCoord); // tuples let me swap variables w/o temps
@@ -311,7 +317,7 @@ element in the direction which represents the largest interval.*/
 				extIdx = stack[entIdx].prev;
 			} // end outer search whi;e
 
-			Console.WriteLine( "Exited tab loop with no intersection" );
+			//Console.WriteLine( "Exited tab loop with no intersection" );
 			return bestW; //found no intersection
 		}
 

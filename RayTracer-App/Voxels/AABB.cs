@@ -122,8 +122,8 @@ namespace RayTracer_App.Voxels
 				maxT = maxZ;
 
 			//so the ray knows where it went for later
-			if (minT > maxT)
-				(minT, maxT) = (maxT, minT); // tuples let me swap variables w/o temps
+			//if (minT > maxT)
+				//(minT, maxT) = (maxT, minT); // tuples let me swap variables w/o temps
 
 			this.tNear = minT;
 			this.tFar = maxT;
