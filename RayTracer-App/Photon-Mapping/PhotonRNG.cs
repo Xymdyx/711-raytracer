@@ -177,14 +177,14 @@ namespace RayTracer_App.Photon_Mapping
 		public void makeGlobalPM()
 		{
 			List<Point> globalPoses = grabPosByType( MAP_TYPE.GLOBAL );
-			this.globalPM.root = globalPM.balance( globalPoses, 0, this );
+			this.globalPM.root = globalPM.balance( globalPoses, 0, this, float.MaxValue, MAP_TYPE.GLOBAL );
 			return;
 		}
 
 		public void makeCausticPM()
 		{
 			List<Point> causticPoses = grabPosByType( MAP_TYPE.CAUSTIC );
-			this.causticPM.root = causticPM.balance( causticPoses, 0, this );
+			this.causticPM.root = causticPM.balance( causticPoses, 0, this, float.MaxValue, MAP_TYPE.CAUSTIC );
 			return;
 		}
 
@@ -273,7 +273,8 @@ namespace RayTracer_App.Photon_Mapping
 		public float intersectPMFull( LightRay ray, World.World world, MAP_TYPE mapType = MAP_TYPE.GLOBAL )
 		{
 			ptKdTree desired = getPMbyType( mapType );
-			float bestW = desired.travelTAB( ray, world );
+			float bestW = desired.travelTAB( ray, world);
+//			float bestW = desired.travelTAB( ray, world, 0 );
 
 			return bestW; //Color.photonColor
 		}

@@ -21,23 +21,31 @@ namespace RayTracer_App.Kd_tree
 		private int _maxLeafObjs; //will be removed for points
 
 		private int _kdSize;
-		
+
+		private int _photonNum;
+
 		private static int MAX_KD_DEPTH = 5 * 4;
 		public KdNode root { get => this._root; set => this._root = value; }
 		public int maxLeafObjs { get => this._maxLeafObjs; set => this._maxLeafObjs = value; }
 		public int kdSize { get => this._kdSize; set => this._kdSize = value; }
+		public int photonNum { get => this._photonNum; set => this._photonNum = value; }
+
 
 		// constructors
 		public ptKdTree() 
 		{
 			this._root =  null;
 			this._maxLeafObjs = 2;
+			this.kdSize = 0;
+			this.photonNum = 0;
 		}
 
 		public ptKdTree( KdNode root )
 		{
 			this._root = root;
 			this._maxLeafObjs = 2;
+			this.kdSize = 1;
+			this.photonNum = 0;
 		}
 
 		//methods
@@ -94,6 +102,95 @@ namespace RayTracer_App.Kd_tree
 		* return new interior node (P, getNode(LFRONT, VFRONT),
 		*  getNode(LREAR, VREAR))
 		*/
+		public float travelTAB( LightRay ray, World.World world, KdNode node = null, Point s = null, int flag = 0 )
+		{
+			// a[coord] = proper coord of entry pt
+			// b[coord] = proper coord of exit point
+			// s = splitting plane offset... from splitting-plane ray intersection
+			//ray must intersect whole scene bounding box prior
+			Point entryPt;
+			Point exitPt;
+			Point sPlanePt;
+			Vector sVec;
+			float aCoord;
+			float bCoord;
+			float splitOffset;
+
+			float bestW = float.MaxValue; //initialize to error per convention so far
+
+			if (node == null)
+				node = this.root;
+
+			ptKdLeafNode leaf = node as ptKdLeafNode;
+			ptKdInteriorNode inner = node as ptKdInteriorNode;
+
+			if (leaf != null)
+				return leaf.stored.rayPhotonIntersect( ray );// test ray photon intersection;
+
+			// N = negative, P = positive, Z = along splitting plane
+			else if (inner != null)
+			{
+				inner.selfAABB.intersect( ray ); // update entry and exit points
+
+				if (ray.entryPt == null || ray.exitPt == null)
+					return bestW;
+
+				entryPt = ray.entryPt.copy();
+				exitPt = ray.exitPt.copy();
+
+				// need this to account for N4 and P4, where we recompute s to sub into a or b in children
+				if (flag == 1) entryPt = s.copy();
+				else if (flag == 2) exitPt = s.copy();
+
+				aCoord = entryPt.getAxisCoord( inner.axis );
+				bCoord = exitPt.getAxisCoord( inner.axis ); //the exit point should remain the same...
+
+				//if (aCoord > bCoord) //a must be smaller than b
+				//{
+				//	(aCoord, bCoord) = (bCoord, aCoord); // tuples let me swap variables w/o temps
+				// //Console.WriteLine( $" a is not smaller than b here for a = {entryPt} , b = {exitPt} " );
+				//}
+
+				splitOffset = inner.axisVal; // - ray.origin.getAxisCoord(inner.axis);
+
+				if (aCoord <= splitOffset)
+				{
+					if (bCoord < splitOffset) //visit leftnode
+						bestW = travelTAB( ray, world, inner.rear ); //N1, N2, N3, P5, Z3
+					else
+					{
+						if (bCoord == splitOffset)
+							bestW = travelTAB( ray, world, inner.front ); //traverse arbitrary child node.. Z2
+						else
+						{ // visit left then right (lower -> upper)
+						  //compute and store COMPLETE location of splitOffset....this means that the offset's full point is needed...replace a or b?
+						  //recommends a stack since the newly computer s is used later
+							bestW = travelTAB( ray, world, inner.rear, inner.partitionPt, 2 ); //tried: 12 both, 21 both, 21 12, 12 21
+
+							if (intersectGood( bestW )) return bestW; //return here since we know first check will def be closer
+
+							bestW = travelTAB( ray, world, inner.front, inner.partitionPt, 1 ); //N4
+						}
+					}
+				}
+				else // aCoord > splitOffset
+				{
+					if (bCoord > splitOffset) //visit right
+						bestW = travelTAB( ray, world, inner.front ); // P1, P2, P3, N5, Z1
+					else
+					{ //visit right then left (upper -> lower)
+					  //compute and store location of splitOffset....I believe this is already done(?)
+						bestW = travelTAB( ray, world, inner.front, inner.partitionPt, 2 );
+
+						if (intersectGood( bestW )) return bestW; //return here since we know first check will def be closer
+
+						bestW = travelTAB( ray, world, inner.rear, inner.partitionPt, 1 ); //P4
+					}
+				}
+			}
+
+			return bestW; //error
+		}
 
 		/* FOR PM: The balancing http://graphics.ucsd.edu/~henrik/papers/rendering_caustics/rendering_caustics_gi96.pdf
 		algorithm converts the unordered list of photons into a balanced kd-tree
@@ -108,7 +205,11 @@ element in the direction which represents the largest interval.*/
 				Photon stored = null;
 
 				if (points.Count != 0)
+				{
 					stored = mapper.grabPhotonByPos( points[0], sampleList ); //grab proper photon from photon list we're building from
+					if( stored != null)
+						this.photonNum++;
+				}
 				else Console.WriteLine( " Leaf node with no photon" );
 
 				return new ptKdLeafNode( stored, prevAxis );
@@ -138,6 +239,7 @@ element in the direction which represents the largest interval.*/
 			List<Point> frontPts = points.GetRange( midIdx + 1 , amount); //skip over middle for odd-sized sets
 			List<Point> rearPts = points.GetRange( 0, amount );
 
+			this._kdSize += 2;
 			return new ptKdInteriorNode( axis, partitionVal, vox,
 				balance(frontPts, depth + 1, mapper, axis, sampleList),
 				balance( rearPts, depth + 1, mapper, axis, sampleList ), medianPt ); //swapping rear and front pts didn't seem to work
@@ -159,7 +261,19 @@ element in the direction which represents the largest interval.*/
 
 		// a given ray traverses the tree and gets the closest intersection
 		// There's a problem with this traversal method. Building the map works well
-		public float travelTAB( LightRay ray, World.World world ,KdNode node = null, Point s = null, int flag = 0  )
+		// this is one ray through the whole ass box... we compute initial pts
+		// https://slideplayer.com/slide/4991637/
+
+
+		public override string ToString()
+		{
+			return $" PM with {this.photonNum} photons and {this.kdSize} nodes\n" + this.root.ToString();
+		}
+	}
+}
+
+/* Misunderstood TAB algo(?)
+ 		public float travelTAB( LightRay ray, World.World world ,KdNode node = null, Point s = null, int flag = 0  )
 		{
 			// a[coord] = proper coord of entry pt
 			// b[coord] = proper coord of exit point
@@ -200,7 +314,7 @@ element in the direction which represents the largest interval.*/
 				else if (flag == 2) exitPt = s.copy();
 
 				aCoord = entryPt.getAxisCoord( inner.axis );
-				bCoord = exitPt.getAxisCoord( inner.axis );
+				bCoord = exitPt.getAxisCoord( inner.axis ); //the exit point should remain the same...
 				splitOffset = inner.axisVal; // - ray.origin.getAxisCoord(inner.axis);
 
 				if( aCoord <= splitOffset)
@@ -241,10 +355,103 @@ element in the direction which represents the largest interval.*/
 
 			return bestW; //error
 		}
-
-		public override string ToString()
+ 
+// using same ray entry and exit whole time
+		public float travelTAB( LightRay ray, World.World world , int depth, KdNode node = null, Point a = null, Point b = null)
 		{
-			return this.root.ToString();
+			// a[coord] = proper coord of entry pt
+			// b[coord] = proper coord of exit point
+			// s = splitting plane offset... from splitting-plane ray intersection
+			//ray must intersect whole scene bounding box prior
+			Point entryPt = null;
+			Point exitPt = null;
+			Point sPlanePt;
+			Vector sVec;
+			float aCoord;
+			float bCoord;
+			float splitOffset;
+
+			ptKdLeafNode leaf;
+			ptKdInteriorNode inner;
+
+			float bestW = float.MaxValue; //initialize to error per convention so far
+
+			leaf = node as ptKdLeafNode;
+			inner = node as ptKdInteriorNode;
+
+			if (node == null && leaf == null && inner == null) //this works
+			{
+				leaf = this.root as ptKdLeafNode;
+				inner = this.root as ptKdInteriorNode;
+
+				if (inner != null)
+				{
+					inner.selfAABB.intersect( ray ); // update entry and exit points
+					entryPt = ray.entryPt.copy();
+					exitPt = ray.exitPt.copy();
+					if (ray.entryPt == null || ray.exitPt == null)
+						return bestW;
+				}
+			}
+
+			if (leaf != null)
+				return leaf.stored.rayPhotonIntersect( ray ) ;// test ray photon intersection;
+			
+			// N = negative, P = positive, Z = along splitting plane
+			else if( inner != null)
+			{
+				// need this to account for N4 and P4, where we recompute s to sub into a or b in children
+				if( entryPt == null)
+					entryPt = a.copy();
+				if( exitPt == null)
+					exitPt = b.copy();
+				float originOffset = ray.origin.getAxisCoord( inner.axis );
+				aCoord = entryPt.getAxisCoord( inner.axis );
+				bCoord = exitPt.getAxisCoord( inner.axis ); //the exit point should remain the same...
+
+				if (aCoord > bCoord) //a must be smaller than b
+				{
+					(aCoord, bCoord) = (bCoord, aCoord); // tuples let me swap variables w/o temps
+					//Console.WriteLine( $" a is not smaller than b here for a = {entryPt} , b = {exitPt} " );
+				}
+				splitOffset = inner.axisVal; // - ray.origin.getAxisCoord(inner.axis);
+
+				if( aCoord <= splitOffset)
+				{
+					if (bCoord < splitOffset) //visit leftnode
+						bestW = travelTAB( ray, world, depth + 1, inner.rear, entryPt, exitPt ); //N1, N2, N3, P5, Z3
+					else
+					{
+						if (bCoord == splitOffset)
+							bestW = travelTAB( ray, world, depth + 1, inner.front, entryPt, exitPt ); //traverse arbitrary child node.. Z2
+						else
+						{ // visit left then right (lower -> upper)
+							//compute and store COMPLETE location of splitOffset....this means that the offset's full point is needed...replace a or b?
+							//recommends a stack since the newly computer s is used later
+							bestW = travelTAB( ray, world, depth + 1, inner.rear, entryPt, inner.partitionPt ); //tried
+
+							if ( intersectGood( bestW ) ) return bestW; //return here since we know first check will def be closer
+
+							bestW = travelTAB( ray, world, depth + 1, inner.front, inner.partitionPt, exitPt ); //N4.. front has s as entry, b same
+						}
+					}
+				}
+				else // aCoord > splitOffset
+				{
+					if (bCoord > splitOffset) //visit right
+						bestW = travelTAB( ray, world, depth + 1, inner.front, entryPt, exitPt ); // P1, P2, P3, N5, Z1
+					else
+					{ //visit right then left (upper -> lower)
+						//compute and store location of splitOffset....I believe this is already done(?)
+						bestW = travelTAB( ray, world, depth + 1,  inner.front, entryPt, inner.partitionPt );
+
+						if ( intersectGood( bestW ) ) return bestW; //return here since we know first check will def be closer
+
+						bestW = travelTAB( ray, world, depth + 1, inner.rear, inner.partitionPt, exitPt ); //P4
+					}
+				}
+			}
+
+			return bestW; //error
 		}
-	}
-}
+ */

@@ -123,8 +123,8 @@ namespace RayTracer_App.Voxels
 			ray.entryPt = ray.findPtAlong( minT ) ;
 			ray.exitPt = ray.findPtAlong( maxT );
 
-			if( ray.origin.distance( ray.entryPt) > ray.origin.distance( ray.exitPt) )
-				(ray.entryPt, ray.exitPt) = (ray.exitPt, ray.entryPt); // tuples let me swap variables w/o temps
+		//	if( ray.origin.distance( ray.entryPt) > ray.origin.distance( ray.exitPt) )
+		//		(ray.entryPt, ray.exitPt) = (ray.exitPt, ray.entryPt); // tuples let me swap variables w/o temps
 
 			return true;
 		}
