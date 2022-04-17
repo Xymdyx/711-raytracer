@@ -63,9 +63,28 @@ public class Vector
         // Equals handles the case of null on right side.
         return lhs.Equals( rhs );
     }
-
     public static bool operator !=( Vector lhs, Vector rhs ) => !(lhs == rhs);
 
+
+    // weird getters
+    public float getAxisComp( int axis )
+    {
+        if (axis == 0) return this.v1;
+        else if (axis == 1) return this.v2;
+        else if (axis == 2) return this.v3;
+
+        return float.NaN;
+    }
+
+    //weird setters.. 0 = x, 1 = 1, 2 = z
+    public void setAxisComp( int axis, float val )
+    {
+        if (axis == 0) this.v1 = val;
+        else if (axis == 1) this.v2 = val;
+        else if (axis == 2) this.v3 = val;
+
+        return;
+    }
 
     // self-operations
     public Vector scale(float k)

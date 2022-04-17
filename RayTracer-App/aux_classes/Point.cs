@@ -83,7 +83,6 @@ public class Point
         return ((p.x == this.x) && (p.y == this.y) && (p.z == this.z));
     }
 
-    //METHODS
 //METHODS
     public float getAxisCoord( int axis )
 	{
@@ -101,6 +100,25 @@ public class Point
         else if (axis == 2) this.z = val;
 
         return;
+    }
+
+    //getters for TAB traversal
+    public static int getNextAxis( int axis )
+	{
+        if (axis == 0) return 1; //x -> y
+        else if (axis == 1) return 2; //y -> z
+        else if (axis == 2) return 0; // z -> x
+
+        return -1; // invalid axis
+    }
+
+    public static int getPrevAxis( int axis )
+    {
+        if (axis == 0) return 2; //z before x
+        else if (axis == 1) return 0; //x before y
+        else if (axis == 2) return 1; // y before z
+
+        return -1; // invalid axis
     }
 
     //calculate distance

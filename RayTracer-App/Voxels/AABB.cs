@@ -17,9 +17,14 @@ namespace RayTracer_App.Voxels
 		//need to compute after camera transform
 
 		private int _axis;
+		private float _tNear; // dist where ray enters box
+		private float _tFar; //dist where ray exits box
 		private Point _center;
 		private Vector _extents;
 		public int axis { get => this._axis; set => this._axis = value; }
+		public float tNear { get => this._tNear; set => this._tNear = value; }
+		public float tFar { get => this._tFar; set => this._tFar = value; }
+
 		public Point center { get => this._center; set => this._center = value; }
 		public Vector extents { get => this._extents; set => this._extents = value; }
 
@@ -120,6 +125,8 @@ namespace RayTracer_App.Voxels
 			if (minT > maxT)
 				(minT, maxT) = (maxT, minT); // tuples let me swap variables w/o temps
 
+			this.tNear = minT;
+			this.tFar = maxT;
 			ray.entryPt = ray.findPtAlong( minT ) ;
 			ray.exitPt = ray.findPtAlong( maxT );
 

@@ -30,6 +30,15 @@ namespace RayTracer_App.Kd_tree
 
 		}
 
+		public float leafIntersect( LightRay ray, float minW, float maxW )
+		{
+			float bestW = this.stored.rayPhotonIntersect( ray );
+			if (bestW >= minW && bestW <= maxW)
+				return bestW;
+
+			return float.MaxValue; //not in bounds of the box;
+		}
+
 		public override string ToString()
 		{
 			String info = $"PM Kd-Leaf with {stored}: ";

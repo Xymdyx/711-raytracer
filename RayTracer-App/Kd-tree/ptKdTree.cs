@@ -32,9 +32,9 @@ namespace RayTracer_App.Kd_tree
 
 
 		// constructors
-		public ptKdTree() 
+		public ptKdTree()
 		{
-			this._root =  null;
+			this._root = null;
 			this._maxLeafObjs = 2;
 			this.kdSize = 0;
 			this.photonNum = 0;
@@ -92,104 +92,6 @@ namespace RayTracer_App.Kd_tree
 				return 2;
 
 			return -1;
-		}
-
-		/*get node... starts as //getNode( allObjects, sceneBoundingBox)
-		* if (Terminal (L, V)) return new leaf node (L)
-		* Find partition plane P
-		* Split V with P producing VFRONTand VREAR
-		* Partition elements of L producing LFRONTand LREAR
-		* return new interior node (P, getNode(LFRONT, VFRONT),
-		*  getNode(LREAR, VREAR))
-		*/
-		public float travelTAB( LightRay ray, World.World world, KdNode node = null, Point s = null, int flag = 0 )
-		{
-			// a[coord] = proper coord of entry pt
-			// b[coord] = proper coord of exit point
-			// s = splitting plane offset... from splitting-plane ray intersection
-			//ray must intersect whole scene bounding box prior
-			Point entryPt;
-			Point exitPt;
-			Point sPlanePt;
-			Vector sVec;
-			float aCoord;
-			float bCoord;
-			float splitOffset;
-
-			float bestW = float.MaxValue; //initialize to error per convention so far
-
-			if (node == null)
-				node = this.root;
-
-			ptKdLeafNode leaf = node as ptKdLeafNode;
-			ptKdInteriorNode inner = node as ptKdInteriorNode;
-
-			if (leaf != null)
-				return leaf.stored.rayPhotonIntersect( ray );// test ray photon intersection;
-
-			// N = negative, P = positive, Z = along splitting plane
-			else if (inner != null)
-			{
-				inner.selfAABB.intersect( ray ); // update entry and exit points
-
-				if (ray.entryPt == null || ray.exitPt == null)
-					return bestW;
-
-				entryPt = ray.entryPt.copy();
-				exitPt = ray.exitPt.copy();
-
-				// need this to account for N4 and P4, where we recompute s to sub into a or b in children
-				if (flag == 1) entryPt = s.copy();
-				else if (flag == 2) exitPt = s.copy();
-
-				aCoord = entryPt.getAxisCoord( inner.axis );
-				bCoord = exitPt.getAxisCoord( inner.axis ); //the exit point should remain the same...
-
-				//if (aCoord > bCoord) //a must be smaller than b
-				//{
-				//	(aCoord, bCoord) = (bCoord, aCoord); // tuples let me swap variables w/o temps
-				// //Console.WriteLine( $" a is not smaller than b here for a = {entryPt} , b = {exitPt} " );
-				//}
-
-				splitOffset = inner.axisVal; // - ray.origin.getAxisCoord(inner.axis);
-
-				if (aCoord <= splitOffset)
-				{
-					if (bCoord < splitOffset) //visit leftnode
-						bestW = travelTAB( ray, world, inner.rear ); //N1, N2, N3, P5, Z3
-					else
-					{
-						if (bCoord == splitOffset)
-							bestW = travelTAB( ray, world, inner.front ); //traverse arbitrary child node.. Z2
-						else
-						{ // visit left then right (lower -> upper)
-						  //compute and store COMPLETE location of splitOffset....this means that the offset's full point is needed...replace a or b?
-						  //recommends a stack since the newly computer s is used later
-							bestW = travelTAB( ray, world, inner.rear, inner.partitionPt, 2 ); //tried: 12 both, 21 both, 21 12, 12 21
-
-							if (intersectGood( bestW )) return bestW; //return here since we know first check will def be closer
-
-							bestW = travelTAB( ray, world, inner.front, inner.partitionPt, 1 ); //N4
-						}
-					}
-				}
-				else // aCoord > splitOffset
-				{
-					if (bCoord > splitOffset) //visit right
-						bestW = travelTAB( ray, world, inner.front ); // P1, P2, P3, N5, Z1
-					else
-					{ //visit right then left (upper -> lower)
-					  //compute and store location of splitOffset....I believe this is already done(?)
-						bestW = travelTAB( ray, world, inner.front, inner.partitionPt, 2 );
-
-						if (intersectGood( bestW )) return bestW; //return here since we know first check will def be closer
-
-						bestW = travelTAB( ray, world, inner.rear, inner.partitionPt, 1 ); //P4
-					}
-				}
-			}
-
-			return bestW; //error
 		}
 
 		/* FOR PM: The balancing http://graphics.ucsd.edu/~henrik/papers/rendering_caustics/rendering_caustics_gi96.pdf
@@ -253,17 +155,172 @@ element in the direction which represents the largest interval.*/
 					(currW != float.MaxValue); //the distance cannot be negative, must be positive(?)
 		}
 
+		// a given ray traverses the tree and gets the closest intersection
+		// There's a problem with this traversal method. Building the map works well
+		// this is one ray through the whole ass box... we compute initial pts
+		// https://slideplayer.com/slide/4991637/
+		//https://dcgi.fel.cvut.cz/home/havran/DISSVH/dissvh.pdf ... C psuedocode on p. 171. It's good reference for actual implementation and HARD to find
+		// if you do read through my code, I strongly recommend adding this to the kdSlides since I misunderstood this algorithm immensely.
+		public float travelTAB( LightRay ray, World.World world)
+		{
+			// a[coord] = proper coord of entry pt
+			// b[coord] = proper coord of exit point
+			// s = splitting plane offset... from splitting-plane ray intersection
+			//ray must intersect whole scene bounding box prior
+			Point entryPt;
+			Point exitPt;
+
+			//coords
+			float aCoord;
+			float bCoord;
+			float splitOffset;
+
+			//distances
+			float aDist;
+			float bDist;
+			float splitDist;
+
+			//kick off with root
+			KdNode currNode = this.root;
+
+			float bestW = float.MaxValue; //initialize to error per convention so far
+
+			ptKdInteriorNode inner = currNode as ptKdInteriorNode;
+
+			if (inner == null) return bestW; //error as there is no root
+	
+			inner.selfAABB.intersect( ray ); // update entry and exit points
+			if (ray.entryPt == null || ray.exitPt == null) // don't intersect scene box
+				return bestW;
+
+			entryPt = ray.entryPt.copy();
+			exitPt = ray.exitPt.copy();
+			aDist = inner.selfAABB.tNear;
+			bDist = inner.selfAABB.tFar;
+
+			// the stack
+			List<KdStackEl> stack = new List<KdStackEl>();
+
+			for (int idx = 0; idx < KdStackEl.MAX_STACK_SIZE; idx++)
+				stack.Add( new KdStackEl() );
+
+			KdNode farChild;
+
+			int entIdx = 0;
+			stack[entIdx].t = aDist; //set signed distance of entry pt
+
+			//external ray origin
+			if (aDist >= 0.0)
+				stack[entIdx].pb = entryPt;
+			else
+				stack[entIdx].pb = ray.origin;
+
+			int extIdx = 1; //stack exit ptr
+			stack[extIdx].t = bDist;
+			stack[extIdx].pb = exitPt; //ray.origin + ray.dir * b... aka findPtAlong
+			stack[extIdx].kdNode = null; //termination flag
+
+			// N = negative, P = positive, Z = along splitting plane
+			while (currNode != null) //while we point to somewhere
+			{
+				ptKdLeafNode leaf;
+				while ( ( leaf = currNode as ptKdLeafNode) == null)
+				{
+					ptKdInteriorNode currInner = currNode as ptKdInteriorNode;
+					// need this to account for N4 and P4, where we recompute s to sub into a or b in children. Need these axes
+					int currAxis = currInner.axis;
+					int nextAxis = Point.getNextAxis(currAxis);
+					int prevAxis = Point.getPrevAxis(currAxis);
+					splitOffset = currInner.axisVal; // - ray.origin.getAxisCoord(inner.axis);
+
+					aCoord = stack[entIdx].pb.getAxisCoord( currAxis );
+					bCoord = stack[extIdx].pb.getAxisCoord( currAxis ); //the exit point should remain the same...
+
+					//if (aCoord > bCoord) //a must be smaller than b
+					//{
+					//	(aCoord, bCoord) = (bCoord, aCoord); // tuples let me swap variables w/o temps
+					// //Console.WriteLine( $" a is not smaller than b here for a = {entryPt} , b = {exitPt} " );
+					//}
+
+					if (aCoord <= splitOffset)
+					{
+						if (bCoord < splitOffset) //visit leftnode
+						{
+							currNode = currInner.rear; //N1, N2, N3, P5, Z3, 						//Z2 visit arbitrary child node
+							continue;
+						}
+						if ( bCoord == splitOffset)
+						{
+							currNode = currInner.front;
+							continue;
+						}
+						 // visit left then right (lower -> upper)
+						//compute and store COMPLETE location of splitOffset....this means that the offset's full point is needed...replace a or b?
+						currNode = currInner.rear;
+						farChild = currInner.front;                     //N4
+					}
+					else // aCoord > splitOffset
+					{
+						if (bCoord > splitOffset)
+						{//visit right
+							currNode = currInner.front; // P1, P2, P3, N5, Z1
+							continue;
+						}
+						//visit right then left (upper -> lower)
+						//compute and store location of splitOffset....I believe this is already done(?)
+						currNode = currInner.front;
+						farChild = currInner.rear; //P4
+					}
+
+					//case P4 or N4... traverse both children
+					// recompute splitting offset
+					splitDist = (splitOffset - ray.origin.getAxisCoord( currAxis )) / ray.direction.getAxisComp( currAxis );
+
+					//setup new exit pt
+					int tmp = extIdx;
+					extIdx++;
+
+					// possibly skip current entry pt
+					if (extIdx == entIdx)
+						extIdx++;
+
+					//push values to stack
+					float nextCoord = ray.origin.getAxisCoord(nextAxis) + splitDist * ray.direction.getAxisComp( nextAxis );
+					float prevCoord = ray.origin.getAxisCoord( prevAxis ) + splitDist * ray.direction.getAxisComp( prevAxis );
+					stack[extIdx].prev = tmp;
+					stack[extIdx].t = splitDist;
+					stack[extIdx].kdNode = farChild;
+					stack[extIdx].pb.setAxisCoord(currAxis, splitOffset);
+					stack[extIdx].pb.setAxisCoord( nextAxis, nextCoord );
+					stack[extIdx].pb.setAxisCoord( prevAxis, prevCoord );
+				} //end leaf while
+
+				// found leaf
+				bestW = leaf.leafIntersect( ray, stack[entIdx].t, stack[extIdx].t );// test ray photon intersection;
+				if (intersectGood( bestW ))
+				{   //found it, stop
+					Console.WriteLine( " Exit traversal loop with intersection" );
+					return bestW;
+				}
+				bestW = float.MaxValue; //just in case
+
+				//pop from stack
+				entIdx = extIdx; //signed distance intervals are adjacent
+				currNode = stack[extIdx].kdNode; //retrieve next node, possible that ray traversal stops
+
+				extIdx = stack[entIdx].prev;
+			} // end outer search whi;e
+
+			Console.WriteLine( "Exited tab loop with no intersection" );
+			return bestW; //found no intersection
+		}
+
+
 		//private Point recomputeS( int axis, float sCoord, LightRay ray )
 		//{
 		//	Point newS = new Point( 0, 0, 0 );
 		//	newS.setAxisCoord( axis, sCoord );
 		//}
-
-		// a given ray traverses the tree and gets the closest intersection
-		// There's a problem with this traversal method. Building the map works well
-		// this is one ray through the whole ass box... we compute initial pts
-		// https://slideplayer.com/slide/4991637/
-
 
 		public override string ToString()
 		{
