@@ -35,6 +35,9 @@ namespace RayTracer_App.Kd_tree
 			float bestW = this.stored.rayPhotonIntersect( ray );
 			if (bestW >= minW && bestW <= maxW)
 				return bestW;
+			else if( bestW != float.MaxValue) //debug
+				Console.WriteLine( $"Rejected photon with distance {bestW} betw {minW} & {maxW}" );
+
 
 			return float.MaxValue; //not in bounds of the box;
 		}

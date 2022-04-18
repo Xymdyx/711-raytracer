@@ -30,7 +30,6 @@ namespace RayTracer_App.Kd_tree
 		public int kdSize { get => this._kdSize; set => this._kdSize = value; }
 		public int photonNum { get => this._photonNum; set => this._photonNum = value; }
 
-
 		// constructors
 		public ptKdTree()
 		{
@@ -147,7 +146,7 @@ element in the direction which represents the largest interval.*/
 
 			this._kdSize += 2;
 			return new ptKdInteriorNode( axis, partitionVal, vox,
-				balance(frontPts, depth + 1, mapper, axis, sampleList),
+				balance( frontPts, depth + 1, mapper, axis, sampleList),
 				balance( rearPts, depth + 1, mapper, axis, sampleList ), medianPt ); //swapping rear and front pts didn't seem to work
 		}
 		
@@ -165,6 +164,7 @@ element in the direction which represents the largest interval.*/
 		// https://slideplayer.com/slide/4991637/
 		//https://dcgi.fel.cvut.cz/home/havran/DISSVH/dissvh.pdf ... C psuedocode on p. 171. It's good reference for actual implementation and HARD to find
 		// if you do read through my code, I strongly recommend adding this to the kdSlides since I misunderstood this algorithm immensely.
+		//https://github.com/dragonbook/mitsuba-ctcloth/blob/master/include/mitsuba/render/sahkdtree2.h
 		public float travelTAB( LightRay ray, World.World world)
 		{
 			// a[coord] = proper coord of entry pt
@@ -173,7 +173,9 @@ element in the direction which represents the largest interval.*/
 			//ray must intersect whole scene bounding box prior
 			Point entryPt;
 			Point exitPt;
-
+			// debug vars
+			int reached = 0;
+			int hit = 0;
 			//coords
 			float aCoord;
 			float bCoord;
@@ -223,59 +225,61 @@ element in the direction which represents the largest interval.*/
 			stack[extIdx].t = bDist;
 			stack[extIdx].pb = exitPt; //ray.origin + ray.dir * b... aka findPtAlong
 			stack[extIdx].kdNode = null; //termination flag
-
+			int depth = 0;
 			// N = negative, P = positive, Z = along splitting plane
 			while (currNode != null) //while we point to somewhere
 			{
 				ptKdLeafNode leaf;
-				while ( ( leaf = currNode as ptKdLeafNode) == null)
+				while ((leaf = currNode as ptKdLeafNode) == null)
 				{
+					depth++;
 					ptKdInteriorNode currInner = currNode as ptKdInteriorNode;
 					// need this to account for N4 and P4, where we recompute s to sub into a or b in children. Need these axes
 					int currAxis = currInner.axis;
-					int nextAxis = Point.getNextAxis(currAxis);
-					int prevAxis = Point.getPrevAxis(currAxis);
+					int nextAxis = Point.getNextAxis( currAxis );
+					int prevAxis = Point.getPrevAxis( currAxis );
 					splitOffset = currInner.axisVal; // - ray.origin.getAxisCoord(inner.axis);
 
 					aCoord = stack[entIdx].pb.getAxisCoord( currAxis );
 					bCoord = stack[extIdx].pb.getAxisCoord( currAxis ); //the exit point should remain the same...
 
-					if (aDist > bDist) Console.Write( " Larger a coord" );
+					//distance not an issue, it's the coords
 
-					//if (aCoord > bCoord) //a must be smaller than b
+					//if (aCoord > bCoord)
 					//{
-					//	(aCoord, bCoord) = (bCoord, aCoord); // tuples let me swap variables w/o temps
-					// //Console.WriteLine( $" a is not smaller than b here for a = {entryPt} , b = {exitPt} " );
+					//	//(aCoord, bCoord) = (bCoord, aCoord);
+					//	//Console.WriteLine( "Larger a coord " ); //a must be smaller than b
+					//	//Console.WriteLine( $" a is not smaller than b here for a = {entryPt} , b = {exitPt} " );
 					//}
 
 					if (aCoord <= splitOffset)
 					{
-						if (bCoord < splitOffset) //visit leftnode
+						if (bCoord <= splitOffset) //visit leftnode
 						{
-							currNode = currInner.rear; //N1, N2, N3, P5, Z3, 						//Z2 visit arbitrary child node
+							currNode = currInner.rear; //N1, N2, N3, P5, Z3, Z2 						//Z2 visit arbitrary child node
 							continue;
 						}
-						if ( bCoord == splitOffset)
+						if (aCoord == splitOffset) //typo in thesis orginally "bCoord == splitOffset" Z1
 						{
 							currNode = currInner.front;
 							continue;
 						}
-						 // visit left then right (lower -> upper)
+						// visit left then right (lower -> upper)
 						//compute and store COMPLETE location of splitOffset....this means that the offset's full point is needed...replace a or b?
 						currNode = currInner.rear;
-						farChild = currInner.front;                     //N4
+						farChild = currInner.front; //getRight                //N4
 					}
 					else // aCoord > splitOffset
 					{
 						if (bCoord > splitOffset)
 						{//visit right
-							currNode = currInner.front; // P1, P2, P3, N5, Z1
+							currNode = currInner.front; // P1, P2, P3, N5
 							continue;
 						}
 						//visit right then left (upper -> lower)
 						//compute and store location of splitOffset....I believe this is already done(?)
-						currNode = currInner.front;
-						farChild = currInner.rear; //P4
+						farChild = currInner.rear; //getLeft //P4
+						currNode = currInner.front; //getRight
 					}
 
 					//case P4 or N4... traverse both children
@@ -291,23 +295,25 @@ element in the direction which represents the largest interval.*/
 						extIdx++;
 
 					//push values to stack
-					float nextCoord = ray.origin.getAxisCoord(nextAxis) + splitDist * ray.direction.getAxisComp( nextAxis );
+					float nextCoord = ray.origin.getAxisCoord( nextAxis ) + splitDist * ray.direction.getAxisComp( nextAxis );
 					float prevCoord = ray.origin.getAxisCoord( prevAxis ) + splitDist * ray.direction.getAxisComp( prevAxis );
 					stack[extIdx].prev = tmp;
 					stack[extIdx].t = splitDist;
 					stack[extIdx].kdNode = farChild;
-					stack[extIdx].pb.setAxisCoord(currAxis, splitOffset);
+					stack[extIdx].pb.setAxisCoord( currAxis, splitOffset );
 					stack[extIdx].pb.setAxisCoord( nextAxis, nextCoord );
 					stack[extIdx].pb.setAxisCoord( prevAxis, prevCoord );
 				} //end leaf while
 
 				// found leaf
-				bestW = leaf.leafIntersect( ray, stack[entIdx].t, stack[extIdx].t );// test ray photon intersection;
+				bestW = leaf.leafIntersect( ray, aDist, bDist );// test ray photon intersection;
+				reached++;
 				if (intersectGood( bestW ))
 				{   //found it, stop
-					Console.WriteLine( " Exit traversal loop with intersection" );
+					Console.WriteLine( $"Exit traversal loop with intersection. Terminated after {depth} iterations. Reached {reached} leaves" );
 					return bestW;
 				}
+								
 				bestW = float.MaxValue; //just in case
 
 				//pop from stack
@@ -317,7 +323,7 @@ element in the direction which represents the largest interval.*/
 				extIdx = stack[entIdx].prev;
 			} // end outer search whi;e
 
-			//Console.WriteLine( "Exited tab loop with no intersection" );
+			//Console.WriteLine( $"Exited tab loop with no intersection. Terminated after {depth} iterations" );
 			return bestW; //found no intersection
 		}
 

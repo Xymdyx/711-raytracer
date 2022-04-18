@@ -394,7 +394,7 @@ namespace RayTracer_App.World
 			this.photonMapper = new PhotonRNG();
 
 			foreach (LightSource l in this.lights)
-				l.emitPhotonsFromDPLS( this, 5000 );
+				l.emitPhotonsFromDPLS( this, 1000 );
 
 			//construct photon maps from lists
 			photonMapper.makePMs();
@@ -465,14 +465,15 @@ namespace RayTracer_App.World
 				Vector travelDir = Vector.ZERO_VEC;
 				bool causticsMark = fromSpec;
 				bool transMark = transmitting;
+				Point pOrigin = offsetIntersect( intersection, travelDir, bestObj.normal );
 				switch (rrOutcome)
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
 						travelDir = getRightDiffuse( bestObjLightModel, u1, u2 );
-						this.photonMapper.addGlobal( intersection, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
+						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
 						if (causticsMark)
 						{
-							this.photonMapper.addCaustic( intersection, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
+							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
 							causticsMark = false; //do we add the photon to the caustic map?
 						}
 						break;
@@ -486,9 +487,9 @@ namespace RayTracer_App.World
 						causticsMark = true;
 						break;
 					case PhotonRNG.RR_OUTCOMES.ABSORB:
-						this.photonMapper.addGlobal( intersection, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
+						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
 						if (causticsMark)
-							this.photonMapper.addCaustic( intersection, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
+							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
 						break;
 					default:
 						break;
@@ -496,7 +497,6 @@ namespace RayTracer_App.World
 
 				if (!travelDir.isZeroVector())
 				{ //we survived
-					Point pOrigin = offsetIntersect( intersection, travelDir, bestObj.normal );
 					LightRay pRay = new LightRay( travelDir, pOrigin);
 					tracePhoton( pRay, depth + 1, causticsMark, transMark );
 				}

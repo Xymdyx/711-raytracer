@@ -149,8 +149,6 @@ namespace RayTracer_App.Camera
 			// this converts everything to camera coords
 			makeCamMat();
 			world.transformAll( this.camTransformMat );
-			bool photonOverlay = false;
-			bool justPhotons = true;
 
 			if (makeKd)
 			{
@@ -183,11 +181,16 @@ namespace RayTracer_App.Camera
 
 			// originally had (-fpHeight/2 + pixHeight/2.. was positive y upward...
 			//focalLen + eyePoint.z if I want to move relative to my z
-			Point fpPoint = new Point ( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen); //gldrawPixels starts drawing lower-left corner at raster positions
+			Point fpPoint = new Point ( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen + this.eyePoint.z); //gldrawPixels starts drawing lower-left corner at raster positions
+			//Point fpPoint = new Point( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen); //gldrawPixels starts drawing lower-left corner at raster positions
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;
 			byte[] hitColorArr = null;
+
+			//modes
 			bool isSuperSampling = false;
+			bool photonOverlay = false;
+			bool justPhotons = true;
 
 			int hits = 0;
 			for ( int y = 0; y < imageHeight; y++) // positive x ->, positive y V

@@ -23,9 +23,9 @@ public class RayTracerMain
 	public static Camera setupCornell( World world, bool includeBunny = false )
 	{
 		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
-		float cbXLim = 5f;
-		float cbYLim = 4f;
-		float cbZLim = 10f;
+		float cbXLim = 3f; //5
+		float cbYLim = 3f; //4
+		float cbZLim = 3f; //10
 
 		//floor border param. 2 triangles.. draw along xz plane as in Whitted.. only difference between top and bottom is the y value
 		Point botTL = new Point( -cbXLim, cbYLim, cbZLim );
@@ -100,23 +100,26 @@ public class RayTracerMain
 		Polygon frontTri2 = new Polygon( frontVerts2, Color.cbGrey );
 		// finally make spheres
 		//left sphere params
-		float sphereRad = 1.25f;
+		float sphereRad = 1f;
 
-		float s1Depth = cbZLim/4f; ; //+z into the scene... I am IN LHS
-		float s1Height = .75f; //1.75f.. 45 is good for lots of sky
+		float s1X = cbXLim - sphereRad;
+		float s1Depth = cbZLim - sphereRad; //+z into the scene... I am IN LHS
+		float s1Height = cbYLim - sphereRad; //1.75f.. 45 is good for lots of sky
 		float s1Trans = 0f;
 		float s1Refl = 1- s1Trans;
 		float s1RefIdx = SceneObject.AIR_REF_INDEX; // ni > nt for TIR
 
 		//right sphere param
-		float s2Depth = s1Depth - 1.5f; //1.85.. like Whitted... 2.75 for far apart
-		float s2Refl = 0f;
+		float s2X = -cbXLim + sphereRad;
+		float s2Depth = s1Depth; //1.85.. like Whitted... 2.75 for far apart
+		float s2Height = s1Height;
+		float s2Refl = 1f;
 		float s2Trans = 0f;
 		float s2RefIdx = SceneObject.AIR_REF_INDEX;
 
-		Sphere sphere1 = new Sphere( new Point( 0, s1Height, s1Depth ), sphereRad, Color.cbChrome, s1Refl, s1Trans, s1RefIdx );
-		Sphere sphere2 = new Sphere( new Point( 0, 0f, s2Depth ), sphereRad, Color.cbChrome, s2Refl, s2Trans, s2RefIdx );
-		sphere2.translate( 1.75f, s1Height, 0 ); //doing it here gives same results as after cam transform ...
+		Sphere sphere1 = new Sphere( new Point( s1X, s1Height, s1Depth ), sphereRad, Color.cbChrome, s1Refl, s1Trans, s1RefIdx );
+		Sphere sphere2 = new Sphere( new Point( s2X, s2Height, s2Depth ), sphereRad, Color.cbChrome, s2Refl, s2Trans, s2RefIdx );
+		//sphere2.translate( 1.75f, s1Height, 0 ); //doing it here gives same results as after cam transform ...
 
 		if (includeBunny)
 		{
@@ -130,7 +133,7 @@ public class RayTracerMain
 		}
 
 		//place mainLight on top wall near its center
-		Point ceilLightPos = new Point( 0f, -cbYLim + .5f, s1Depth ); // 0f, -cbYLim + .5f, 0f 
+		Point ceilLightPos = new Point( 0f, -cbYLim + .5f, s1Depth - 1f ); // 0f, -cbYLim + .5f, 0f 
 		Color ceilLightColor = Color.whiteSpecular;
 		LightSource ceilLight = new LightSource( ceilLightPos, ceilLightColor );
 
@@ -149,11 +152,11 @@ public class RayTracerMain
 		world.addObject( frontTri1 );
 		world.addObject( frontTri2 );
 		world.addObject( sphere1 );
-		//world.addObject( sphere2 );
+		world.addObject( sphere2 );
 
 		Vector up = new Vector( 0f, 1f, 0f );
-		Point eyePos = new Point( 0f, -.5f, -2.5f ); //0f, -1f, -5f
-		Point lookAt = new Point( .5f, .5f, s1Depth + 1f );
+		Point eyePos = new Point( 0f, -cbYLim + .5f, s1Depth - 1f ); //0f, -5f, -2.5f
+		Point lookAt = new Point( 0f, -.5f, cbZLim ); //.5f, .5f, s1Depth + 1f
 		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
 
 		return cam;
@@ -244,7 +247,7 @@ public class RayTracerMain
 	//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
 	public static void doRayTracing()
 	{
-		float focalLen = -1.25f; //distance from camera to film plane center along N... //1.25
+		float focalLen = 1f; //distance from camera to film plane center along N... //1.25, -1.25
 
 		World world = new World();
 
