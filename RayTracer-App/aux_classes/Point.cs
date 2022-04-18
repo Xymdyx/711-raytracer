@@ -282,7 +282,7 @@ public class Point
 
         if ((dp == rayMagn) || (ptRay == ray.direction)) // point is in path of ray
         {
-            Console.WriteLine( "Photon along path of ray! Returning distance." );
+            //Console.WriteLine( "Photon along path of ray! Returning distance." );
             return distance( ray.origin ); //sqrt is expensive...
         }
 
@@ -302,7 +302,7 @@ public class Point
 
         if ((dp == rayMagn) || (ptRay == ray.direction)) // point is in path of ray
         {
-            Console.WriteLine( "Photon along path of ray!" );
+            //Console.WriteLine( "Photon along path of ray!" );
             return true;
         }
 

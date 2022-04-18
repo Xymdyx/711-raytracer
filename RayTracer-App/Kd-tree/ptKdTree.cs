@@ -165,8 +165,9 @@ element in the direction which represents the largest interval.*/
 		//https://dcgi.fel.cvut.cz/home/havran/DISSVH/dissvh.pdf ... C psuedocode on p. 171. It's good reference for actual implementation and HARD to find
 		// if you do read through my code, I strongly recommend adding this to the kdSlides since I misunderstood this algorithm immensely.
 		//https://github.com/dragonbook/mitsuba-ctcloth/blob/master/include/mitsuba/render/sahkdtree2.h
-		public float travelTAB( LightRay ray, World.World world)
+		public float travelTAB( LightRay ray, World.World world, bool debug = false)
 		{
+//WORKS...photon shooting is jank
 			// a[coord] = proper coord of entry pt
 			// b[coord] = proper coord of exit point
 			// s = splitting plane offset... from splitting-plane ray intersection
@@ -245,13 +246,6 @@ element in the direction which represents the largest interval.*/
 
 					//distance not an issue, it's the coords
 
-					//if (aCoord > bCoord)
-					//{
-					//	//(aCoord, bCoord) = (bCoord, aCoord);
-					//	//Console.WriteLine( "Larger a coord " ); //a must be smaller than b
-					//	//Console.WriteLine( $" a is not smaller than b here for a = {entryPt} , b = {exitPt} " );
-					//}
-
 					if (aCoord <= splitOffset)
 					{
 						if (bCoord <= splitOffset) //visit leftnode
@@ -306,11 +300,12 @@ element in the direction which represents the largest interval.*/
 				} //end leaf while
 
 				// found leaf
-				bestW = leaf.leafIntersect( ray, aDist, bDist );// test ray photon intersection;
+				bestW = leaf.leafIntersect( ray, aDist, bDist, false );// test ray photon intersection;
 				reached++;
 				if (intersectGood( bestW ))
 				{   //found it, stop
-					Console.WriteLine( $"Exit traversal loop with intersection. Terminated after {depth} iterations. Reached {reached} leaves" );
+					if(debug)
+						Console.WriteLine( $"Exit traversal loop with intersection. Terminated after {depth} iterations. Reached {reached} leaves" );
 					return bestW;
 				}
 								

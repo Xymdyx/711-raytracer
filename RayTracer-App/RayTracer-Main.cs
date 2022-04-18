@@ -133,7 +133,7 @@ public class RayTracerMain
 		}
 
 		//place mainLight on top wall near its center
-		Point ceilLightPos = new Point( 0f, -cbYLim + .5f, s1Depth - 1f ); // 0f, -cbYLim + .5f, 0f 
+		Point ceilLightPos = new Point( 0f, 0f, s1Depth - 1f ); // 0f, -cbYLim + .5f, 0f 
 		Color ceilLightColor = Color.whiteSpecular;
 		LightSource ceilLight = new LightSource( ceilLightPos, ceilLightColor );
 
@@ -155,8 +155,8 @@ public class RayTracerMain
 		world.addObject( sphere2 );
 
 		Vector up = new Vector( 0f, 1f, 0f );
-		Point eyePos = new Point( 0f, -cbYLim + .5f, s1Depth - 1f ); //0f, -5f, -2.5f
-		Point lookAt = new Point( 0f, -.5f, cbZLim ); //.5f, .5f, s1Depth + 1f
+		Point eyePos = new Point( 0f, .5f, -2.5f ); //0f, .5f, -2.5f0f, -
+		Point lookAt = new Point( 0f, -1.5f, cbZLim ); //0f, -1f, cbZLim
 		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
 
 		return cam;

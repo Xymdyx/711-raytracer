@@ -30,14 +30,13 @@ namespace RayTracer_App.Kd_tree
 
 		}
 
-		public float leafIntersect( LightRay ray, float minW, float maxW )
+		public float leafIntersect( LightRay ray, float minW, float maxW, bool debug = false )
 		{
 			float bestW = this.stored.rayPhotonIntersect( ray );
 			if (bestW >= minW && bestW <= maxW)
 				return bestW;
-			else if( bestW != float.MaxValue) //debug
+			else if( bestW != float.MaxValue && debug) //debug
 				Console.WriteLine( $"Rejected photon with distance {bestW} betw {minW} & {maxW}" );
-
 
 			return float.MaxValue; //not in bounds of the box;
 		}

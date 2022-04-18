@@ -394,7 +394,7 @@ namespace RayTracer_App.World
 			this.photonMapper = new PhotonRNG();
 
 			foreach (LightSource l in this.lights)
-				l.emitPhotonsFromDPLS( this, 1000 );
+				l.emitPhotonsFromDPLS( this, 100 );
 
 			//construct photon maps from lists
 			photonMapper.makePMs();

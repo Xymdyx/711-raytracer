@@ -189,8 +189,8 @@ namespace RayTracer_App.Camera
 
 			//modes
 			bool isSuperSampling = false;
-			bool photonOverlay = false;
-			bool justPhotons = true;
+			bool photonOverlay = true;
+			bool justPhotons = false;
 
 			int hits = 0;
 			for ( int y = 0; y < imageHeight; y++) // positive x ->, positive y V
