@@ -30,7 +30,7 @@ namespace RayTracer_App.Kd_tree
 
 		}
 
-		public float leafIntersect( LightRay ray, float minW, float maxW, bool debug = false )
+		public float leafIntersect( LightRay ray, float minW = float.MinValue, float maxW = float.MaxValue, bool debug = false )
 		{
 			float bestW = this.stored.rayPhotonIntersect( ray );
 			if (bestW >= minW && bestW <= maxW)
@@ -41,12 +41,14 @@ namespace RayTracer_App.Kd_tree
 			return float.MaxValue; //not in bounds of the box;
 		}
 
+		public void debugPrint()
+		{
+			Console.WriteLine($"PM Kd-Leaf with {stored} on prevAxis {stored.kdFlag} ");
+		}
+
 		public override string ToString()
 		{
-			String info = $"PM Kd-Leaf with {stored}: ";
-			int objNum = 1;
-
-
+			String info = $"PM Kd-Leaf with {stored} ";
 			return info;
 		}
 	}

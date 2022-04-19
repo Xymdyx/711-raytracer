@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Diagnostics;
+using RayTracer_App.Photon_Mapping;
 using RayTracer_App.World;
 
 //MATRIX 4D -> MATRIX4X4
@@ -189,7 +190,7 @@ namespace RayTracer_App.Camera
 
 			//modes
 			bool isSuperSampling = false;
-			bool photonOverlay = true;
+			bool photonOverlay = false;
 			bool justPhotons = false;
 
 			int hits = 0;
@@ -234,6 +235,15 @@ namespace RayTracer_App.Camera
 			renderTimer.Stop();
 			Console.WriteLine( "Rendering the scene took " + (renderTimer.ElapsedMilliseconds) + " milliseconds" );
 			Console.WriteLine( $" There are {hits} non-background colors/ {imageHeight * imageWidth} colors total" );
+
+			//pm debug
+			world.photonMapper.rrStats();
+			world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
+			Console.WriteLine( "Global PM: " + world.photonMapper.globalPM.pmPrint() );
+			world.photonMapper.globalPM.pmHeapPrint(false, true);
+
+			//world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
+
 			if (photonOverlay || justPhotons)
 				Console.WriteLine( $"Lit caustics: {world.causticHits}\n Total hits {world.photoHits}" );
 

@@ -8,6 +8,9 @@ using System.Collections.Generic;
 using RayTracer_App.aux_classes;
 //DOUBLE -> FLOAT
 
+//Booksmarks... Ctrl + K, Ctrl K to toogle...
+// Ctrl + K + N for next..
+// Ctrl + N + K for previous
 //https://matrix.reshish.com/multiplication.php 
 //https://antongerdelan.net/colour/
 public class RayTracerMain
@@ -23,9 +26,9 @@ public class RayTracerMain
 	public static Camera setupCornell( World world, bool includeBunny = false )
 	{
 		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
-		float cbXLim = 3f; //5
-		float cbYLim = 3f; //4
-		float cbZLim = 3f; //10
+		float cbXLim = 1.5f; //3
+		float cbYLim = 1.5f; //3
+		float cbZLim = 1.5f; //3
 
 		//floor border param. 2 triangles.. draw along xz plane as in Whitted.. only difference between top and bottom is the y value
 		Point botTL = new Point( -cbXLim, cbYLim, cbZLim );
@@ -100,7 +103,7 @@ public class RayTracerMain
 		Polygon frontTri2 = new Polygon( frontVerts2, Color.cbGrey );
 		// finally make spheres
 		//left sphere params
-		float sphereRad = 1f;
+		float sphereRad = .7f; //1f
 
 		float s1X = cbXLim - sphereRad;
 		float s1Depth = cbZLim - sphereRad; //+z into the scene... I am IN LHS
@@ -114,8 +117,8 @@ public class RayTracerMain
 		float s2Depth = s1Depth; //1.85.. like Whitted... 2.75 for far apart
 		float s2Height = s1Height;
 		float s2Refl = 1f;
-		float s2Trans = 0f;
-		float s2RefIdx = SceneObject.AIR_REF_INDEX;
+		float s2Trans = 1 - s2Refl;
+		float s2RefIdx = .955f;
 
 		Sphere sphere1 = new Sphere( new Point( s1X, s1Height, s1Depth ), sphereRad, Color.cbChrome, s1Refl, s1Trans, s1RefIdx );
 		Sphere sphere2 = new Sphere( new Point( s2X, s2Height, s2Depth ), sphereRad, Color.cbChrome, s2Refl, s2Trans, s2RefIdx );
@@ -133,7 +136,7 @@ public class RayTracerMain
 		}
 
 		//place mainLight on top wall near its center
-		Point ceilLightPos = new Point( 0f, 0f, s1Depth - 1f ); // 0f, -cbYLim + .5f, 0f 
+		Point ceilLightPos = new Point( 0f, 0f, s1Depth - 1f ); // 0f, -cbYLim + .5f, 0f ... 0f, -2f, s1Depth - 1f
 		Color ceilLightColor = Color.whiteSpecular;
 		LightSource ceilLight = new LightSource( ceilLightPos, ceilLightColor );
 
@@ -155,8 +158,8 @@ public class RayTracerMain
 		world.addObject( sphere2 );
 
 		Vector up = new Vector( 0f, 1f, 0f );
-		Point eyePos = new Point( 0f, .5f, -2.5f ); //0f, .5f, -2.5f0f, -
-		Point lookAt = new Point( 0f, -1.5f, cbZLim ); //0f, -1f, cbZLim
+		Point eyePos = new Point( 0f, .75f/2f, -2.75f/2f ); //0f, .5f, -2.75f... facing rear // facing frontBound 0f, .5f, -.75f
+		Point lookAt = new Point( 0f, -1.5f/2f, cbZLim ); //0f, -1.5f, cbZLim...-cbZlim for rear
 		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
 
 		return cam;
@@ -247,7 +250,7 @@ public class RayTracerMain
 	//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
 	public static void doRayTracing()
 	{
-		float focalLen = 1f; //distance from camera to film plane center along N... //1.25, -1.25
+		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25, -1.25
 
 		World world = new World();
 
@@ -256,12 +259,12 @@ public class RayTracerMain
 		imageHeight = imageWidth;
 
 		/* PHOTON MAPPING TODO LIST (page 47 onwards in Jensen's 2008 notes) :
-		* make photon and pointKdTree classes (PM maps are kdTrees)
+		* * make photon and pointKdTree classes (PM maps are kdTrees)
 		* * make Russian roulette
-		* figure out how to shoot photons ( the points where photons land will be sent into the kdTree as splitting criterion) 
+		* * figure out how to shoot photons ( the points where photons land will be sent into the kdTree as splitting criterion)  //buggy right now
  		* * setup Cornell box scene with Whitted method
-		* figure out how to balance photons in kdTree as we go
-		* photon tracing
+		* * figure out how to balance photons in kdTree as we go
+		* * photon tracing
 		* collect the k nearest photons and make calculation for global and caustic PMs
 		* What is the tone reproduction formula?
 		* figure out caustics and indirect illumination

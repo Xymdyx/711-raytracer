@@ -393,8 +393,8 @@ namespace RayTracer_App.World
 		{
 			this.photonMapper = new PhotonRNG();
 
-			foreach (LightSource l in this.lights)
-				l.emitPhotonsFromDPLS( this, 100 );
+			foreach (LightSource l in this.lights) //187 visible using BFS photon list check on 500. Only lose about 30 with kd tree visuals, which makes sense
+				l.emitPhotonsFromDPLS( this, 10000 ); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
 
 			//construct photon maps from lists
 			photonMapper.makePMs();
@@ -425,6 +425,7 @@ namespace RayTracer_App.World
 		// we don't focus our shoots like we do for the caustic pass		
 		public void tracePhoton( LightRay photonRay, int depth, bool fromSpec = false, bool transmitting = false )
 		{
+			//TODO SHOOT BETTER
 			float bestW = float.MaxValue;
 			Color flux = null;
 			Point intersection = null;
@@ -460,6 +461,7 @@ namespace RayTracer_App.World
 				if (bestObj as Sphere != null)
 					Console.WriteLine( "Hit sphere" );
 
+				flux =bestObjLightModel.illuminate( intersection, -photonRay.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
 				float u1 = this.photonMapper.random01();
 				float u2 = this.photonMapper.random01();
 				Vector travelDir = Vector.ZERO_VEC;
@@ -469,11 +471,11 @@ namespace RayTracer_App.World
 				switch (rrOutcome)
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
-						travelDir = getRightDiffuse( bestObjLightModel, u1, u2 );
-						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
+						travelDir = getRightDiffuse( bestObjLightModel, u1, u2 ); //photon's flux needs to be multiplied by psurface color TODO
+						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, flux, 1.0f );
 						if (causticsMark)
 						{
-							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
+							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, flux, 1.0f );
 							causticsMark = false; //do we add the photon to the caustic map?
 						}
 						break;
@@ -487,15 +489,15 @@ namespace RayTracer_App.World
 						causticsMark = true;
 						break;
 					case PhotonRNG.RR_OUTCOMES.ABSORB:
-						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
+						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, flux, 1.0f );
 						if (causticsMark)
-							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, 1.0f );
+							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, flux, 1.0f );
 						break;
 					default:
 						break;
 				}
 
-				if (!travelDir.isZeroVector())
+				if (!travelDir.isZeroVector() && depth <= PhotonRNG.MAX_SHOOT_DEPTH)
 				{ //we survived
 					LightRay pRay = new LightRay( travelDir, pOrigin);
 					tracePhoton( pRay, depth + 1, causticsMark, transMark );
@@ -506,7 +508,7 @@ namespace RayTracer_App.World
 			return;
 		}
 
-		//helper to call PhotonMapper to find photon intersections
+		//helper to call PhotonMapper to find photon intersections. I don't think the TAB algo visits all of them
 		public Color overlayPhotons( LightRay ray, bool kdMode = false)
 		{
 			PhotonRNG.MAP_TYPE mapVal = PhotonRNG.MAP_TYPE.NONE;
@@ -526,6 +528,23 @@ namespace RayTracer_App.World
 			if (mapVal == PhotonRNG.MAP_TYPE.CAUSTIC) causticHits++;
 
 			return photonMapper.getPColorbyType( mapVal ); // nothing if black
+		}
+
+		//do pass two here, where we render and gather the N nearest photons in a sphere of radius r
+		// to compute indirect illumination and solve the rendering equation's 4 integrals
+		public void beginpmPassTwo()
+		{
+		/*collect the k nearest photons and make calculation for global and caustic PMs
+		* What is the tone reproduction formula ?
+		* Direct illumination calculated using MC Raytracing
+		* Caustics estimated using caustic map, never MC raytracing
+		* indirect illumination comes from photon maps
+		* figure out caustics and indirect illumination
+		* implement a cone filter if ambitious */
+
+			//as far as I can tell the photons are around, even if my visualization algo doesn't pick up all of them
+			//photonRNG.collectKNeighbors( int kPhotons );
+			return;
 		}
 	}
 }

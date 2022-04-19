@@ -20,34 +20,50 @@ namespace RayTracer_App.Kd_tree
 
 		private int _maxLeafObjs; //will be removed for points
 
+		private int _kdLevels; // tells how many levels we have
+
 		private int _kdSize;
 
 		private int _photonNum;
 
+		private List<KdNode> _pmHeap; //for locating photons helper... some nodes won't have photons...
+
 		private static int MAX_KD_DEPTH = 5 * 4;
 		public KdNode root { get => this._root; set => this._root = value; }
 		public int maxLeafObjs { get => this._maxLeafObjs; set => this._maxLeafObjs = value; }
+		public int kdLevels { get => this._kdLevels; set => this._kdLevels = value; }
 		public int kdSize { get => this._kdSize; set => this._kdSize = value; }
 		public int photonNum { get => this._photonNum; set => this._photonNum = value; }
+		public List<KdNode> pmHeap { get => this._pmHeap;}
 
 		// constructors
-		public ptKdTree()
+		public ptKdTree( )
 		{
 			this._root = null;
+			this._pmHeap = new List<KdNode>();
 			this._maxLeafObjs = 2;
+			this.kdLevels = 0;
 			this.kdSize = 0;
 			this.photonNum = 0;
 		}
 
-		public ptKdTree( KdNode root )
+		public ptKdTree( KdNode root, int pSize )
 		{
 			this._root = root;
+			this._pmHeap = new List<KdNode>();
 			this._maxLeafObjs = 2;
+			this.kdLevels = 1;
 			this.kdSize = 1;
 			this.photonNum = 0;
 		}
 
 		//methods
+		//called before building photon maps so we can fill up the heap as we go.
+		public void fillHeap( int total )
+		{
+			for (int idx = 0; idx < total; idx++)
+				this.pmHeap.Add( null );
+		}
 
 		//helper for finding Vector to translate points along split plane for an AABB
 		private Vector findSplitVec( AABB vox, int axis )
@@ -98,12 +114,12 @@ namespace RayTracer_App.Kd_tree
 		by recursively selecting the root node among the data-set as the median
 element in the direction which represents the largest interval.*/
 		public KdNode balance( List<Point> points, int depth, PhotonRNG mapper,
-			float prevAxis = float.MaxValue, PhotonRNG.MAP_TYPE sampleList = PhotonRNG.MAP_TYPE.GLOBAL ) //need two extra defaults for initial purposes
+			float prevAxis = float.MaxValue, PhotonRNG.MAP_TYPE sampleList = PhotonRNG.MAP_TYPE.GLOBAL, int heapIdx = 1 ) //need two extra defaults for initial purposes
 		{
+			Photon stored = null;
 			//base case
 			if (terminal( points, depth ))
 			{
-				Photon stored = null;
 
 				if (points.Count != 0)
 				{
@@ -115,7 +131,14 @@ element in the direction which represents the largest interval.*/
 				}
 				else Console.WriteLine( " Leaf node with no photon" );
 
-				return new ptKdLeafNode( stored, prevAxis );
+				if (depth + 1 > kdLevels) kdLevels = depth + 1; //debugging
+				ptKdLeafNode ptLeaf = new ptKdLeafNode( stored, prevAxis );
+
+				if (pmHeap.Count < heapIdx) //this ensures the heap is the right size...
+					fillHeap( heapIdx );
+
+				this.pmHeap[heapIdx - 1] = ptLeaf;
+				return ptLeaf;
 			}
 
 			AABB vox = AABB.boxAroundPoints( points ); // form box from points
@@ -139,15 +162,25 @@ element in the direction which represents the largest interval.*/
 			int amount = size - (midIdx + 1) ;
 
 			float partitionVal = medianPt.getAxisCoord( axis ); //we split along median...
-			List<Point> frontPts = points.GetRange( midIdx + 1 , amount); //skip over middle for odd-sized sets
-			List<Point> rearPts = points.GetRange( 0, amount );
+			List<Point> frontPts = points.GetRange( midIdx + 1 , amount); //RIGHT NODE
+			List<Point> rearPts = points.GetRange( 0, amount ); //LEFT NODE
 
 			if (frontPts.Count != rearPts.Count) Console.WriteLine("uneven list sizes in build");
 
+			stored = mapper.grabPhotonByPos( medianPt, sampleList ); //grab proper photon from photon list we're building from.. This can be null for interior nodes
+			if (stored != null)
+				this.photonNum++;
+
 			this._kdSize += 2;
-			return new ptKdInteriorNode( axis, partitionVal, vox,
-				balance( frontPts, depth + 1, mapper, axis, sampleList),
-				balance( rearPts, depth + 1, mapper, axis, sampleList ), medianPt ); //swapping rear and front pts didn't seem to work
+			int frontIdx = (heapIdx * 2) + 1; //right child at 2i + 1... with i >= 1
+			int rearIdx = (heapIdx * 2);  // left child at 2i... with i >=1
+
+			ptKdInteriorNode ptInt = new ptKdInteriorNode( axis, partitionVal, vox,
+				balance( frontPts, depth + 1, mapper, axis, sampleList, frontIdx),
+				balance( rearPts, depth + 1, mapper, axis, sampleList, rearIdx ), medianPt, stored ); //swapping rear and front pts didn't seem to work
+
+			this.pmHeap[heapIdx - 1] = ptInt;
+			return ptInt;
 		}
 		
 		private bool intersectGood( float currW )
@@ -259,7 +292,6 @@ element in the direction which represents the largest interval.*/
 							continue;
 						}
 						// visit left then right (lower -> upper)
-						//compute and store COMPLETE location of splitOffset....this means that the offset's full point is needed...replace a or b?
 						currNode = currInner.rear;
 						farChild = currInner.front; //getRight                //N4
 					}
@@ -271,7 +303,6 @@ element in the direction which represents the largest interval.*/
 							continue;
 						}
 						//visit right then left (upper -> lower)
-						//compute and store location of splitOffset....I believe this is already done(?)
 						farChild = currInner.rear; //getLeft //P4
 						currNode = currInner.front; //getRight
 					}
@@ -300,7 +331,8 @@ element in the direction which represents the largest interval.*/
 				} //end leaf while
 
 				// found leaf
-				bestW = leaf.leafIntersect( ray, aDist, bDist, false );// test ray photon intersection;
+				bestW = leaf.leafIntersect( ray, aDist, bDist, false );// test ray photon intersection... turning off the distance checks did result in more visible photons in map
+
 				reached++;
 				if (intersectGood( bestW ))
 				{   //found it, stop
@@ -329,9 +361,37 @@ element in the direction which represents the largest interval.*/
 		//	newS.setAxisCoord( axis, sCoord );
 		//}
 
+		//print general PM stats
+		public String pmPrint()
+		{
+			return $" PM with {this.photonNum} photons and {this.kdSize} nodes with {this.kdLevels} levels";
+		}
+
+		//print the max heap we use for gathering photons
+		public void pmHeapPrint( bool showInt = true, bool showLeaf = true)
+		{
+			int heapEl = 1;
+			foreach( KdNode kd in pmHeap)
+			{
+				ptKdInteriorNode ptIn;
+				ptKdLeafNode pLeaf;
+				if ( (showInt) && (ptIn = kd as ptKdInteriorNode) != null)
+				{
+					Console.WriteLine( $"Heap element {heapEl}:" );
+					ptIn.debugPrint();
+				}
+				else if ( (showLeaf) && (pLeaf = kd as ptKdLeafNode) != null)
+				{
+					Console.WriteLine( $"Heap element {heapEl}:" );
+					pLeaf.debugPrint();
+				}
+				heapEl++;
+			}
+		}
+
 		public override string ToString()
 		{
-			return $" PM with {this.photonNum} photons and {this.kdSize} nodes\n" + this.root.ToString();
+			return $" PM with {this.photonNum} photons and {this.kdSize} nodes with {this.kdLevels} levels\n" + this.root.ToString();
 		}
 	}
 }
