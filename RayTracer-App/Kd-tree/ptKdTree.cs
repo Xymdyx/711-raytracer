@@ -359,51 +359,54 @@ element in the direction which represents the largest interval.*/
 		{
 			//nearestHeap = queryMap.locatePhotons( 1, radPtr, k, nearestHeap );
 			float rad = *radPtr;
-			if ( (loc * 2 + 1) < this.pmHeap.Count)
+			if (((loc * 2) + 1) < this.pmHeap.Count)
 			{
 				//examine children via recursion
 				ptKdInteriorNode inside = pmHeap[loc - 1] as ptKdInteriorNode;
-				if( inside != null)
+				if (inside != null)
 				{
-					float xD = (inside.partitionPt.x - pos.x);
-					float yD = (inside.partitionPt.y - pos.y);
-					float zD = (inside.partitionPt.z - pos.z);
-					float dist1 = xD * xD + yD * yD + zD * zD;
-
-					if( dist1 < 0)
+					float dist1 = pos.getAxisCoord( inside.axis ) - inside.axisVal;
+					if (dist1 < 0)
 					{
 						locatePhotons( 2 * loc, k, pos, radPtr, heap ); //visit the left/rear child
 						if (dist1 * dist1 < rad * rad)
-							locatePhotons( (2 * loc + 1), k, pos, radPtr, heap ); //then visit the right/front child
+							locatePhotons( (2 * loc) + 1, k, pos, radPtr, heap ); //then visit the right/front child
 					}
 					else
 					{
-						locatePhotons( (2 * loc + 1), k, pos, radPtr, heap ); //visit the right/front child
+						locatePhotons( (2 * loc) + 1, k, pos, radPtr, heap ); //visit the right/front child
 						if (dist1 * dist1 < rad * rad)
-							locatePhotons( 2 * loc , k, pos, radPtr, heap ); //then visit the left/rear child
+							locatePhotons( 2 * loc, k, pos, radPtr, heap ); //then visit the left/rear child
 					}
 				}
+			}
 
-				//okay we're in leaf teritory
-				ptKdLeafNode leaf = pmHeap[loc - 1] as ptKdLeafNode;
-				float dist2 = pos.distance( leaf.stored.pos ); //compute true squared sitance
+			//okay we're in leaf teritory
+			ptKdLeafNode leaf = pmHeap[loc - 1] as ptKdLeafNode;
+			if (leaf != null) //never gets executed
+			{
+				Point pLeaf = leaf.stored.pos;
+				float xD = (pLeaf.x - pos.x);
+				float yD = (pLeaf.y - pos.y);
+				float zD = (pLeaf.z - pos.z);
+				float dist2 = xD * xD + yD * yD + zD * zD;
 
 				//insert into max heap and update search radius
 				if (dist2 < rad * rad)
 				{
-					float maxDist = (float) heap.peekTopOfHeap();
-
-					// remove the heap root if necessary
-					if ( (heap.getHeapSize() == k + 1) && dist2 < maxDist)
-						heap.extractHeadOfHeap();
+					//float maxDist = (float) heap.peekTopOfHeap();
+					// remove the heap root if necessary.. now handled in the insert function
+					//if ( (heap.getHeapSize() == k + 1) && dist2 < maxDist)
+					//	heap.extractHeadOfHeap();
 
 					heap.InsertElementInHeap( dist2, leaf.stored );
 					*radPtr = dist2;
 				}
-
-				return;
 			}
+
+			return;
 		}
+		
 
 
 		//private Point recomputeS( int axis, float sCoord, LightRay ray )

@@ -317,8 +317,8 @@ public class RayTracerMain
 		//	//floor - cube size:[25, 2.5, 60]
 		//	//floor - cube location:[ -2.0, -6.5, -0.5]
 
-		//doRayTracing();
-		MaxHeap<int>.testHeap();
+		doRayTracing();
+		
 		if (colsPtr == default)
 		{
 			Console.WriteLine( "Did not receive information to draw OpenGL pixels. Stopping now" );

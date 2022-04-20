@@ -50,6 +50,12 @@ public class MaxHeap<T>
         return (this.sizeOfHeap + 1) == this.ptrList.Count && this.arr.Length == (this.sizeOfHeap + 1);
 	}
 
+    //returns if the heap is empty
+    public bool heapEmpty()
+    {
+        return this.sizeOfHeap == 0;
+    }
+
     // call this if we're also shuffling an object list
     public void swapObjs( int idx1, int idx2 )
 	{

@@ -161,6 +161,7 @@ namespace RayTracer_App.Camera
 			{
 				world.findBB(); //advanced cp 2
 				world.beginpmPassOne();
+				world.beginpmPassTwo();
 				//photonOverlay = true;
 			}
 
@@ -240,8 +241,7 @@ namespace RayTracer_App.Camera
 			world.photonMapper.rrStats();
 			world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
 			Console.WriteLine( "Global PM: " + world.photonMapper.globalPM.pmPrint() );
-			world.photonMapper.globalPM.pmHeapPrint(false, true);
-
+			//world.photonMapper.globalPM.pmHeapPrint(false, true);
 			//world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
 
 			if (photonOverlay || justPhotons)

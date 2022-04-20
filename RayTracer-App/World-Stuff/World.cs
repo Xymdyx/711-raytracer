@@ -26,6 +26,7 @@ namespace RayTracer_App.World
 		private PhotonRNG _photonMapper;
 		private int _photoHits;
 		private int _causticHits;
+		private bool pmOn;
 
 		//private int[] attributes;
 		public List<SceneObject> objects { get => this._objects; set => this._objects = value; }
@@ -56,6 +57,7 @@ namespace RayTracer_App.World
 			this._kdTree = new KdTree();
 			this._sceneBB = null;
 			this._bestObj = null;
+			this.pmOn = false;
 		}
 
 		//parameter CONSTRUCTOR
@@ -67,6 +69,7 @@ namespace RayTracer_App.World
 			this._kdTree = new KdTree();
 			this._sceneBB = null;
 			this._bestObj = null;
+			this.pmOn = false;
 		}
 
 		//debug print
@@ -232,6 +235,14 @@ namespace RayTracer_App.World
 
 				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
 
+				//calculate indirect illumination & caustics via PM queries
+				if( pmOn && intersection != null)
+				{
+					float defRadius = 1f; //declare as a temp so we don't screw up a constant value
+					MaxHeap<Photon> nearestPhotons =
+						this.photonMapper.kNearestPhotons( intersection, PhotonRNG.K_PHOTONS, defRadius );
+				}
+
 				if (recDepth < MAX_DEPTH)
 				{
 					//need this since we recurse and may update bestObj
@@ -394,7 +405,7 @@ namespace RayTracer_App.World
 			this.photonMapper = new PhotonRNG();
 
 			foreach (LightSource l in this.lights) //187 visible using BFS photon list check on 500. Only lose about 30 with kd tree visuals, which makes sense
-				l.emitPhotonsFromDPLS( this, 10000 ); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
+				l.emitPhotonsFromDPLS( this, 100 ); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
 
 			//construct photon maps from lists
 			photonMapper.makePMs();
@@ -534,16 +545,17 @@ namespace RayTracer_App.World
 		// to compute indirect illumination and solve the rendering equation's 4 integrals
 		public void beginpmPassTwo()
 		{
-		/*collect the k nearest photons and make calculation for global and caustic PMs
-		* What is the tone reproduction formula ?
-		* Direct illumination calculated using MC Raytracing
-		* Caustics estimated using caustic map, never MC raytracing
-		* indirect illumination comes from photon maps
-		* figure out caustics and indirect illumination
-		* implement a cone filter if ambitious */
+			/* *collect the k nearest photons and make calculation for global and caustic PMs
+			* What is the tone reproduction formula ?
+			* Direct & specular illumination calculated using MC Raytracing
+			* Caustics estimated using caustic map, never MC raytracing
+			* indirect illumination comes from photon maps
+			* figure out caustics and indirect illumination
+			* implement a cone filter if ambitious */
 
 			//as far as I can tell the photons are around, even if my visualization algo doesn't pick up all of them
 			//photonRNG.collectKNeighbors( int kPhotons );
+			this.pmOn = true;
 			return;
 		}
 	}
