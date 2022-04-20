@@ -350,7 +350,7 @@ namespace RayTracer_App.Photon_Mapping
 		}
 		
 		//gather k-Nearest photons
-		public List<Photon> nearestInPM( int k, float rad, MAP_TYPE desired = MAP_TYPE.GLOBAL )
+		public unsafe List<Photon> kNearestPhotons( Point pos, int k, float rad, MAP_TYPE desired = MAP_TYPE.GLOBAL )
 		{
 			// use a priority queue here.
 			// we check within a certain radius for photons
@@ -358,9 +358,20 @@ namespace RayTracer_App.Photon_Mapping
 			// we gather nearby ones, add to max heap
 			// do this for all nearest photons, replace closer ones with farther ones
 			// return the list of k photons for calculations
+			float* radPtr = &rad;
 			List<Photon> nearestHeap = new List<Photon>();
+			//PriorityQueue<Photon, float> queue = new PriorityQueue<Photon, float>;
+			
 
-			return null;
+			for (int el = 0; el < k; el++)
+				nearestHeap.Add( null );
+
+			ptKdTree queryMap = this.getPMbyType( desired );
+
+			if( queryMap != null)
+				queryMap.locatePhotons( 1, pos, radPtr, k, nearestHeap );
+
+			return nearestHeap;
 		}
 		//debug RR stats
 		public void rrStats()

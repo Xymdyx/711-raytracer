@@ -354,6 +354,47 @@ element in the direction which represents the largest interval.*/
 			return bestW; //found no intersection
 		}
 
+		public unsafe void locatePhotons( int loc, Point pos, float* radPtr, int k, List<Photon> heap )
+		{
+			//nearestHeap = queryMap.locatePhotons( 1, radPtr, k, nearestHeap );
+			float rad = *radPtr;
+			if ( (loc * 2 + 1) < this.pmHeap.Count)
+			{
+				//examine children via recursion
+				ptKdInteriorNode inside = pmHeap[loc - 1] as ptKdInteriorNode;
+				if( inside != null)
+				{
+					float xD = (inside.partitionPt.x - pos.x);
+					float yD = (inside.partitionPt.y - pos.y);
+					float zD = (inside.partitionPt.z - pos.z);
+					float dist1 = xD * xD + yD * yD + zD * zD;
+
+					if( dist1 < 0)
+					{
+						locatePhotons( 2 * loc, pos, radPtr, k, heap ); //visit the left/rear child
+						if (dist1 * dist1 < rad * rad)
+							locatePhotons( (2 * loc + 1), pos, radPtr, k, heap ); //then visit the right/frotn child
+					}
+					else
+					{
+						locatePhotons( (2 * loc + 1), pos, radPtr, k, heap ); //visit the right/front child
+						if (dist1 * dist1 < rad * rad)
+							locatePhotons( 2 * loc , pos, radPtr, k, heap ); //then visit the left/rear child
+					}
+				}
+
+				//okay we're in leaf teritory
+				ptKdLeafNode leaf = pmHeap[loc - 1] as ptKdLeafNode;
+				float dist2 = pos.distance( leaf.stored.pos ); //compute true squared sitance
+				if (dist2 < rad * rad)
+				{
+					heap.Add( leaf.stored ); //insert into maxHeap
+					*radPtr = dist2; //update the value our search radius ptr contains
+				}
+
+			}
+		}
+
 
 		//private Point recomputeS( int axis, float sCoord, LightRay ray )
 		//{
