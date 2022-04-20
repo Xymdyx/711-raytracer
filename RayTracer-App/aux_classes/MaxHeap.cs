@@ -62,11 +62,20 @@ public class MaxHeap<T>
     public void InsertElementInHeap( double value, T obj )
     {
 
-        if (sizeOfHeap < 0)
+        if (sizeOfHeap < 0) //this means we freeed the tree at one point and have accessed it again.
         {
             Console.WriteLine( "MAx Heap is empty" );
             return;
         }
+
+        //if the list is full, we don't want to insert anything unless it's lower than the root
+        if (heapFull() )
+        { 
+            if (value >= peekTopOfHeap())
+                return;
+            extractHeadOfHeap();
+        }
+
         //Insertion of value inside the array happens at the last index of the  array, which is the heapSize. Should cover popping case
         arr[sizeOfHeap + 1] = value;
         ptrList[sizeOfHeap + 1] = obj; 
@@ -154,8 +163,9 @@ public class MaxHeap<T>
             return;
         }
         else if (sizeOfHeap == left)
-        { //If there is only left child of this node, then do a comparison and return.  
-            if (arr[index] < arr[left])
+        { 
+            //If there is only a left child
+            if (arr[index] > arr[left]) //left nodes always less than right ones for both min/max heaps
             {
                 double tmp = arr[index];
                 arr[index] = arr[left];
@@ -225,19 +235,46 @@ public class MaxHeap<T>
 	{
         MaxHeap<int> intHeap = new MaxHeap<int>( 20 );
         for( int i = 0; i < 100; i++)
-		{
-            int maxInt = (int) intHeap.peekTopOfHeap();
-            
-            if ( intHeap.heapFull() && i > maxInt)
-                maxInt = (int) intHeap.extractHeadOfHeap();
-            if (!intHeap.heapFull())
-                intHeap.InsertElementInHeap( i, i );
-		}
+		    intHeap.InsertElementInHeap( i, i );
+		
 
-        Console.WriteLine( "Final Heap :" );
+        Console.WriteLine( "First Heap :" );
         intHeap.levelOrder();
         Console.WriteLine( "Deleting heap..." );
         intHeap.deleteHeap();
-	}
+
+        intHeap = new MaxHeap<int>( 20 );
+
+        for (int i = 100; i >= 0; i--)
+            intHeap.InsertElementInHeap( i, i );
+
+        Console.WriteLine( "Second Heap :" );
+        intHeap.levelOrder();
+        Console.WriteLine( "Deleting heap..." );
+        intHeap.deleteHeap();
+
+
+        // Custom inputs
+        intHeap = new MaxHeap<int>( 9 );
+        intHeap.InsertElementInHeap( 5, 5 );
+        intHeap.InsertElementInHeap( 3, 3 );
+        intHeap.InsertElementInHeap( 17, 17 );
+        intHeap.InsertElementInHeap( 10, 10 );
+        intHeap.InsertElementInHeap( 84, 84 );
+        intHeap.InsertElementInHeap( 19, 19 );
+        intHeap.InsertElementInHeap( 6, 6 );
+        intHeap.InsertElementInHeap( 22, 22 );
+        intHeap.InsertElementInHeap( 9, 9);
+
+        intHeap.InsertElementInHeap( 78, 78 );
+        intHeap.InsertElementInHeap( 210, 210 );
+
+        Console.WriteLine( " GFG Test:" );
+
+        intHeap.levelOrder();
+        Console.WriteLine( "Deleting heap..." );
+        intHeap.deleteHeap();
+
+    }
 }
 
