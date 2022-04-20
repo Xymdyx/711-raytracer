@@ -392,7 +392,7 @@ element in the direction which represents the largest interval.*/
 				float dist2 = xD * xD + yD * yD + zD * zD;
 
 				//insert into max heap and update search radius
-				if (dist2 < rad * rad)
+				if (dist2 < rad )
 				{
 					//float maxDist = (float) heap.peekTopOfHeap();
 					// remove the heap root if necessary.. now handled in the insert function

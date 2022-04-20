@@ -236,11 +236,25 @@ namespace RayTracer_App.World
 				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
 
 				//calculate indirect illumination & caustics via PM queries
-				if( pmOn && intersection != null)
+				if (pmOn && intersection != null)
 				{
-					float defRadius = 1f; //declare as a temp so we don't screw up a constant value
+					float defRadius = 1.5f; //declare as a temp so we don't screw up a constant value
 					MaxHeap<Photon> nearestPhotons =
 						this.photonMapper.kNearestPhotons( intersection, PhotonRNG.K_PHOTONS, defRadius );
+					if (!nearestPhotons.heapEmpty())
+					{
+						float circleRad = (float)nearestPhotons.doubleMazHeap[1];
+						Color photonAdditive = Color.defaultBlack;
+						foreach (Photon p in nearestPhotons.objMaxMHeap)
+						{
+							if (p != null)
+								photonAdditive += p.pColor;
+						}
+						photonAdditive.scale( (float)(Math.PI * circleRad * circleRad) ); //average
+
+						if (photonAdditive != Color.defaultBlack)
+							currColor += photonAdditive;
+					}
 				}
 
 				if (recDepth < MAX_DEPTH)

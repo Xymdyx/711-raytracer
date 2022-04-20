@@ -74,7 +74,7 @@ namespace RayTracer_App.World
 				ne++;
 			}
 			//scale stored phtons by 1/ne
-			world.photonMapper.scaleStored( power );
+			world.photonMapper.scaleStored( 1/ne );
 		}
 	}
 }
