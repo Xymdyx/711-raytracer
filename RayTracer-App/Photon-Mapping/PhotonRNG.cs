@@ -349,30 +349,26 @@ namespace RayTracer_App.Photon_Mapping
 			}
 		}
 		
-		//gather k-Nearest photons
-		public unsafe List<Photon> kNearestPhotons( Point pos, int k, float rad, MAP_TYPE desired = MAP_TYPE.GLOBAL )
+		//gather k-Nearest photons around a ray's given intersection point
+		public unsafe MaxHeap<Photon> kNearestPhotons( Point pos, int k, float rad, MAP_TYPE desired = MAP_TYPE.GLOBAL )
 		{
-			// use a priority queue here.
+			// use a priority queue here. MHigher val = lower priority
 			// we check within a certain radius for photons
 			// the longest one we use to make a sphere
 			// we gather nearby ones, add to max heap
 			// do this for all nearest photons, replace closer ones with farther ones
 			// return the list of k photons for calculations
+
 			float* radPtr = &rad;
-			List<Photon> nearestHeap = new List<Photon>();
-			//PriorityQueue<Photon, float> queue = new PriorityQueue<Photon, float>;
-			
-
-			for (int el = 0; el < k; el++)
-				nearestHeap.Add( null );
-
+			MaxHeap<Photon> nearestHeap = new MaxHeap<Photon>(k);
 			ptKdTree queryMap = this.getPMbyType( desired );
 
 			if( queryMap != null)
-				queryMap.locatePhotons( 1, pos, radPtr, k, nearestHeap );
+				queryMap.locatePhotons( 1, k, pos, radPtr, nearestHeap );
 
-			return nearestHeap;
+			return nearestHeap; //this way we have the photons nd their distances for use
 		}
+
 		//debug RR stats
 		public void rrStats()
 		{

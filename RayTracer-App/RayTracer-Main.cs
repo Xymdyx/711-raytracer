@@ -17,7 +17,7 @@ public class RayTracerMain
 {
 	static int imageWidth;
 	static int imageHeight;
-	static IntPtr colsPtr;
+	static IntPtr colsPtr = default;
 	//static GCHandle colsHandle;
 	static bool[] valid = new bool[1];
 	static float[] rat = new float[4];
@@ -317,7 +317,13 @@ public class RayTracerMain
 		//	//floor - cube size:[25, 2.5, 60]
 		//	//floor - cube location:[ -2.0, -6.5, -0.5]
 
-		doRayTracing();
+		//doRayTracing();
+		MaxHeap<int>.testHeap();
+		if (colsPtr == default)
+		{
+			Console.WriteLine( "Did not receive information to draw OpenGL pixels. Stopping now" );
+			return -1;
+		}
 
 		//begin OpenGl
 		int[] argc = new int[1]; argc[0] = 0; string[] argv = null;

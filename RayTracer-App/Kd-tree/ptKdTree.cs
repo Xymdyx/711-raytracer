@@ -354,7 +354,8 @@ element in the direction which represents the largest interval.*/
 			return bestW; //found no intersection
 		}
 
-		public unsafe void locatePhotons( int loc, Point pos, float* radPtr, int k, List<Photon> heap )
+		// locate the photons given a ray's intersection position with an object
+		public unsafe void locatePhotons( int loc, int k, Point pos, float* radPtr, MaxHeap<Photon> heap )
 		{
 			//nearestHeap = queryMap.locatePhotons( 1, radPtr, k, nearestHeap );
 			float rad = *radPtr;
@@ -371,27 +372,36 @@ element in the direction which represents the largest interval.*/
 
 					if( dist1 < 0)
 					{
-						locatePhotons( 2 * loc, pos, radPtr, k, heap ); //visit the left/rear child
+						locatePhotons( 2 * loc, k, pos, radPtr, heap ); //visit the left/rear child
 						if (dist1 * dist1 < rad * rad)
-							locatePhotons( (2 * loc + 1), pos, radPtr, k, heap ); //then visit the right/frotn child
+							locatePhotons( (2 * loc + 1), k, pos, radPtr, heap ); //then visit the right/front child
 					}
 					else
 					{
-						locatePhotons( (2 * loc + 1), pos, radPtr, k, heap ); //visit the right/front child
+						locatePhotons( (2 * loc + 1), k, pos, radPtr, heap ); //visit the right/front child
 						if (dist1 * dist1 < rad * rad)
-							locatePhotons( 2 * loc , pos, radPtr, k, heap ); //then visit the left/rear child
+							locatePhotons( 2 * loc , k, pos, radPtr, heap ); //then visit the left/rear child
 					}
 				}
 
 				//okay we're in leaf teritory
 				ptKdLeafNode leaf = pmHeap[loc - 1] as ptKdLeafNode;
 				float dist2 = pos.distance( leaf.stored.pos ); //compute true squared sitance
+
+				//insert into max heap and update search radius
 				if (dist2 < rad * rad)
 				{
-					heap.Add( leaf.stored ); //insert into maxHeap
-					*radPtr = dist2; //update the value our search radius ptr contains
+					float maxDist = (float) heap.peekTopOfHeap();
+
+					// remove the heap root if necessary
+					if ( (heap.getHeapSize() == k + 1) && dist2 < maxDist)
+						heap.extractHeadOfHeap();
+
+					heap.InsertElementInHeap( dist2, leaf.stored );
+					*radPtr = dist2;
 				}
 
+				return;
 			}
 		}
 
