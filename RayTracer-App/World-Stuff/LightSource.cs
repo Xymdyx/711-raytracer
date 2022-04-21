@@ -28,7 +28,7 @@ namespace RayTracer_App.World
 			this._power = 0;
 		}
 
-		public LightSource( Point position, Color lightColor, float power = 2)
+		public LightSource( Point position, Color lightColor, float power = 25)
 		{
 			this._position = position;
 			this._lightColor = lightColor;
@@ -74,7 +74,7 @@ namespace RayTracer_App.World
 				ne++;
 			}
 			//scale stored phtons by 1/ne
-			world.photonMapper.scaleStored( 1/ne );
+			world.photonMapper.scaleStored( photonPow );
 		}
 	}
 }

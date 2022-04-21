@@ -15,8 +15,8 @@ namespace RayTracer_App.Photon_Mapping
 	public class PhotonRNG
 	{
 		public const int MAX_SHOOT_DEPTH = 999;
-		public const int K_PHOTONS = 5;
-		public const float DEF_SEARCH_RAD = .015f; //this will probably get overwritten by kNearestPhotons
+		public const int K_PHOTONS = 30;
+		public const float DEF_SEARCH_RAD = .15f; //this will probably get overwritten by kNearestPhotons
 		//russian roulette enum for more readable code
 
 		//RR debug
@@ -180,12 +180,12 @@ namespace RayTracer_App.Photon_Mapping
 			foreach (Photon g in this.globalPL)
 			{
 				g.power *= powerScale;
-				g.pColor.scale(g.power);
+				g.pColor = g.pColor.scale(g.power);
 			}
 			foreach (Photon c in this.causticPL)
 			{
 				c.power *= powerScale;
-				c.pColor.scale( c.power );
+				c.pColor = c.pColor.scale( c.power );
 			}
 		}
 

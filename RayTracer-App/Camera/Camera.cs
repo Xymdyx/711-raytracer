@@ -238,12 +238,14 @@ namespace RayTracer_App.Camera
 			Console.WriteLine( $" There are {hits} non-background colors/ {imageHeight * imageWidth} colors total" );
 
 			//pm debug
-			world.photonMapper.rrStats();
-			world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
-			Console.WriteLine( "Global PM: " + world.photonMapper.globalPM.pmPrint() );
-			//world.photonMapper.globalPM.pmHeapPrint(false, true);
-			//world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
-
+			if (doPM)
+			{
+				world.photonMapper.rrStats();
+				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
+				Console.WriteLine( "Global PM: " + world.photonMapper.globalPM.pmPrint() );
+				//world.photonMapper.globalPM.pmHeapPrint(false, true);
+				//world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
+			}
 			if (photonOverlay || justPhotons)
 				Console.WriteLine( $"Lit caustics: {world.causticHits}\n Total hits {world.photoHits}" );
 
