@@ -6,6 +6,7 @@ using RayTracer_App.Camera;
 using RayTracer_App.Scene_Objects;
 using System.Collections.Generic;
 using RayTracer_App.aux_classes;
+using RayTracer_App.Illumination_Models;
 //DOUBLE -> FLOAT
 
 //Booksmarks... Ctrl + K, Ctrl K to toogle...
@@ -39,8 +40,8 @@ public class RayTracerMain
 		List<Point> botVerts1 = new List<Point> { botTL, botBL, botTR };
 		List<Point> botVerts2 = new List<Point> { botBR.copy(), botTR.copy(), botBL.copy() };
 
-		Polygon botTri1 = new Polygon( botVerts1, Color.cbGrey );
-		Polygon botTri2 = new Polygon( botVerts2, Color.cbGrey );
+		Polygon botTri1 = new Polygon( botVerts1, Color.cbGrey, Phong.cornellPhong );
+		Polygon botTri2 = new Polygon( botVerts2, Color.cbGrey, Phong.cornellPhong );
 
 		//top border param. 2 triangles.. Color is pale grey. Shared w bot and rear
 		Point topTL = new Point( -cbXLim, -cbYLim, cbZLim );
@@ -52,8 +53,8 @@ public class RayTracerMain
 		List<Point> topVerts1 = new List<Point> { topTR, topBL, topTL, };
 		List<Point> topVerts2 = new List<Point> { topBL.copy() , topTR.copy(), topBR.copy() };
 
-		Polygon topTri1 = new Polygon( topVerts1, Color.cbGrey );
-		Polygon topTri2 = new Polygon( topVerts2, Color.cbGrey );
+		Polygon topTri1 = new Polygon( topVerts1, Color.cbGrey, Phong.cornellPhong );
+		Polygon topTri2 = new Polygon( topVerts2, Color.cbGrey, Phong.cornellPhong );
 
 		//right border param. 2 triangles.. draw along the yz plane... only difference will be the x value. Color is red
 		Point rightTL = new Point( cbXLim, -cbYLim, cbZLim );
@@ -63,8 +64,8 @@ public class RayTracerMain
 
 		List<Point> rightVerts1 = new List<Point> { rightTR, rightBL, rightTL };
 		List<Point> rightVerts2 = new List<Point> { rightBL.copy(), rightTR.copy(), rightBR.copy() };
-		Polygon rightTri1 = new Polygon( rightVerts1, Color.cbBlue );
-		Polygon rightTri2 = new Polygon( rightVerts2, Color.cbBlue );
+		Polygon rightTri1 = new Polygon( rightVerts1, Color.cbBlue, Phong.cornellPhong );
+		Polygon rightTri2 = new Polygon( rightVerts2, Color.cbBlue, Phong.cornellPhong );
 
 		//left border param. 2 triangles... Color is blue
 		Point leftTL = new Point( -cbXLim, -cbYLim, -cbZLim );
@@ -74,8 +75,8 @@ public class RayTracerMain
 
 		List<Point> leftVerts1 = new List<Point> { leftTL, leftBL, leftTR };
 		List<Point> leftVerts2 = new List<Point> { leftBR.copy(), leftTR.copy(), leftBL.copy() };
-		Polygon leftTri1 = new Polygon( leftVerts1, Color.cbRed );
-		Polygon leftTri2 = new Polygon( leftVerts2, Color.cbRed );
+		Polygon leftTri1 = new Polygon( leftVerts1, Color.cbRed, Phong.cornellPhong );
+		Polygon leftTri2 = new Polygon( leftVerts2, Color.cbRed, Phong.cornellPhong );
 
 		//rear wall border param. 2 triangles... intersection of left&top, right&top, left&bot, right&bot at higher z
 		//left border param. 2 triangles... Color is blue
@@ -87,8 +88,8 @@ public class RayTracerMain
 
 		List<Point> rearVerts1 = new List<Point> { rearTL, rearBL, rearTR };
 		List<Point> rearVerts2 = new List<Point> { rearBR.copy(), rearTR.copy(), rearBL.copy() };
-		Polygon rearTri1 = new Polygon( rearVerts1, Color.cbGrey );
-		Polygon rearTri2 = new Polygon( rearVerts2, Color.cbGrey );
+		Polygon rearTri1 = new Polygon( rearVerts1, Color.cbGrey, Phong.cornellPhong );
+		Polygon rearTri2 = new Polygon( rearVerts2, Color.cbGrey, Phong.cornellPhong );
 
 		//front wall border param. 2 triangles... intersection of left&top, right&top, left&bot, right&bot at higher z
 		//left border param. 2 triangles... Color is blue
@@ -99,8 +100,8 @@ public class RayTracerMain
 
 		List<Point> frontVerts1 = new List<Point> { frontTR, frontBL, frontTL };
 		List<Point> frontVerts2 = new List<Point> { frontBL.copy(), frontTR.copy(),frontBR.copy() };
-		Polygon frontTri1 = new Polygon( frontVerts1, Color.cbGrey );
-		Polygon frontTri2 = new Polygon( frontVerts2, Color.cbGrey );
+		Polygon frontTri1 = new Polygon( frontVerts1, Color.cbGrey, Phong.cornellPhong );
+		Polygon frontTri2 = new Polygon( frontVerts2, Color.cbGrey, Phong.cornellPhong );
 		// finally make spheres
 		//left sphere params
 		float sphereRad = .7f; //1f
@@ -116,7 +117,7 @@ public class RayTracerMain
 		float s2X = -cbXLim + sphereRad;
 		float s2Depth = s1Depth; //1.85.. like Whitted... 2.75 for far apart
 		float s2Height = s1Height;
-		float s2Refl = 1f;
+		float s2Refl = .45f;
 		float s2Trans = 1 - s2Refl;
 		float s2RefIdx = .955f;
 

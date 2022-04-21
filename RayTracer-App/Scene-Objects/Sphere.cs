@@ -29,7 +29,7 @@ namespace RayTracer_App.Scene_Objects
 			this._specular = Color.whiteSpecular;
 		}
 
-		public Sphere( Point center, float radius, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX )
+		public Sphere( Point center, float radius, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX, IlluminationModel lightModel = null )
 		{
 			this._center = center;
 			this._radius = radius;
@@ -41,6 +41,8 @@ namespace RayTracer_App.Scene_Objects
 			this._kTrans = kTrans;
 			this.refIndex = refIndex;
 
+			if (lightModel != null)
+				this._lightModel = lightModel;
 		}
 
 		public Sphere( Point center, float radius, Color diffuse, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX )

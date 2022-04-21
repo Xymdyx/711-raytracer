@@ -26,7 +26,7 @@ namespace RayTracer_App.aux_classes
                 Point p2 = vertices[indices[1]].copy();
                 Point p3 = vertices[indices[2]].copy();
                 List<Point> plyVerts = new List<Point> { p1, p2, p3 };
-                return new Polygon( plyVerts, Color.bunnyColor, Color.whiteSpecular);
+                return new Polygon( plyVerts, Color.bunnyColor);
 			}
             return null;
 		}

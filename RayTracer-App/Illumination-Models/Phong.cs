@@ -17,6 +17,7 @@ namespace RayTracer_App.Illumination_Models
 		//best 0f, .55f, .05f, 20f 
 		public static Phong regularPhong = new Phong( 0f, .65f, .25f, 12f );
 		public static Phong floorPhong = new Phong( 0f, .45f, .35f, 128f );
+		public static Phong cornellPhong = new Phong( 0f, .75f, .1f, 128f );
 
 		private float _ka; // not going to implement since ambient will be shaved later
 		//private float _kd; // Lambertian diffuse
@@ -71,7 +72,8 @@ namespace RayTracer_App.Illumination_Models
 
 		//precondiiton: the negative of the cameraRay gets passed so it is going TO the viewer's eye, not from
 		//TODO IMPLEMENT ILLUMINATE... this returns an irradiance triplet, which will be converted by the camera via TR to a color.
-		public override Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, bool transShadows = false, float shadowBias = 1e-4f ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
+		public override Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj,
+			bool transShadows = false, bool shadowPass = false, float shadowBias = 1e-4f ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
 		{
 
 			Color lightIrradiance = Color.defaultBlack;
@@ -86,10 +88,10 @@ namespace RayTracer_App.Illumination_Models
 					SceneObject blocking = World.World.checkRayIntersectionObj( shadowRay, allObjs, light );
 					float litPercent = 1.0f;
 
-					if ((blocking != null) && (!(transShadows) || (blocking.kTrans <= 0.0f))) //the shadowRay gets blocked by an object on way to light
+					if ( !shadowPass && (blocking != null) && (!(transShadows) || (blocking.kTrans <= 0.0f))) //the shadowRay gets blocked by an object on way to light
 						continue;
 
-					else if ((blocking != null) && (transShadows) && (blocking.kTrans > 0.0f))
+					else if ( !shadowPass && (blocking != null) && (transShadows) && (blocking.kTrans > 0.0f))
 						litPercent = blocking.kTrans;
 
 				// reflect = Incoming - 2( (Incoming.dot(normal) * normal) / (normalLength^2) )

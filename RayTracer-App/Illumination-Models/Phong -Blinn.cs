@@ -72,7 +72,8 @@ namespace RayTracer_App.Illumination_Models
 
 		//precondiiton: the negative of the cameraRay gets passed so it is going TO the viewer's eye, not from
 		//TODO IMPLEMENT ILLUMINATE... this returns an irradiance triplet, which will be converted by the camera via TR to a color.
-		public override Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, bool transShadows = false, float shadowBias = 1e-6f ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
+		public override Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, 
+			bool transShadows = false, bool shadowPass = false, float shadowBias = 1e-6f ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
 		{
 
 			Color lightIrradiance = Color.defaultBlack;
@@ -86,10 +87,10 @@ namespace RayTracer_App.Illumination_Models
 					SceneObject blocking = World.World.checkRayIntersectionObj( shadowRay, allObjs, light );
 					float litPercent = 1.0f;
 			
-					if ( (blocking != null) && ( !(transShadows) || (blocking.kTrans <= 0.0f) ) ) //the shadowRay gets blocked by an object on way to light
+					if ( !shadowPass && (blocking != null) && ( !(transShadows) || (blocking.kTrans <= 0.0f) ) ) //the shadowRay gets blocked by an object on way to light
 						continue;
 
-					else if ((blocking != null) && (transShadows) && (blocking.kTrans > 0.0f))
+					else if ( !shadowPass && (blocking != null) && (transShadows) && (blocking.kTrans > 0.0f))
 						litPercent = blocking.kTrans;
 
 					// kd * (litObj.illuminate() * light.color * (shadowRay.dotProduct( Normal) ) + 

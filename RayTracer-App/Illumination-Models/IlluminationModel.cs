@@ -43,7 +43,8 @@ namespace RayTracer_App.Illumination_Models
 		}
 		public abstract Color illuminate( Point intersect, Vector normal, LightRay incoming,
 			Vector mirrorReflect, Vector cameraRay, LightSource light, SceneObject litObj );
-		public abstract Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, bool transShadows = false, float shadowBias = 1e-4f );
+		public abstract Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj, 
+			bool transShadows = false, bool shadowPass = false, float shadowBias = 1e-4f );
 
 		//consider asking sampling over a unit disc... the Nusselt Analog https://en.wikipedia.org/wiki/View_factor#Nusselt_analog
 		public virtual Vector mcDiffuseDir( float u1, float u2 )

@@ -28,7 +28,7 @@ namespace RayTracer_App.World
 			this._power = 0;
 		}
 
-		public LightSource( Point position, Color lightColor, float power = 25)
+		public LightSource( Point position, Color lightColor, float power = 1)
 		{
 			this._position = position;
 			this._lightColor = lightColor;
@@ -57,7 +57,7 @@ namespace RayTracer_App.World
 			float photonW;
 			int ne = 0;
 			Point photonPos;
-			float photonPow = this.power * (1 / totalPhotons);
+			float photonPow = this.power * (1f / totalPhotons);
 			while (ne != totalPhotons)
 			{
 				do

@@ -238,7 +238,7 @@ namespace RayTracer_App.World
 				//calculate indirect illumination & caustics via PM queries
 				if (pmOn && intersection != null)
 				{
-					float defRadius = 1.5f; //declare as a temp so we don't screw up a constant value
+					float defRadius = PhotonRNG.DEF_SEARCH_RAD	; //declare as a temp so we don't screw up a constant value
 					MaxHeap<Photon> nearestPhotons =
 						this.photonMapper.kNearestPhotons( intersection, PhotonRNG.K_PHOTONS, defRadius );
 					if (!nearestPhotons.heapEmpty())
@@ -252,12 +252,13 @@ namespace RayTracer_App.World
 							float pDist = (float) nearestPhotons.doubleMazHeap[el];
 							if (p != null)
 							{
-								float pConeWeight = 1 - (pDist/ ( gathered * circleRad)); //the cone filter!
+								float pConeWeight = 1f - (pDist/ ( gathered * circleRad)); //the cone filter!
 								photonAdditive += p.pColor.scale( pConeWeight);
 							}
 						}
-						float coneDivisor = 1 - (2 / (gathered * 3) );
-						photonAdditive = photonAdditive.scale( (float)(Math.PI * circleRad * circleRad) * coneDivisor  ); //average
+						float coneDivisor = 1f - (2f / (gathered * 3f) );
+						float photonScaler = (float) (1f / ((Math.PI * circleRad) * coneDivisor));
+						photonAdditive = photonAdditive.scale( photonScaler ); //average
 
 						if (photonAdditive != Color.defaultBlack)
 							currColor += photonAdditive;
@@ -493,7 +494,7 @@ namespace RayTracer_App.World
 				if (bestObj as Sphere != null)
 					Console.WriteLine( "Hit sphere" );
 
-				flux =bestObjLightModel.illuminate( intersection, -photonRay.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
+				flux = bestObjLightModel.illuminate( intersection, -photonRay.direction, this.lights, this.objects, this.bestObj, true, false ); //return to irradiance for TR
 				float u1 = this.photonMapper.random01();
 				float u2 = this.photonMapper.random01();
 				Vector travelDir = Vector.ZERO_VEC;
@@ -566,19 +567,18 @@ namespace RayTracer_App.World
 		// to compute indirect illumination and solve the rendering equation's 4 integrals
 		public void beginpmPassTwo()
 		{
-			/* *collect the k nearest photons and make calculation for global and caustic PMs
-			* What is the tone reproduction formula ?
-			* Direct & specular illumination calculated using MC Raytracing
-			* Caustics estimated using caustic map, never MC raytracing
-			* indirect illumination comes from photon maps
-			* figure out caustics and indirect illumination
-			* implement a cone filter if ambitious */
-
 			//as far as I can tell the photons are around, even if my visualization algo doesn't pick up all of them
-			//photonRNG.collectKNeighbors( int kPhotons );
 			this.pmOn = true;
 			return;
 		}
+
+		/* *collect the k nearest photons and make calculation for global and caustic PMs
+* What is the tone reproduction formula ?
+* Direct & specular illumination calculated using MC Raytracing
+* Caustics estimated using caustic map, never MC raytracing
+* indirect illumination comes from photon maps
+* figure out caustics and indirect illumination
+** implement a cone filter if ambitious */
 	}
 }
 
