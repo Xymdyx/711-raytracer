@@ -28,7 +28,7 @@ namespace RayTracer_App.World
 			this._power = 0;
 		}
 
-		public LightSource( Point position, Color lightColor, float power = 100)
+		public LightSource( Point position, Color lightColor, float power = 2)
 		{
 			this._position = position;
 			this._lightColor = lightColor;

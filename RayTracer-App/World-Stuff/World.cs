@@ -245,12 +245,19 @@ namespace RayTracer_App.World
 					{
 						float circleRad = (float)nearestPhotons.doubleMazHeap[1];
 						Color photonAdditive = Color.defaultBlack;
-						foreach (Photon p in nearestPhotons.objMaxMHeap)
+						int gathered = nearestPhotons.heapSize;
+						for( int el = 0; el <= nearestPhotons.heapSize; el++)
 						{
+							Photon p = nearestPhotons.objMaxMHeap[el];
+							float pDist = (float) nearestPhotons.doubleMazHeap[el];
 							if (p != null)
-								photonAdditive += p.pColor;
+							{
+								float pConeWeight = 1 - (pDist/ ( gathered * circleRad)); //the cone filter!
+								photonAdditive += p.pColor.scale( pConeWeight);
+							}
 						}
-						photonAdditive.scale( (float)(Math.PI * circleRad * circleRad) ); //average
+						float coneDivisor = 1 - (2 / (gathered * 3) );
+						photonAdditive = photonAdditive.scale( (float)(Math.PI * circleRad * circleRad) * coneDivisor  ); //average
 
 						if (photonAdditive != Color.defaultBlack)
 							currColor += photonAdditive;

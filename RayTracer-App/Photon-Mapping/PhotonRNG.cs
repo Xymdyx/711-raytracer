@@ -15,8 +15,8 @@ namespace RayTracer_App.Photon_Mapping
 	public class PhotonRNG
 	{
 		public const int MAX_SHOOT_DEPTH = 999;
-		public const int K_PHOTONS = 20;
-		public const float DEF_SEARCH_RAD = .15f; //this will probably get overwritten by kNearestPhotons
+		public const int K_PHOTONS = 5;
+		public const float DEF_SEARCH_RAD = .015f; //this will probably get overwritten by kNearestPhotons
 		//russian roulette enum for more readable code
 
 		//RR debug
@@ -368,7 +368,7 @@ namespace RayTracer_App.Photon_Mapping
 			if (queryMap != null)
 			{
 				queryMap.locatePhotons( 1, k, pos, radPtr, nearestHeap );
-				if (nearestHeap.getHeapSize() > k/2)
+				if (nearestHeap.heapFull())
 					Console.WriteLine( $"Actually found {nearestHeap.heapSize} photons near pt {pos}" );
 			}
 			return nearestHeap; //this way we have the photons nd their distances for use
