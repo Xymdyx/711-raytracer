@@ -17,7 +17,7 @@ namespace RayTracer_App.Illumination_Models
 		//best 0f, .55f, .05f, 20f 
 		public static Phong regularPhong = new Phong( 0f, .65f, .25f, 12f );
 		public static Phong floorPhong = new Phong( 0f, .45f, .35f, 128f );
-		public static Phong cornellPhong = new Phong( 0f, .75f, .1f, 128f );
+		public static Phong cornellPhong = new Phong( 0f, .75f, 0f, 128f );
 
 		private float _ka; // not going to implement since ambient will be shaved later
 		//private float _kd; // Lambertian diffuse
@@ -120,7 +120,7 @@ namespace RayTracer_App.Illumination_Models
 		// BRDF used for Monte Carlo Distributed Ray Tracing as described in 9-2 slide deck
 		//https://www.cs.princeton.edu/courses/archive/fall16/cos526/papers/importance.pdf
 		//https://www.cs.princeton.edu/courses/archive/fall03/cs526/papers/lafortune94.pdf
-		public float mcBRDF( Vector incoming, Vector outgoing, Vector normal )
+		public override float mcBRDF( Vector incoming, Vector outgoing, Vector normal )
 		{
 			// fr( x, Oi, Oo) = kd * (1/pi) + ks * ( (n+2)/(2pi)) * cos^n alpha
 			// Oi = incoming, Oo = outgoing, x = intersection pt with object
@@ -135,7 +135,7 @@ namespace RayTracer_App.Illumination_Models
 			return diffTerm + specTerm;
 		}
 
-		public Vector mcDiffuseDir( float u1, float u2 )
+		public override Vector mcDiffuseDir( float u1, float u2 )
 		{
 			float u1Sqrt = (float) Math.Sqrt( u1 );
 			float sqrtScaler = (float) Math.Sqrt( 1 - u1 );
@@ -153,7 +153,7 @@ namespace RayTracer_App.Illumination_Models
 
 		// specular direction for PHONG BRDF for Monte Carlo.. picks random specular direction on unit hemisphere
 		//u1 and u2 are random variables between 0 and 1 passed as variables
-		public Vector mcSpecDir( float u1, float u2 )
+		public override Vector mcSpecDir( float u1, float u2 )
 		{
 			//from princeton... sopherical -> vector // sintheta * cosazi, sintheta * sizazi, costheta
 			float u1Pow = (float) Math.Pow( u1, (1/ (this.ke + 1 )) ); // u1^ 1/ (n +1)

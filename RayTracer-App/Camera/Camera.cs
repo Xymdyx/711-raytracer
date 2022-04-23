@@ -223,7 +223,7 @@ namespace RayTracer_App.Camera
 						pixColors[pos + 1] = hitColorArr[1]; //try 0-1.0 floats instead of 255
 						pixColors[pos + 2] = hitColorArr[2]; //try 0-1.0 floats instead of 255
 
-						if( hitColor != Color.bgColor) hits++;
+						if( !hitColor.Equals(Color.bgColor) ) hits++;
 					}
 
 					fpPoint.x += pixWidth;

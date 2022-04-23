@@ -16,7 +16,7 @@ namespace RayTracer_App.Photon_Mapping
 	{
 		public const int MAX_SHOOT_DEPTH = 999;
 		public const int K_PHOTONS = 15;
-		public const float DEF_SEARCH_RAD = .15f; //this will probably get overwritten by kNearestPhotons
+		public const float DEF_SEARCH_RAD = .015f; //this will probably get overwritten by kNearestPhotons
 		//russian roulette enum for more readable code
 
 		//RR debug

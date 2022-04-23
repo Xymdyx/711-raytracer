@@ -117,7 +117,7 @@ public class RayTracerMain
 		float s2X = -cbXLim + sphereRad;
 		float s2Depth = s1Depth; //1.85.. like Whitted... 2.75 for far apart
 		float s2Height = s1Height;
-		float s2Refl = .45f;
+		float s2Refl = .5f;
 		float s2Trans = 1 - s2Refl;
 		float s2RefIdx = .955f;
 

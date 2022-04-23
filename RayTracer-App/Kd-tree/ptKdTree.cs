@@ -355,6 +355,7 @@ element in the direction which represents the largest interval.*/
 		}
 
 		// locate the photons given a ray's intersection position with an object
+		//given radius squared...Make sure to be consistent...
 		public unsafe void locatePhotons( int loc, int k, Point pos, float* radPtr, MaxHeap<Photon> heap )
 		{
 			//nearestHeap = queryMap.locatePhotons( 1, radPtr, k, nearestHeap );
@@ -369,13 +370,13 @@ element in the direction which represents the largest interval.*/
 					if (dist1 < 0)
 					{
 						locatePhotons( 2 * loc, k, pos, radPtr, heap ); //visit the left/rear child
-						if (dist1 * dist1 < rad * rad)
+						if (dist1 * dist1 < rad )
 							locatePhotons( (2 * loc) + 1, k, pos, radPtr, heap ); //then visit the right/front child
 					}
 					else
 					{
 						locatePhotons( (2 * loc) + 1, k, pos, radPtr, heap ); //visit the right/front child
-						if (dist1 * dist1 < rad * rad)
+						if (dist1 * dist1 < rad )
 							locatePhotons( 2 * loc, k, pos, radPtr, heap ); //then visit the left/rear child
 					}
 				}

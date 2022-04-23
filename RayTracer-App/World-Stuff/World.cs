@@ -202,7 +202,7 @@ namespace RayTracer_App.World
 				return intersection.displaceMe( normal );
 		}
 
-		//method for finding the color when a ray hits an object. Whitted method
+		//recursive method for finding the color when a ray hits an object. Whitted recursive method
 		// TODO: Decompose into smaller methods
 		public Color spawnRay( LightRay ray, int recDepth )
 		{
@@ -235,35 +235,11 @@ namespace RayTracer_App.World
 
 				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
 
-				//calculate indirect illumination & caustics via PM queries
-				if (pmOn && intersection != null)
-				{
-					float defRadius = PhotonRNG.DEF_SEARCH_RAD	; //declare as a temp so we don't screw up a constant value
-					MaxHeap<Photon> nearestPhotons =
-						this.photonMapper.kNearestPhotons( intersection, PhotonRNG.K_PHOTONS, defRadius );
-					if (!nearestPhotons.heapEmpty())
-					{
-						float circleRad = (float)nearestPhotons.doubleMazHeap[1];
-						Color photonAdditive = Color.defaultBlack;
-						int gathered = nearestPhotons.heapSize;
-						for( int el = 0; el <= nearestPhotons.heapSize; el++)
-						{
-							Photon p = nearestPhotons.objMaxMHeap[el];
-							float pDist = (float) nearestPhotons.doubleMazHeap[el];
-							if (p != null)
-							{
-								float pConeWeight = 1f - (pDist/ ( gathered * circleRad)); //the cone filter!
-								photonAdditive += p.pColor.scale( pConeWeight);
-							}
-						}
-						float coneDivisor = 1f - (2f / (gathered * 3f) );
-						float photonScaler = (float) (1f / ((Math.PI * circleRad) * coneDivisor));
-						photonAdditive = photonAdditive.scale( photonScaler ); //average
+				//calculate indirect illumination & caustics via PM queries...Only for diffuse
+				Color photonCols = callPhotons( intersection, bestObj.normal );
+				if (!photonCols.Equals(Color.defaultBlack) )
+					currColor += photonCols;
 
-						if (photonAdditive != Color.defaultBlack)
-							currColor += photonAdditive;
-					}
-				}
 
 				if (recDepth < MAX_DEPTH)
 				{
@@ -427,7 +403,7 @@ namespace RayTracer_App.World
 			this.photonMapper = new PhotonRNG();
 
 			foreach (LightSource l in this.lights) //187 visible using BFS photon list check on 500. Only lose about 30 with kd tree visuals, which makes sense
-				l.emitPhotonsFromDPLS( this, 2000 ); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
+				l.emitPhotonsFromDPLS( this ); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
 
 			//construct photon maps from lists
 			photonMapper.makePMs();
@@ -463,7 +439,7 @@ namespace RayTracer_App.World
 			Color flux = null;
 			Point intersection = null;
 			PhotonRNG.RR_OUTCOMES rrOutcome = PhotonRNG.RR_OUTCOMES.TRANSMIT; //assume we're transmitting for simplicity.
-			//no kdTree
+			//no kdTree for now TODO
 			bestW = findRayIntersect( photonRay );
 
 			//move this out for efficiency
@@ -494,7 +470,7 @@ namespace RayTracer_App.World
 				if (bestObj as Sphere != null)
 					Console.WriteLine( "Hit sphere" );
 
-				flux = bestObjLightModel.illuminate( intersection, -photonRay.direction, this.lights, this.objects, this.bestObj, true, false ); //return to irradiance for TR
+				flux = bestObjLightModel.illuminate( intersection, -photonRay.direction, this.lights, this.objects, this.bestObj, true, true ); //last flag is for giving photons a pass from shadows
 				float u1 = this.photonMapper.random01();
 				float u2 = this.photonMapper.random01();
 				Vector travelDir = Vector.ZERO_VEC;
@@ -572,13 +548,166 @@ namespace RayTracer_App.World
 			return;
 		}
 
-		/* *collect the k nearest photons and make calculation for global and caustic PMs
+/* *collect the k nearest photons and make calculation for global and caustic PMs
 * What is the tone reproduction formula ?
 * Direct & specular illumination calculated using MC Raytracing
 * Caustics estimated using caustic map, never MC raytracing
 * indirect illumination comes from photon maps
 * figure out caustics and indirect illumination
 ** implement a cone filter if ambitious */
+		public Color callPhotons( Point intersection, Vector objNormal )
+		{
+			Color photonAdditive = Color.defaultBlack;
+			if (pmOn && intersection != null)
+			{
+				float defRadius = PhotonRNG.DEF_SEARCH_RAD; //declare as a temp so we don't screw up a constant value
+				MaxHeap<Photon> nearestPhotons =
+					this.photonMapper.kNearestPhotons( intersection, PhotonRNG.K_PHOTONS, defRadius );
+				if (!nearestPhotons.heapEmpty())
+				{
+					float circleRad = (float)nearestPhotons.doubleMazHeap[1];
+					float radRoot = (float)Math.Sqrt( circleRad );
+					photonAdditive = Color.defaultBlack;
+					int gathered = nearestPhotons.heapSize;
+					for (int el = 0; el <= nearestPhotons.heapSize; el++)
+					{
+						Photon p = nearestPhotons.objMaxMHeap[el];
+						float pDist = (float)nearestPhotons.doubleMazHeap[el];
+						if (p != null)
+						{
+							//float photonDP = objNormal.dotProduct( p.direction);
+							float pConeWeight = 1f - (float)(pDist / (gathered * radRoot)); //the cone filter!
+							photonAdditive += p.pColor.scale( pConeWeight );
+						}
+					}
+					float coneDivisor = 1f - (2f / (gathered * 3f));
+					float photonScaler = (float)(1f / (Math.PI * circleRad * coneDivisor));
+					photonAdditive = photonAdditive.scale( photonScaler ); //average
+				}
+			}
+			return photonAdditive;
+		}
+
+		// Importance sampling using Phong-Bassed BRDF, Russian Roulette.
+		// Implemented for Photon Mapping ease.
+		// TODO: Decompose into smaller methods
+		public Color spawnRayIS( LightRay ray, int recDepth )
+		{
+
+			Color currColor = Color.bgColor;
+			float bestW = float.MaxValue;
+			float currW = float.MaxValue;
+			Color lightRadiance = null;
+			Point intersection = null;
+
+			//no kdTree
+			if (this.kdTree.root == null)
+				bestW = findRayIntersect( ray );
+			else
+				bestW = this.kdTree.travelTAB( ray, this );
+
+			//move this out for efficiency
+			if ((this.bestObj != null) && (bestW != float.MaxValue))
+			{
+				Sphere s = this.bestObj as Sphere;
+				Polygon t = this.bestObj as Polygon;
+				if (s != null) intersection = s.getRayPoint( ray, bestW );
+				else if (t != null) intersection = t.getRayPoint( ray, bestW );
+
+				IlluminationModel bestObjLightModel = this.bestObj.lightModel;
+
+				if ((t != null) && (t.hasTexCoord())) // determine floor triangle point color
+					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
+
+				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
+
+				SceneObject localBest = this.bestObj;
+				Vector nHit = localBest.normal;
+				bool inside = false;
+				float checkDp = nHit.dotProduct( ray.direction );
+
+				if (checkDp > 0) // issue was using Math.Min for return in sphere intersect
+				{
+					nHit = -nHit;
+					inside = true;
+				}
+
+				//importance sampling/russian roulette here,
+				float u1 = this.photonMapper.random01();
+				float u2 = this.photonMapper.random01();
+				Vector travelDir = Vector.ZERO_VEC;
+				Point pOrigin = offsetIntersect( intersection, travelDir, bestObj.normal );
+				PhotonRNG.RR_OUTCOMES rrOutcome = PhotonRNG.RR_OUTCOMES.TRANSMIT; //assume we're transmitting for simplicity.
+				switch (rrOutcome)
+				{
+					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
+						travelDir = getRightDiffuse( bestObjLightModel, u1, u2 ); //photon's flux needs to be multiplied by psurface color TODO
+						break;
+					case PhotonRNG.RR_OUTCOMES.SPECULAR:
+						travelDir = bestObjLightModel.mcSpecDir( u1, u2);
+						break;
+					case PhotonRNG.RR_OUTCOMES.TRANSMIT: //handles logic for negating normal and cos term inside method
+						travelDir = Vector.transmit2( ray.direction, this.bestObj.normal, SceneObject.AIR_REF_INDEX, bestObj.refIndex );
+						break;
+					case PhotonRNG.RR_OUTCOMES.ABSORB:
+						break;
+					default:
+						break;
+				}
+
+				//if we're diffuse then collect photons at this point...
+				//calculate indirect illumination & caustics via PM queries...Only for diffuse
+				Color photonCols = callPhotons( intersection, bestObj.normal );
+				if (!photonCols.Equals( Color.defaultBlack ))
+					currColor += photonCols;
+
+				if (recDepth < MAX_DEPTH)
+				{
+					//need this since we recurse and may update bestObj
+					Color recColor = null;
+
+					//reflection
+					if (this.bestObj.kRefl > 0)
+					{
+						//importance sampling here if on
+						Point reflOrigin;
+						Vector reflDir = Vector.reflect2( ray.direction, localBest.normal ); //equivalent way with what I did for Phong. But this is just reflecting back the same ray
+						reflOrigin = offsetIntersect( intersection, reflDir, localBest.normal );
+						LightRay reflRay = new LightRay( reflDir, reflOrigin );
+						recColor = spawnRayIS( reflRay, recDepth + 1 );
+
+						if (recColor != null)
+							currColor += recColor.scale( localBest.kRefl );
+					}
+
+					//refraction - cp6
+					//https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_en.html... app
+					//https://www.scratchapixel.com/code.php?id=8&origin=/lessons/3d-basic-rendering/ray-tracing-overview... better
+					if (this.bestObj.kTrans > 0) //cp6 TODO, handle ray passing through an object!
+					{
+						//spawn transmission ray
+						Vector transDir;
+						Point transOrigin;
+
+						if (inside) //these do alternate
+							transDir = Vector.transmit( ray.direction, nHit, localBest.refIndex, SceneObject.AIR_REF_INDEX );
+						else
+							transDir = Vector.transmit( ray.direction, nHit, SceneObject.AIR_REF_INDEX, localBest.refIndex );
+						
+						transOrigin = offsetIntersect( intersection, transDir, localBest.normal );
+						LightRay translRay = new LightRay( transDir, transOrigin );
+						ray.entryPt = intersection; //keep track of if we're in an object or not
+						recColor = spawnRayIS( translRay, recDepth + 1 );
+
+						ray.entryPt = null; // we've exited
+
+						if (recColor != null)
+							currColor += recColor.scale( localBest.kTrans );
+					}
+				}
+			}
+			return currColor;
+		}
 	}
 }
 
