@@ -107,7 +107,7 @@ public class RayTracerMain
 		float sphereRad = .7f; //1f
 
 		float s1X = cbXLim - sphereRad;
-		float s1Depth = cbZLim - sphereRad; //+z into the scene... I am IN LHS
+		float s1Depth = 0f; //cbZLim - sphereRad; //+z into the scene... I am IN LHS
 		float s1Height = cbYLim - sphereRad; //1.75f.. 45 is good for lots of sky
 		float s1Trans = 0f;
 		float s1Refl = 1- s1Trans;
@@ -117,8 +117,8 @@ public class RayTracerMain
 		float s2X = -cbXLim + sphereRad;
 		float s2Depth = s1Depth; //1.85.. like Whitted... 2.75 for far apart
 		float s2Height = s1Height;
-		float s2Refl = .5f;
-		float s2Trans = 1 - s2Refl;
+		float s2Refl = 0f;
+		float s2Trans = .5f;
 		float s2RefIdx = .955f;
 
 		Sphere sphere1 = new Sphere( new Point( s1X, s1Height, s1Depth ), sphereRad, Color.cbChrome, s1Refl, s1Trans, s1RefIdx );

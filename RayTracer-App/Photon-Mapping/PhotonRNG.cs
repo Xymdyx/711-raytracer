@@ -15,9 +15,9 @@ namespace RayTracer_App.Photon_Mapping
 	public class PhotonRNG
 	{
 		public const int MAX_SHOOT_DEPTH = 999;
-		public const int K_PHOTONS = 15;
-		public const float DEF_SEARCH_RAD = .015f; //this will probably get overwritten by kNearestPhotons
-		//russian roulette enum for more readable code
+		public const int K_PHOTONS = 100; //15
+		public const float DEF_SEARCH_RAD = .5f; //.1f for w direct illum
+		public const float CONE_FILTER_CONST = 1f; //for cone filter... >=1
 
 		//RR debug
 		private int absorbed;
@@ -160,16 +160,16 @@ namespace RayTracer_App.Photon_Mapping
 
 		//MANAGING PLs
 		//makes a new photon and adds it to the global photon list...
-		public void addGlobal( Point intersection, float dx, float dy, Color objColor = null, float power = 0 )
+		public void addGlobal( Point intersection, float dx, float dy, Vector dir, Color objColor = null, float power = 0 )
 		{
-			Photon p = new Photon( intersection, power, dx, dy , objColor);
+			Photon p = new Photon( intersection, power, dx, dy , dir, objColor);
 			this.globalPL.Add( p );
 		}
 
 		//makes a new photon and adds it to the global photon list...
-		public void addCaustic( Point intersection, float dx, float dy, Color objColor, float power = 0 )
+		public void addCaustic( Point intersection, float dx, float dy, Vector dir, Color objColor, float power = 0 )
 		{
-			Photon p = new Photon( intersection, power, dx, dy, objColor );
+			Photon p = new Photon( intersection, power, dx, dy, dir, objColor );
 			this.causticPL.Add( p );
 		}
 
@@ -358,7 +358,7 @@ namespace RayTracer_App.Photon_Mapping
 		// we gather nearby ones, add to max heap
 		// do this for all nearest photons, replace closer ones with farther ones
 		// return the list of k photons for calculations
-		public unsafe MaxHeap<Photon> kNearestPhotons( Point pos, int k, float rad = PhotonRNG.DEF_SEARCH_RAD, MAP_TYPE desired = MAP_TYPE.GLOBAL )
+		public unsafe MaxHeap<Photon> kNearestPhotons( Point pos, int k, float rad = PhotonRNG.DEF_SEARCH_RAD, MAP_TYPE desired = MAP_TYPE.GLOBAL, bool debug = false )
 		{
 
 			float* radPtr = &rad;
@@ -368,7 +368,7 @@ namespace RayTracer_App.Photon_Mapping
 			if (queryMap != null)
 			{
 				queryMap.locatePhotons( 1, k, pos, radPtr, nearestHeap );
-				if (nearestHeap.heapFull())
+				if (nearestHeap.heapFull() && debug)
 					Console.WriteLine( $"Actually found {nearestHeap.heapSize} photons near pt {pos}" );
 			}
 			return nearestHeap; //this way we have the photons nd their distances for use

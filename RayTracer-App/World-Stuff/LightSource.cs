@@ -28,7 +28,7 @@ namespace RayTracer_App.World
 			this._power = 0;
 		}
 
-		public LightSource( Point position, Color lightColor, float power = 1)
+		public LightSource( Point position, Color lightColor, float power = 1f)
 		{
 			this._position = position;
 			this._lightColor = lightColor;
@@ -49,7 +49,7 @@ namespace RayTracer_App.World
 		// for square light -- https://www.cs.princeton.edu/courses/archive/fall16/cos526/lectures/03-photonmapping.pdf
 
 		//emit photons from diffuse point light source... 
-		public void emitPhotonsFromDPLS( World world, int totalPhotons = 1000 )
+		public void emitPhotonsFromDPLS( World world, int totalPhotons = 1000 ) //was 1000
 		{
 			float x;
 			float y;
@@ -57,7 +57,7 @@ namespace RayTracer_App.World
 			float photonW;
 			int ne = 0;
 			Point photonPos;
-			float photonPow = this.power * (1f / totalPhotons);
+			float photonPow = (1f / totalPhotons);
 			while (ne != totalPhotons)
 			{
 				do

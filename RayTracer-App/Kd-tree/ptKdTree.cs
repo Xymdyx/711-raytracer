@@ -366,7 +366,7 @@ element in the direction which represents the largest interval.*/
 				ptKdInteriorNode inside = pmHeap[loc - 1] as ptKdInteriorNode;
 				if (inside != null)
 				{
-					float dist1 = pos.getAxisCoord( inside.axis ) - inside.axisVal;
+					float dist1 = pos.getAxisCoord( inside.axis ) - inside.partitionPt.getAxisCoord(inside.axis); //switching this around seems to help...
 					if (dist1 < 0)
 					{
 						locatePhotons( 2 * loc, k, pos, radPtr, heap ); //visit the left/rear child
@@ -392,30 +392,17 @@ element in the direction which represents the largest interval.*/
 				float zD = (pLeaf.z - pos.z);
 				float dist2 = xD * xD + yD * yD + zD * zD;
 
-				//insert into max heap and update search radius
+				//insert into max heap and update search squared radius
 				if (dist2 < rad )
 				{
-					//float maxDist = (float) heap.peekTopOfHeap();
-					// remove the heap root if necessary.. now handled in the insert function
-					//if ( (heap.getHeapSize() == k + 1) && dist2 < maxDist)
-					//	heap.extractHeadOfHeap();
-
 					heap.InsertElementInHeap( dist2, leaf.stored );
-					*radPtr = dist2;
+					*radPtr = (float) heap.doubleMazHeap[1]; //the search radius is the distance to root node in max heap -_-. I was assigning it to dist2
 				}
 			}
 
 			return;
 		}
 		
-
-
-		//private Point recomputeS( int axis, float sCoord, LightRay ray )
-		//{
-		//	Point newS = new Point( 0, 0, 0 );
-		//	newS.setAxisCoord( axis, sCoord );
-		//}
-
 		//print general PM stats
 		public String pmPrint()
 		{
