@@ -15,8 +15,8 @@ namespace RayTracer_App.Photon_Mapping
 	public class PhotonRNG
 	{
 		public const int MAX_SHOOT_DEPTH = 999;
-		public const int K_PHOTONS = 50; //15... able to gather 449 on 1000?
-		public const float DEF_SEARCH_RAD = .1f; //.1f for w direct illum
+		public const int K_PHOTONS = 250; //15... able to gather 449 on 1000?
+		public const float DEF_SEARCH_RAD = .15f; //.1f for w direct illum
 		public const float CONE_FILTER_CONST = 1f; //for cone filter... >=1
 
 		//RR debug
@@ -213,7 +213,8 @@ namespace RayTracer_App.Photon_Mapping
 		{
 			List<Point> causticPoses = grabPosByType( MAP_TYPE.CAUSTIC );
 			//globalPM.fillHeap( causticPoses.Count );
-			this.causticPM.root = causticPM.balance( causticPoses, 0, this, float.MaxValue, MAP_TYPE.CAUSTIC );
+			if( causticPoses.Count > 0)
+				this.causticPM.root = causticPM.balance( causticPoses, 0, this, float.MaxValue, MAP_TYPE.CAUSTIC );
 			return;
 		}
 

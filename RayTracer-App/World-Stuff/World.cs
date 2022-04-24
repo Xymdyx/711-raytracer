@@ -390,7 +390,7 @@ namespace RayTracer_App.World
 			this.photonMapper = new PhotonRNG();
 
 			foreach (LightSource l in this.lights) //187 visible using BFS photon list check on 500. Only lose about 30 with kd tree visuals, which makes sense
-				l.emitPhotonsFromDPLS( this, 1000); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
+				l.emitPhotonsFromDPLS( this, 500); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
 
 			//construct photon maps from lists
 			photonMapper.makePMs();
@@ -543,7 +543,7 @@ namespace RayTracer_App.World
 * indirect illumination comes from photon maps
 * figure out caustics and indirect illumination
 ** implement a cone filter if ambitious */
-		public Color callPhotons( Point intersection, Vector incoming, Vector objNormal )
+		public Color callPhotons( Point intersection, Vector outgoing, Vector objNormal ) //incoming to a point, outgoing from a point to the eye...
 		{
 			Color photonAdditive = Color.defaultBlack;
 			if (pmOn && intersection != null)
@@ -565,7 +565,7 @@ namespace RayTracer_App.World
 						{
 							if (objNormal.dotProduct( p.dir ) < 0f)
 							{
-								float brdfScaler = this.bestObj.lightModel.mcBRDF( p.dir, incoming, objNormal ); //probability of this photon
+								float brdfScaler = this.bestObj.lightModel.mcBRDF( p.dir, -outgoing, objNormal ); //probability of this photon being visible from the eye
 								float pConeWeight = 1f - (float)(pDist / (coneConst * radRoot)); //the cone filter!
 								Color tempColor = p.pColor.scale( brdfScaler );
 								photonAdditive += tempColor;//.scale( pConeWeight );
@@ -675,8 +675,8 @@ namespace RayTracer_App.World
 				if (rrOutcome == PhotonRNG.RR_OUTCOMES.DIFFUSE && recDepth < maxBounces && localBest.kRefl == 0 && localBest.kTrans == 0)
 				{ //we diffusely or specularly reflect
 					LightRay pRay = new LightRay( travelDir, pOrigin );
-					float prob = bestObjLightModel.mcBRDF( ray.direction, travelDir, localBest.normal );
-					currColor += spawnRayIS( pRay, recDepth + 1, diffuseFlag ).scale( 1f/prob * materialScale);
+					float prob = bestObjLightModel.mcBRDF( travelDir, -ray.direction, localBest.normal );
+					currColor += spawnRayIS( pRay, recDepth + 1, diffuseFlag );
 				}
 				diffuseFlag = false;
 				if (recDepth < maxBounces)

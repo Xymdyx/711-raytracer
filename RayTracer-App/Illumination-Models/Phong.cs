@@ -120,7 +120,9 @@ namespace RayTracer_App.Illumination_Models
 			// We are backwards tracing from the eye...so wo = incoming = FROM EYE
 			// take dot product here
 			Vector refl = Vector.reflect2( incoming, normal );          // reflection = perfectly reflective direction of the incoming ray
-			float cos = (float) Math.Max( 0, refl.dotProduct( outgoing ) ); //no negatives allowed
+			Vector refl2 = Vector.reflect( incoming, normal );          // reflection = perfectly reflective direction of the incoming ray
+			float reflDP = refl.dotProduct( outgoing );
+			float cos = (float) Math.Max( 0, reflDP ); //no negatives allowed
 
 			//raise cosine to nth
 			cos = (float)Math.Pow( cos, ke );
