@@ -226,6 +226,7 @@ namespace RayTracer_App.World
 			//move this out for efficiency
 			if ((this.bestObj != null) && (bestW != float.MaxValue))
 			{
+				currColor = Color.defaultBlack;
 				Sphere s = this.bestObj as Sphere;
 				Polygon t = this.bestObj as Polygon;
 				if (s != null) intersection = s.getRayPoint( ray, bestW );
@@ -236,13 +237,14 @@ namespace RayTracer_App.World
 				if ((t != null) && (t.hasTexCoord())) // determine floor triangle point color
 					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
 
+				//if(bestObj.kTrans != 0 || bestObj.kRefl != 0) //specular stuff
 				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
 
 				//calculate indirect illumination & caustics via PM queries...Only for diffuse
 				Color photonCols = callPhotons( intersection, bestObj.normal );
-				if (!photonCols.Equals(Color.defaultBlack)) //recDepth > 1 && bestObj.kTrans == 0 && bestObj.kRefl == 0   && 
-					currColor += photonCols;
-
+				//if (currColor.Equals( Color.defaultBlack) && bestObj.kTrans == 0 && bestObj.kRefl == 0) //recDepth > 1 && bestObj.kTrans == 0 && bestObj.kRefl == 0   && 
+				//if( currColor.Equals(Color.defaultBlack))
+				currColor += photonCols;
 
 				if (recDepth < MAX_DEPTH)
 				{
@@ -268,12 +270,6 @@ namespace RayTracer_App.World
 						Point reflOrigin;
 						//Vector reflDir = Vector.reflect( -ray.direction, localBest.normal );
 						Vector reflDir = Vector.reflect2( ray.direction, localBest.normal ); //equivalent way with what I did for Phong. But this is just reflecting back the same ray
-
-						//if (reflDir.dotProduct( localBest.normal ) < 0)
-						//	reflOrigin = intersection.displaceMe( -localBest.normal );
-						//else
-						//	reflOrigin = intersection.displaceMe( localBest.normal );
-
 						reflOrigin = offsetIntersect( intersection, reflDir, localBest.normal );
 						LightRay reflRay = new LightRay( reflDir, reflOrigin );
 						recColor = spawnRay( reflRay, recDepth + 1 );
@@ -400,7 +396,7 @@ namespace RayTracer_App.World
 			this.photonMapper = new PhotonRNG();
 
 			foreach (LightSource l in this.lights) //187 visible using BFS photon list check on 500. Only lose about 30 with kd tree visuals, which makes sense
-				l.emitPhotonsFromDPLS( this, 2000 ); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
+				l.emitPhotonsFromDPLS( this, 10 ); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
 
 			//construct photon maps from lists
 			photonMapper.makePMs();
@@ -497,7 +493,7 @@ namespace RayTracer_App.World
 						break;
 					case PhotonRNG.RR_OUTCOMES.ABSORB:
 						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
-						if (causticsMark) ;
+						if (causticsMark)
 							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
 						break;
 					default:
@@ -561,7 +557,7 @@ namespace RayTracer_App.World
 				float defRadius = PhotonRNG.DEF_SEARCH_RAD; //this is r^2 already
 				MaxHeap<Photon> nearestPhotons =
 					this.photonMapper.kNearestPhotons( intersection, PhotonRNG.K_PHOTONS, defRadius );
-				if (!nearestPhotons.heapEmpty())
+				if (nearestPhotons.heapSize >= 8)
 				{
 					float circleRad = (float)nearestPhotons.doubleMazHeap[1]; //given r^2
 					float radRoot = (float) Math.Sqrt(circleRad);
@@ -573,13 +569,15 @@ namespace RayTracer_App.World
 						float pDist = (float)nearestPhotons.doubleMazHeap[el];
 						if (p != null)
 						{
-							float photonDP = (float) Math.Max(0.0, -objNormal.dotProduct( p.dir));
-							float pConeWeight = 1f - (float)(pDist * photonDP / (coneConst * radRoot)); //the cone filter!
-							photonAdditive += p.pColor.scale( pConeWeight );
+							if (objNormal.dotProduct( p.dir ) < 0f)
+							{
+								float pConeWeight = 1f - (float)(pDist / (coneConst * radRoot)); //the cone filter!
+								photonAdditive += p.pColor;//.scale( pConeWeight );
+							}
 						}
 					}
 					float coneDivisor = 1f - (2f / (coneConst * 3f));
-					float photonScaler = (float)(1f / (Math.PI * circleRad * coneDivisor));
+					float photonScaler = (float)(1f / (Math.PI * circleRad)); //this gets insanely high
 					photonAdditive = photonAdditive.scale( photonScaler ); //average
 					if (nearestPhotons.heapSize > this.highestK) this.highestK = nearestPhotons.heapSize;
 					this.allK += nearestPhotons.heapSize;

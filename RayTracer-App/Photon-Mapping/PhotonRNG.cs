@@ -15,8 +15,8 @@ namespace RayTracer_App.Photon_Mapping
 	public class PhotonRNG
 	{
 		public const int MAX_SHOOT_DEPTH = 999;
-		public const int K_PHOTONS = 100; //15
-		public const float DEF_SEARCH_RAD = .5f; //.1f for w direct illum
+		public const int K_PHOTONS = 100; //15... able to gather 449 on 1000?
+		public const float DEF_SEARCH_RAD = .25f; //.1f for w direct illum
 		public const float CONE_FILTER_CONST = 1f; //for cone filter... >=1
 
 		//RR debug
@@ -24,6 +24,12 @@ namespace RayTracer_App.Photon_Mapping
 		private int reflected;
 		private int transmitted;
 		private int diffused;
+		private int _maxGlobal;
+		private int _maxCaustic;
+
+		public int maxGlobal { get => this._maxGlobal; set => this._maxGlobal = value; }
+		public int maxCaustics { get => this._maxCaustic; set => this._maxCaustic = value; }
+
 		public enum RR_OUTCOMES
 		{
 			ERROR = -1,
@@ -162,6 +168,9 @@ namespace RayTracer_App.Photon_Mapping
 		//makes a new photon and adds it to the global photon list...
 		public void addGlobal( Point intersection, float dx, float dy, Vector dir, Color objColor = null, float power = 0 )
 		{
+			if (globalPL.Count >= maxGlobal)
+				return;
+
 			Photon p = new Photon( intersection, power, dx, dy , dir, objColor);
 			this.globalPL.Add( p );
 		}
@@ -169,6 +178,8 @@ namespace RayTracer_App.Photon_Mapping
 		//makes a new photon and adds it to the global photon list...
 		public void addCaustic( Point intersection, float dx, float dy, Vector dir, Color objColor, float power = 0 )
 		{
+			if (causticPL.Count >= maxCaustics)
+				return;
 			Photon p = new Photon( intersection, power, dx, dy, dir, objColor );
 			this.causticPL.Add( p );
 		}

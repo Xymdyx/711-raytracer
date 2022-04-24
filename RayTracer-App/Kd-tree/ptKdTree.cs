@@ -360,33 +360,38 @@ element in the direction which represents the largest interval.*/
 		{
 			//nearestHeap = queryMap.locatePhotons( 1, radPtr, k, nearestHeap );
 			float rad = *radPtr;
+			ptKdInteriorNode inside = pmHeap[loc - 1] as ptKdInteriorNode;
+			ptKdLeafNode leaf = pmHeap[loc - 1] as ptKdLeafNode;
 			if (((loc * 2) + 1) < this.pmHeap.Count)
 			{
 				//examine children via recursion
-				ptKdInteriorNode inside = pmHeap[loc - 1] as ptKdInteriorNode;
 				if (inside != null)
 				{
 					float dist1 = pos.getAxisCoord( inside.axis ) - inside.partitionPt.getAxisCoord(inside.axis); //switching this around seems to help...
 					if (dist1 < 0)
 					{
 						locatePhotons( 2 * loc, k, pos, radPtr, heap ); //visit the left/rear child
-						if (dist1 * dist1 < rad )
+						if (dist1 * dist1 < *radPtr)
 							locatePhotons( (2 * loc) + 1, k, pos, radPtr, heap ); //then visit the right/front child
 					}
 					else
 					{
 						locatePhotons( (2 * loc) + 1, k, pos, radPtr, heap ); //visit the right/front child
-						if (dist1 * dist1 < rad )
+						if (dist1 * dist1 < *radPtr)
 							locatePhotons( 2 * loc, k, pos, radPtr, heap ); //then visit the left/rear child
 					}
 				}
 			}
 
 			//okay we're in leaf teritory
-			ptKdLeafNode leaf = pmHeap[loc - 1] as ptKdLeafNode;
-			if (leaf != null) //never gets executed
+			rad = *radPtr;
+			Photon phot = null;
+			if (inside != null &&  inside.stored != null) phot = inside.stored;
+			else if (leaf != null) phot = leaf.stored;
+
+			if (phot != null) //never gets executed
 			{
-				Point pLeaf = leaf.stored.pos;
+				Point pLeaf = phot.pos;
 				float xD = (pLeaf.x - pos.x);
 				float yD = (pLeaf.y - pos.y);
 				float zD = (pLeaf.z - pos.z);
@@ -395,7 +400,7 @@ element in the direction which represents the largest interval.*/
 				//insert into max heap and update search squared radius
 				if (dist2 < rad )
 				{
-					heap.InsertElementInHeap( dist2, leaf.stored );
+					heap.InsertElementInHeap( dist2, phot );
 					*radPtr = (float) heap.doubleMazHeap[1]; //the search radius is the distance to root node in max heap -_-. I was assigning it to dist2
 				}
 			}

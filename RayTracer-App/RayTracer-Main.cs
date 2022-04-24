@@ -104,7 +104,7 @@ public class RayTracerMain
 		Polygon frontTri2 = new Polygon( frontVerts2, Color.cbGrey, Phong.cornellPhong );
 		// finally make spheres
 		//left sphere params
-		float sphereRad = .7f; //1f
+		float sphereRad = .5f; //1f
 
 		float s1X = cbXLim - sphereRad;
 		float s1Depth = 0f; //cbZLim - sphereRad; //+z into the scene... I am IN LHS
@@ -266,10 +266,9 @@ public class RayTracerMain
  		* * setup Cornell box scene with Whitted method
 		* * figure out how to balance photons in kdTree as we go
 		* * photon tracing
-		* collect the k nearest photons and make calculation for global and caustic PMs
-		* What is the tone reproduction formula?
+		* * * collect the k nearest photons and make calculation for global and caustic PMs
 		* figure out caustics and indirect illumination
-		* implement a cone filter if ambitious
+		* * * implement a cone filter if ambitious
 		*/
 
 		//Camera cam = setupWhitted( world, false );

@@ -58,6 +58,8 @@ namespace RayTracer_App.World
 			int ne = 0;
 			Point photonPos;
 			float photonPow = (1f / totalPhotons);
+			world.photonMapper.maxGlobal = totalPhotons;
+			world.photonMapper.maxCaustics = totalPhotons;
 			while (ne != totalPhotons)
 			{
 				do
@@ -65,7 +67,7 @@ namespace RayTracer_App.World
 					x = world.photonMapper.randomRange();
 					y = world.photonMapper.randomRange();
 					z = world.photonMapper.randomRange();
-				} while ((x * x) + (y * y) + (z * z) > 1);
+				} while( (x * x) + (y * y) + (z * z) > 1 ) ;
 
 				Vector dir = new Vector( x, y, z );
 				LightRay photonRay = new LightRay( dir, this.position );

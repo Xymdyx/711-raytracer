@@ -52,21 +52,6 @@ namespace RayTracer_App.Illumination_Models
 		public override Color illuminate( Point intersect, Vector normal, LightRay incoming,
 			Vector mirrorReflect, Vector cameraRay, LightSource light, SceneObject litObj ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
 		{
-
-			//// kd * (litObj.illuminate() * light.color * (incoming.dotProduct( Normal) ) + 
-			//Vector incomingVec = -incoming.direction;
-			//Color diffuseTerm = litObj.diffuse * light.lightColor;
-			//diffuseTerm = diffuseTerm.scale( this.kd * incomingVec.dotProduct( normal ) ); //changed to be negative - 2/27
-
-			//// ks * (Color.specular * lights.color * (mirrorReflect.dotProduct( cameraRay)^ke) ;
-			//Color specTerm = litObj.specular * light.lightColor;
-			//float specReflDp = mirrorReflect.dotProduct( cameraRay );
-			//float totalSpecRefl = specReflDp;
-			//totalSpecRefl = (float) Math.Pow( specReflDp, ke ) ;
-
-			//specTerm = specTerm.scale( this.ks * totalSpecRefl);
-			////( this.ks * litObj.specular * light.lightColor * mirrorReflect.dotProduct( cameraRay ) );
-			//return diffuseTerm + specTerm;
 			return Color.defaultBlack;
 		}
 
