@@ -97,34 +97,50 @@ namespace RayTracer_App.Illumination_Models
 					specTerm = specTerm.scale( this.ks * totalSpecRefl );
 					//( this.ks * litObj.specular * light.lightColor * mirrorReflect.dotProduct( cameraRay ) );
 					lightIrradiance += (diffuseTerm + specTerm).scale(litPercent);
+
+				if (lightIrradiance.Equals( Color.defaultBlack )) //some photons are shadowy, I guess
+					;// Console.WriteLine( "Phong computed black as the color at this point" );
 				}
 
 			return lightIrradiance;
 		}
 
+		//POSSIBLE ISSUE TODO
 		// BRDF used for Monte Carlo Distributed Ray Tracing as described in 9-2 slide deck
 		//https://www.cs.princeton.edu/courses/archive/fall16/cos526/papers/importance.pdf
 		//https://www.cs.princeton.edu/courses/archive/fall03/cs526/papers/lafortune94.pdf
+		//https://www.researchgate.net/publication/342837181_Real-Time_Shading_with_Phong_BRDF_Model
 		public override float mcBRDF( Vector incoming, Vector outgoing, Vector normal )
 		{
 			// fr( x, Oi, Oo) = kd * (1/pi) + ks * ( (n+2)/(2pi)) * cos^n alpha
-			// Oi = incoming, Oo = outgoing, x = intersection pt with object
+			// Oi = incoming, Oo = outgoing/eye, x = intersection pt with object
 			// kd, ks, n are all here... n = specular exponent
 			// alpha = angle between reflective direction and outgoing ray direction... (their dot product raised to the n) max is pi/2
 			// kd + ks <= 1
-			Vector refl = Vector.reflect( outgoing, normal );
-			float cos = refl.dotProduct( outgoing );
+			// We are backwards tracing from the eye...so wo = incoming = FROM EYE
+			// take dot product here
+			Vector refl = Vector.reflect2( incoming, normal );          // reflection = perfectly reflective direction of the incoming ray
+			float cos = (float) Math.Max( 0, refl.dotProduct( outgoing ) ); //no negatives allowed
+
+			//raise cosine to nth
+			cos = (float)Math.Pow( cos, ke );
+
 			float diffTerm = (float) (this.kd / Math.PI);
 			float specTerm = (float) ( (this.ks) * ((this.ke + 2) / (2 * Math.PI)) * cos );
+			float prob = diffTerm + specTerm;
 
-			return diffTerm + specTerm;
+			if( prob > 1 || prob < 0)
+				Console.WriteLine( $"Improbable prob in BRDF" );
+
+			return prob;
 		}
 
-		public override Vector mcDiffuseDir( float u1, float u2 )
+		public override Vector mcDiffuseDir( float u1, float u2 ) // wi/incoming light/ we are randomly calculating
 		{
 			float u1Sqrt = (float) Math.Sqrt( u1 );
 			float sqrtScaler = (float) Math.Sqrt( 1 - u1 );
 
+			//from slides
 			float theta = (float) Math.Acos( u1Sqrt );
 			float azithumal = (float) (2 * Math.PI * u2);
 
@@ -133,7 +149,11 @@ namespace RayTracer_App.Illumination_Models
 			float y = (float)(sqrtScaler * Math.Sin( azithumal )); // sqrt(1-u) *sinazi
 			float z = u1Sqrt; // sqrt(u1)
 
-			return new Vector( x, y, z ); //normalized
+			Vector quickVec = new Vector( x, y, z ); //normalized
+													 // slides way
+			Vector cartConv = Sphere.sphericalToCart( theta, azithumal );
+			
+			return cartConv;
 		}
 
 		// specular direction for PHONG BRDF for Monte Carlo.. picks random specular direction on unit hemisphere
@@ -155,7 +175,11 @@ namespace RayTracer_App.Illumination_Models
 			float y = (float)(sqrtScaler * Math.Sin( azithumal )); // sqrtScaler *sinazi
 			float z = u1Pow; 
 
-			return new Vector( x, y, z ); //normalized
+			Vector quickVec = new Vector( x, y, z ); //normalized
+
+			Vector cartVec = Sphere.sphericalToCart( alpha, azithumal );
+
+			return cartVec;
 		}
 	}
 }

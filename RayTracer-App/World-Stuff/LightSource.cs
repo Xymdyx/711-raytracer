@@ -57,7 +57,7 @@ namespace RayTracer_App.World
 			float photonW;
 			int ne = 0;
 			Point photonPos;
-			float photonPow = (1f / totalPhotons);
+			float photonPow = (this.power / totalPhotons) ;
 			world.photonMapper.maxGlobal = totalPhotons;
 			world.photonMapper.maxCaustics = totalPhotons;
 			while (ne != totalPhotons)

@@ -53,7 +53,7 @@ namespace RayTracer_App.Photon_Mapping
 			this.litFlag = false;
 
 			if (objColor != null)
-				this.pColor *= objColor;
+				this.pColor = objColor;
 		}
 
 		//full constructor used by copy in the event I must store separate photons in the lists and maps

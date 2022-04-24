@@ -201,7 +201,18 @@ namespace RayTracer_App.Camera
 				{
 					fire.direction = fpPoint - this.eyePoint;
 					//supersample branch here... have an array of hitcolors... average them then pass to TR below
-					if (!isSuperSampling && !justPhotons)
+					if( doPM)
+					{
+						int samples = 1;
+						hitColor = Color.defaultBlack;
+						for (int sk = 0; sk < samples; sk++)
+							hitColor += world.spawnRayIS( fire, 1 );
+
+						hitColor.scale( (float) 1f / samples );
+						if (hitColor.whiteOrHigher()) ;
+							//Console.WriteLine( "Importance sample output white or higher" );
+					}
+					else if (!isSuperSampling && !justPhotons)
 					{
 						hitColor = world.spawnRay( fire, 1 ); //this will be irradiance.... CP5	
 					}

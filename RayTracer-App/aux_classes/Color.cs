@@ -19,6 +19,7 @@ public class Color
     public static Color sphereColor = new Color( 0.0f, 0.0f, 1.0f );
     public static Color floorColor = new Color( 1.0f, 0.0f, 0.0f );
     public static Color bunnyColor = new Color( 0.770f, 0.590f, 0.354f );
+
     public static Color cbBlue = new Color( 0.237f, 0.486f, 0.790f );
     public static Color cbRed = new Color( 0.760f, 0.0988f, 0.187f );
     public static Color cbGrey = new Color( 0.810f, 0.802f, 0.803f );
@@ -99,7 +100,13 @@ public class Color
         return (c.r == this.r && c.g == this.g && c.b == this.b);
 	}
 
-	public override string ToString()
+    public bool whiteOrHigher( )
+    {
+
+        return (this.r >= 1 && this.g >= 1 && this.b >= 1);
+    }
+
+    public override string ToString()
 	{
 		return $"Color({r}, {g}, {b})";
 	}

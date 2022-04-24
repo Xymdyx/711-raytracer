@@ -57,6 +57,18 @@ namespace RayTracer_App.Scene_Objects
 			this.refIndex = refIndex;
 		}
 
+		//convert from spherical to cartesian
+		//x=ρsinφcosθ,y=ρsinφsinθ, and z=ρcosφ. where rho = radius
+		public static Vector sphericalToCart( float theta, float phi )
+		{
+			float sinTheta = (float) Math.Sin( theta );
+			float cosTheta = (float)Math.Cos( theta );
+			float sinPhi = (float)Math.Sin( phi );
+			float cosPhi = (float)Math.Cos( phi );
+
+			return new Vector( sinPhi * cosTheta, sinPhi * sinTheta, cosPhi );
+		}
+
 		// function for getting where along ray intersection happens with a sphere
 		// sets normal somewhere.. see 27 in notes
 		public override Point getRayPoint( LightRay ray, float w ) //corrected on 2/27...

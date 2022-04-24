@@ -106,10 +106,10 @@ public class RayTracerMain
 		//left sphere params
 		float sphereRad = .5f; //1f
 
-		float s1X = cbXLim - sphereRad;
+		float s1X = cbXLim - (sphereRad * 2f);
 		float s1Depth = 0f; //cbZLim - sphereRad; //+z into the scene... I am IN LHS
 		float s1Height = cbYLim - sphereRad; //1.75f.. 45 is good for lots of sky
-		float s1Trans = 0f;
+		float s1Trans = .5f;
 		float s1Refl = 1- s1Trans;
 		float s1RefIdx = SceneObject.AIR_REF_INDEX; // ni > nt for TIR
 
@@ -137,7 +137,7 @@ public class RayTracerMain
 		}
 
 		//place mainLight on top wall near its center
-		Point ceilLightPos = new Point( 0f, -cbXLim + .005f, s1Depth - 1f ); ; // 0f, -cbYLim + .5f, 0f ... 0f, -2f, s1Depth - 1f
+		Point ceilLightPos = new Point( -.5f, -cbXLim + .25f, s1Depth ); ; // 0f, -cbYLim + .5f, 0f ... 0f, -2f, s1Depth - 1f
 		Color ceilLightColor = Color.whiteSpecular;
 		LightSource ceilLight = new LightSource( ceilLightPos, ceilLightColor );
 
@@ -156,7 +156,7 @@ public class RayTracerMain
 		world.addObject( frontTri1 );
 		world.addObject( frontTri2 );
 		world.addObject( sphere1 );
-		world.addObject( sphere2 );
+		//world.addObject( sphere2 );
 
 		Vector up = new Vector( 0f, 1f, 0f );
 		Point eyePos = new Point( 0f, .75f/2f, -2.75f/2f ); //0f, .5f, -2.75f... facing rear // facing frontBound 0f, .5f, -.75f

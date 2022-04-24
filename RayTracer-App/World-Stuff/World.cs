@@ -240,12 +240,6 @@ namespace RayTracer_App.World
 				//if(bestObj.kTrans != 0 || bestObj.kRefl != 0) //specular stuff
 				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
 
-				//calculate indirect illumination & caustics via PM queries...Only for diffuse
-				Color photonCols = callPhotons( intersection, bestObj.normal );
-				//if (currColor.Equals( Color.defaultBlack) && bestObj.kTrans == 0 && bestObj.kRefl == 0) //recDepth > 1 && bestObj.kTrans == 0 && bestObj.kRefl == 0   && 
-				//if( currColor.Equals(Color.defaultBlack))
-				currColor += photonCols;
-
 				if (recDepth < MAX_DEPTH)
 				{
 					//need this since we recurse and may update bestObj
@@ -396,7 +390,7 @@ namespace RayTracer_App.World
 			this.photonMapper = new PhotonRNG();
 
 			foreach (LightSource l in this.lights) //187 visible using BFS photon list check on 500. Only lose about 30 with kd tree visuals, which makes sense
-				l.emitPhotonsFromDPLS( this, 10 ); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
+				l.emitPhotonsFromDPLS( this, 1000); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
 
 			//construct photon maps from lists
 			photonMapper.makePMs();
@@ -549,7 +543,7 @@ namespace RayTracer_App.World
 * indirect illumination comes from photon maps
 * figure out caustics and indirect illumination
 ** implement a cone filter if ambitious */
-		public Color callPhotons( Point intersection, Vector objNormal )
+		public Color callPhotons( Point intersection, Vector incoming, Vector objNormal )
 		{
 			Color photonAdditive = Color.defaultBlack;
 			if (pmOn && intersection != null)
@@ -557,7 +551,7 @@ namespace RayTracer_App.World
 				float defRadius = PhotonRNG.DEF_SEARCH_RAD; //this is r^2 already
 				MaxHeap<Photon> nearestPhotons =
 					this.photonMapper.kNearestPhotons( intersection, PhotonRNG.K_PHOTONS, defRadius );
-				if (nearestPhotons.heapSize >= 8)
+				if ( nearestPhotons.heapSize >= 8)
 				{
 					float circleRad = (float)nearestPhotons.doubleMazHeap[1]; //given r^2
 					float radRoot = (float) Math.Sqrt(circleRad);
@@ -571,8 +565,10 @@ namespace RayTracer_App.World
 						{
 							if (objNormal.dotProduct( p.dir ) < 0f)
 							{
+								float brdfScaler = this.bestObj.lightModel.mcBRDF( p.dir, incoming, objNormal ); //probability of this photon
 								float pConeWeight = 1f - (float)(pDist / (coneConst * radRoot)); //the cone filter!
-								photonAdditive += p.pColor;//.scale( pConeWeight );
+								Color tempColor = p.pColor.scale( brdfScaler );
+								photonAdditive += tempColor;//.scale( pConeWeight );
 							}
 						}
 					}
@@ -589,7 +585,7 @@ namespace RayTracer_App.World
 		// Importance sampling using Phong-Bassed BRDF, Russian Roulette.
 		// Implemented for Photon Mapping ease.
 		// TODO: Decompose into smaller methods
-		public Color spawnRayIS( LightRay ray, int recDepth )
+		public Color spawnRayIS( LightRay ray, int recDepth, bool fromDiffuse = false, int maxBounces = 4 )
 		{
 
 			Color currColor = Color.bgColor;
@@ -597,6 +593,7 @@ namespace RayTracer_App.World
 			float currW = float.MaxValue;
 			Color lightRadiance = null;
 			Point intersection = null;
+			bool diffuseFlag = fromDiffuse;
 
 			//no kdTree
 			if (this.kdTree.root == null)
@@ -614,12 +611,21 @@ namespace RayTracer_App.World
 
 				IlluminationModel bestObjLightModel = this.bestObj.lightModel;
 
+				//handle indirect global illumination here. Really shitty sampling
+				//calculate indirect illumination & caustics via PM queries...Only for diffuse
+				if (fromDiffuse)
+				{
+					Color photonCols = callPhotons( intersection, ray.direction, bestObj.normal );
+					if (photonCols.whiteOrHigher()) Console.WriteLine( "Indirect illumination is white or higher" );
+					return photonCols;
+				}
+
 				if ((t != null) && (t.hasTexCoord())) // determine floor triangle point color
 					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
 
-				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //return to irradiance for TR
+				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //gather direct illumination
 
-				SceneObject localBest = this.bestObj;
+				SceneObject localBest = this.bestObj; //needed since we can overwrite this
 				Vector nHit = localBest.normal;
 				bool inside = false;
 				float checkDp = nHit.dotProduct( ray.direction );
@@ -633,35 +639,47 @@ namespace RayTracer_App.World
 				//importance sampling/russian roulette here TODO... figure out how to incorporate this into transmittance
 				float u1 = this.photonMapper.random01();
 				float u2 = this.photonMapper.random01();
+				float materialScale = 1f; // so we can do reflection and refraction properly
+
 				float dirProb = float.MinValue; //for PDF
 				Vector travelDir = Vector.ZERO_VEC;
 				Point pOrigin = offsetIntersect( intersection, travelDir, bestObj.normal );
 				PhotonRNG.RR_OUTCOMES rrOutcome = PhotonRNG.RR_OUTCOMES.TRANSMIT; //assume we're transmitting for simplicity.
+				if (!inside)
+					rrOutcome = this.photonMapper.RussianRoulette( bestObjLightModel.kd, bestObjLightModel.ks, localBest.kRefl, localBest.kTrans );
+
 				//https://henrikdahlberg.github.io/2016/09/12/fresnel-reflection-and-refraction.html
 				//https://blog.demofox.org/2017/01/09/raytracing-reflection-refraction-fresnel-total-internal-reflection-and-beers-law/
 				switch (rrOutcome)
 				{
-					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
-						travelDir = bestObjLightModel.mcDiffuseDir( u1, u2 );
+					case PhotonRNG.RR_OUTCOMES.DIFFUSE: 
+						travelDir = bestObjLightModel.mcDiffuseDir( u1, u2 ); //this is wi... camera ray is outgoing
+						diffuseFlag = true;
 						//if we're diffuse then collect photons at this point...
-						//calculate indirect illumination & caustics via PM queries...Only for diffuse
-						Color photonCols = callPhotons( intersection, bestObj.normal );
-						if (!photonCols.Equals( Color.defaultBlack ))
-							currColor += photonCols;
 						break;
 					case PhotonRNG.RR_OUTCOMES.SPECULAR:
-						travelDir = bestObjLightModel.mcSpecDir( u1, u2);
+						//travelDir = bestObjLightModel.mcSpecDir( u1, u2);
+						diffuseFlag = false;
+						materialScale = localBest.kRefl;
 						break;
 					case PhotonRNG.RR_OUTCOMES.TRANSMIT: //handles logic for negating normal and cos term inside method
-						travelDir = Vector.transmit2( ray.direction, this.bestObj.normal, SceneObject.AIR_REF_INDEX, bestObj.refIndex );
 						break;
 					case PhotonRNG.RR_OUTCOMES.ABSORB:
+						diffuseFlag = false;
 						break;
 					default:
+						diffuseFlag = false;
 						break;
 				}
 
-				if (recDepth < MAX_DEPTH)
+				if (rrOutcome == PhotonRNG.RR_OUTCOMES.DIFFUSE && recDepth < maxBounces && localBest.kRefl == 0 && localBest.kTrans == 0)
+				{ //we diffusely or specularly reflect
+					LightRay pRay = new LightRay( travelDir, pOrigin );
+					float prob = bestObjLightModel.mcBRDF( ray.direction, travelDir, localBest.normal );
+					currColor += spawnRayIS( pRay, recDepth + 1, diffuseFlag ).scale( 1f/prob * materialScale);
+				}
+				diffuseFlag = false;
+				if (recDepth < maxBounces)
 				{
 					//need this since we recurse and may update bestObj
 					Color recColor = null;
@@ -669,9 +687,9 @@ namespace RayTracer_App.World
 					if (this.bestObj.kRefl > 0)
 					{
 						//importance sampling here if on
-						Point reflOrigin;
+						//Point reflOrigin;
 						Vector reflDir = Vector.reflect2( ray.direction, localBest.normal ); //equivalent way with what I did for Phong. But this is just reflecting back the same ray
-						reflOrigin = offsetIntersect( intersection, reflDir, localBest.normal );
+						Point reflOrigin = offsetIntersect( intersection, reflDir, localBest.normal );
 						LightRay reflRay = new LightRay( reflDir, reflOrigin );
 						recColor = spawnRayIS( reflRay, recDepth + 1 );
 
@@ -692,7 +710,7 @@ namespace RayTracer_App.World
 							transDir = Vector.transmit( ray.direction, nHit, localBest.refIndex, SceneObject.AIR_REF_INDEX );
 						else
 							transDir = Vector.transmit( ray.direction, nHit, SceneObject.AIR_REF_INDEX, localBest.refIndex );
-						
+
 						transOrigin = offsetIntersect( intersection, transDir, localBest.normal );
 						LightRay translRay = new LightRay( transDir, transOrigin );
 						ray.entryPt = intersection; //keep track of if we're in an object or not
