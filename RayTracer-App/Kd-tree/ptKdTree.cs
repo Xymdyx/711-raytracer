@@ -109,9 +109,9 @@ namespace RayTracer_App.Kd_tree
 			return -1;
 		}
 
-		/* FOR PM: The balancing http://graphics.ucsd.edu/~henrik/papers/rendering_caustics/rendering_caustics_gi96.pdf
-		algorithm converts the unordered list of photons into a balanced kd-tree
-		by recursively selecting the root node among the data-set as the median
+/* FOR PM: The balancing http://graphics.ucsd.edu/~henrik/papers/rendering_caustics/rendering_caustics_gi96.pdf
+algorithm converts the unordered list of photons into a balanced kd-tree
+by recursively selecting the root node among the data-set as the median
 element in the direction which represents the largest interval.*/
 		public KdNode balance( List<Point> points, int depth, PhotonRNG mapper,
 			float prevAxis = float.MaxValue, PhotonRNG.MAP_TYPE sampleList = PhotonRNG.MAP_TYPE.GLOBAL, int heapIdx = 1 ) //need two extra defaults for initial purposes
@@ -152,13 +152,11 @@ element in the direction which represents the largest interval.*/
 			Point medianPt;
 
 			// if median is odd.. list[n/2]
-			// 22 is mid of 46
-			//23 for 46 elements
 			if (size % 2 == 1)
 				medianPt = points[midIdx];
 			else
 				medianPt = (points[midIdx] + points[midIdx + 1].toVec()) * .5f; //works
-			//this will give median index of sorted list.. median https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/median/
+			//this will give median index of sorted list.. median https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/median/ ... Jensen gets MEDIAN INDEX using an efficient median algo
 			int amount = size - (midIdx + 1) ;
 
 			float partitionVal = medianPt.getAxisCoord( axis ); //we split along median...
@@ -175,6 +173,7 @@ element in the direction which represents the largest interval.*/
 			int frontIdx = (heapIdx * 2) + 1; //right child at 2i + 1... with i >= 1
 			int rearIdx = (heapIdx * 2);  // left child at 2i... with i >=1
 
+			// the rightside of the tree is being built first....!!!!!!!! 4/24 LAST
 			ptKdInteriorNode ptInt = new ptKdInteriorNode( axis, partitionVal, vox,
 				balance( frontPts, depth + 1, mapper, axis, sampleList, frontIdx),
 				balance( rearPts, depth + 1, mapper, axis, sampleList, rearIdx ), medianPt, stored ); //swapping rear and front pts didn't seem to work
@@ -191,9 +190,6 @@ element in the direction which represents the largest interval.*/
 					(currW != float.MaxValue); //the distance cannot be negative, must be positive(?)
 		}
 
-		// a given ray traverses the tree and gets the closest intersection
-		// There's a problem with this traversal method. Building the map works well
-		// this is one ray through the whole ass box... we compute initial pts
 		// https://slideplayer.com/slide/4991637/
 		//https://dcgi.fel.cvut.cz/home/havran/DISSVH/dissvh.pdf ... C psuedocode on p. 171. It's good reference for actual implementation and HARD to find
 		// if you do read through my code, I strongly recommend adding this to the kdSlides since I misunderstood this algorithm immensely.
@@ -383,13 +379,13 @@ element in the direction which represents the largest interval.*/
 				}
 			}
 
-			//okay we're in leaf teritory
+			//must check since a few interior nodes may NOT have photons
 			rad = *radPtr;
 			Photon phot = null;
 			if (inside != null &&  inside.stored != null) phot = inside.stored;
 			else if (leaf != null) phot = leaf.stored;
 
-			if (phot != null) //never gets executed
+			if (phot != null) //know this works... 
 			{
 				Point pLeaf = phot.pos;
 				float xD = (pLeaf.x - pos.x);
@@ -400,7 +396,7 @@ element in the direction which represents the largest interval.*/
 				//insert into max heap and update search squared radius
 				if (dist2 < rad )
 				{
-					heap.InsertElementInHeap( dist2, phot );
+					heap.InsertElementInHeap( dist2, phot ); //tested this...4/24
 					*radPtr = (float) heap.doubleMazHeap[1]; //the search radius is the distance to root node in max heap -_-. I was assigning it to dist2
 				}
 			}

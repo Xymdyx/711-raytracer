@@ -59,14 +59,14 @@ namespace RayTracer_App.Scene_Objects
 
 		//convert from spherical to cartesian
 		//x=ρsinφcosθ,y=ρsinφsinθ, and z=ρcosφ. where rho = radius
-		public static Vector sphericalToCart( float theta, float phi )
+		public static Vector sphericalToCart( float theta, float azi )
 		{
 			float sinTheta = (float) Math.Sin( theta );
 			float cosTheta = (float)Math.Cos( theta );
-			float sinPhi = (float)Math.Sin( phi );
-			float cosPhi = (float)Math.Cos( phi );
+			float sinAzi = (float)Math.Sin( azi );
+			float cosAzi = (float)Math.Cos( azi );
 
-			return new Vector( sinPhi * cosTheta, sinPhi * sinTheta, cosPhi );
+			return new Vector( sinAzi * cosTheta, sinAzi * sinTheta, cosAzi ); //looked right... 4/24
 		}
 
 		// function for getting where along ray intersection happens with a sphere

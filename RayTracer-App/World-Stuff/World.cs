@@ -390,17 +390,18 @@ namespace RayTracer_App.World
 			this.photonMapper = new PhotonRNG();
 
 			foreach (LightSource l in this.lights) //187 visible using BFS photon list check on 500. Only lose about 30 with kd tree visuals, which makes sense
-				l.emitPhotonsFromDPLS( this, 500); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
+				l.emitGlobalPhotonsFromDPLS( this, 1000); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
 
 			//construct photon maps from lists
 			photonMapper.makePMs();
 		}
 
 		//helper for finding correct diffuse direction for Monte Carlo sampling
-		private Vector getRightDiffuse( IlluminationModel model, float u1, float u2 )
+		private Vector getRightDiffuse( IlluminationModel model, float u1, float u2, Vector normal = null )
 		{
 			Phong p = model as Phong;
 			PhongBlinn pb = model as PhongBlinn;
+			Vector hemiVec = Vector.ZERO_VEC;
 
 			if (p == null && pb == null) //error
 			{
@@ -409,11 +410,14 @@ namespace RayTracer_App.World
 			}
 
 			if (p != null)
-				return p.mcDiffuseDir( u1, u2 );
+			{
+				 hemiVec = p.mcDiffuseDir( u1, u2, normal );
+			}
 			else if (pb != null)
-				return pb.mcDiffuseDir( u1, u2 );
-
-			return Vector.ZERO_VEC;
+			{
+				hemiVec = pb.mcDiffuseDir( u1, u2, normal );
+			}
+			return hemiVec;
 		}
 
 		//called by lightsources in the scene when shooting photons. 
@@ -465,10 +469,10 @@ namespace RayTracer_App.World
 				bool causticsMark = fromSpec;
 				bool transMark = transmitting;
 				Point pOrigin = offsetIntersect( intersection, travelDir, bestObj.normal );
-				switch (rrOutcome)
+				switch (rrOutcome) //am I properly extending this for transmission??? - 4/24 TODO
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
-						travelDir = getRightDiffuse( bestObjLightModel, u1, u2 ); //photon's flux needs to be multiplied by psurface color TODO
+						travelDir = getRightDiffuse( bestObjLightModel, u1, u2, bestObj.normal ); //photon's flux needs to be multiplied by psurface color TODO???? -4/24
 						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
 						if (causticsMark)
 						{
@@ -537,7 +541,6 @@ namespace RayTracer_App.World
 		}
 
 /* *collect the k nearest photons and make calculation for global and caustic PMs
-* What is the tone reproduction formula ?
 * Direct & specular illumination calculated using MC Raytracing
 * Caustics estimated using caustic map, never MC raytracing
 * indirect illumination comes from photon maps
@@ -551,12 +554,14 @@ namespace RayTracer_App.World
 				float defRadius = PhotonRNG.DEF_SEARCH_RAD; //this is r^2 already
 				MaxHeap<Photon> nearestPhotons =
 					this.photonMapper.kNearestPhotons( intersection, PhotonRNG.K_PHOTONS, defRadius );
-				if ( nearestPhotons.heapSize >= 8)
+
+				if ( nearestPhotons.heapSize >= 8) //per Jensen's implementation. Reduces noise... 4/24
 				{
-					float circleRad = (float)nearestPhotons.doubleMazHeap[1]; //given r^2
+					float circleRad = (float)nearestPhotons.doubleMazHeap[1]; //stored as r^2
 					float radRoot = (float) Math.Sqrt(circleRad);
 					photonAdditive = Color.defaultBlack;
 					float coneConst = PhotonRNG.CONE_FILTER_CONST;
+
 					for (int el = 0; el <= nearestPhotons.heapSize; el++)
 					{
 						Photon p = nearestPhotons.objMaxMHeap[el];
@@ -572,9 +577,12 @@ namespace RayTracer_App.World
 							}
 						}
 					}
+
 					float coneDivisor = 1f - (2f / (coneConst * 3f));
-					float photonScaler = (float)(1f / (Math.PI * circleRad)); //this gets insanely high
-					photonAdditive = photonAdditive.scale( photonScaler ); //average
+					float areaScaler = (float) ((1f / Math.PI)/ circleRad) ; //this gets insanely high without the check for 8 photons...4/24
+					photonAdditive = photonAdditive.scale( areaScaler ); //average
+
+					//debug
 					if (nearestPhotons.heapSize > this.highestK) this.highestK = nearestPhotons.heapSize;
 					this.allK += nearestPhotons.heapSize;
 				}
@@ -588,7 +596,7 @@ namespace RayTracer_App.World
 		public Color spawnRayIS( LightRay ray, int recDepth, bool fromDiffuse = false, int maxBounces = 4 )
 		{
 
-			Color currColor = Color.bgColor;
+			Color currColor = Color.defaultBlack;
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
 			Color lightRadiance = null;
@@ -620,8 +628,8 @@ namespace RayTracer_App.World
 					return photonCols;
 				}
 
-				if ((t != null) && (t.hasTexCoord())) // determine floor triangle point color
-					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS ); //return to irradiance for TR
+				if ((t != null) && (t.hasTexCoord())) 
+					this.bestObj.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS );
 
 				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //gather direct illumination
 
@@ -630,21 +638,22 @@ namespace RayTracer_App.World
 				bool inside = false;
 				float checkDp = nHit.dotProduct( ray.direction );
 
-				if (checkDp > 0) // issue was using Math.Min for return in sphere intersect
+				if (checkDp > 0)
 				{
 					nHit = -nHit;
 					inside = true;
 				}
 
-				//importance sampling/russian roulette here TODO... figure out how to incorporate this into transmittance
+				//importance sampling/russian roulette here TODO... figure out how to incorporate this into transmittance... did I do this right 4/24...
 				float u1 = this.photonMapper.random01();
 				float u2 = this.photonMapper.random01();
-				float materialScale = 1f; // so we can do reflection and refraction properly
+				float materialScale = 1f;
 
 				float dirProb = float.MinValue; //for PDF
 				Vector travelDir = Vector.ZERO_VEC;
 				Point pOrigin = offsetIntersect( intersection, travelDir, bestObj.normal );
 				PhotonRNG.RR_OUTCOMES rrOutcome = PhotonRNG.RR_OUTCOMES.TRANSMIT; //assume we're transmitting for simplicity.
+
 				if (!inside)
 					rrOutcome = this.photonMapper.RussianRoulette( bestObjLightModel.kd, bestObjLightModel.ks, localBest.kRefl, localBest.kTrans );
 
@@ -653,14 +662,13 @@ namespace RayTracer_App.World
 				switch (rrOutcome)
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE: 
-						travelDir = bestObjLightModel.mcDiffuseDir( u1, u2 ); //this is wi... camera ray is outgoing
+						travelDir = getRightDiffuse( bestObjLightModel, u1, u2, localBest.normal ); //this is wi... camera ray is outgoing
 						diffuseFlag = true;
 						//if we're diffuse then collect photons at this point...
 						break;
 					case PhotonRNG.RR_OUTCOMES.SPECULAR:
-						//travelDir = bestObjLightModel.mcSpecDir( u1, u2);
+						//travelDir = bestObjLightModel.mcSpecDir( u1, u2); //grainy when used in place of mirror, which is expected for 1 sample... 4/24
 						diffuseFlag = false;
-						materialScale = localBest.kRefl;
 						break;
 					case PhotonRNG.RR_OUTCOMES.TRANSMIT: //handles logic for negating normal and cos term inside method
 						break;
@@ -678,10 +686,10 @@ namespace RayTracer_App.World
 					float prob = bestObjLightModel.mcBRDF( travelDir, -ray.direction, localBest.normal );
 					currColor += spawnRayIS( pRay, recDepth + 1, diffuseFlag );
 				}
+
 				diffuseFlag = false;
-				if (recDepth < maxBounces)
+				if (recDepth < maxBounces) //handle reflection and transmission here...
 				{
-					//need this since we recurse and may update bestObj
 					Color recColor = null;
 					//reflection
 					if (this.bestObj.kRefl > 0)

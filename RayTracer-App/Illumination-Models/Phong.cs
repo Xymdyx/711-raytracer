@@ -137,7 +137,7 @@ namespace RayTracer_App.Illumination_Models
 			return prob;
 		}
 
-		public override Vector mcDiffuseDir( float u1, float u2 ) // wi/incoming light/ we are randomly calculating
+		public override Vector mcDiffuseDir( float u1, float u2, Vector normal = null ) // wi/incoming light/ we are randomly calculating
 		{
 			float u1Sqrt = (float) Math.Sqrt( u1 );
 			float sqrtScaler = (float) Math.Sqrt( 1 - u1 );
@@ -152,15 +152,19 @@ namespace RayTracer_App.Illumination_Models
 			float z = u1Sqrt; // sqrt(u1)
 
 			Vector quickVec = new Vector( x, y, z ); //normalized
-													 // slides way
-			Vector cartConv = Sphere.sphericalToCart( theta, azithumal );
-			
-			return cartConv;
+			Vector cartConv = Sphere.sphericalToCart( theta, azithumal ); // slides way seems to have helped but I am unsure if right... 4/24 TODO
+
+			//these vectors are valid in local hemisphere space, need to transform to cam space, handled by caller
+
+			if (normal == null)
+				return cartConv; //normalized vector wrt to the hemisphere only
+
+			return Vector.dirAroundNormalHemisphere( normal, theta, azithumal );
 		}
 
 		// specular direction for PHONG BRDF for Monte Carlo.. picks random specular direction on unit hemisphere
 		//u1 and u2 are random variables between 0 and 1 passed as variables
-		public override Vector mcSpecDir( float u1, float u2 )
+		public override Vector mcSpecDir( float u1, float u2, Vector normal = null )
 		{
 			//from princeton... sopherical -> vector // sintheta * cosazi, sintheta * sizazi, costheta
 			float u1Pow = (float) Math.Pow( u1, (1/ (this.ke + 1 )) ); // u1^ 1/ (n +1)
@@ -179,9 +183,12 @@ namespace RayTracer_App.Illumination_Models
 
 			Vector quickVec = new Vector( x, y, z ); //normalized
 
-			Vector cartVec = Sphere.sphericalToCart( alpha, azithumal );
+			Vector cartConv = Sphere.sphericalToCart( alpha, azithumal );
 
-			return cartVec;
+			if (normal == null)
+				return cartConv; //normalized vector wrt to the hemisphere only
+
+			return Vector.dirAroundNormalHemisphere( normal, alpha, azithumal );
 		}
 	}
 }

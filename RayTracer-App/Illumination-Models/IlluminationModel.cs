@@ -49,10 +49,10 @@ namespace RayTracer_App.Illumination_Models
 		public abstract float mcBRDF( Vector incoming, Vector outgoing, Vector normal );
 
 		//consider asking sampling over a unit disc... the Nusselt Analog https://en.wikipedia.org/wiki/View_factor#Nusselt_analog
-		public abstract Vector mcDiffuseDir( float u1, float u2 );
+		public abstract Vector mcDiffuseDir( float u1, float u2, Vector normal = null );
 
 		// specular direction for PHONG BRDF for Monte Carlo.. picks random specular direction on unit hemisphere
 		//u1 and u2 are random variables between 0 and 1 passed as variables
-		public abstract Vector mcSpecDir( float u1, float u2 );
+		public abstract Vector mcSpecDir( float u1, float u2, Vector normal = null );
 	}
 }

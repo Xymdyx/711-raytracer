@@ -28,7 +28,7 @@ namespace RayTracer_App.World
 			this._power = 0;
 		}
 
-		public LightSource( Point position, Color lightColor, float power = 1f)
+		public LightSource( Point position, Color lightColor, float power = 30f)
 		{
 			this._position = position;
 			this._lightColor = lightColor;
@@ -49,7 +49,7 @@ namespace RayTracer_App.World
 		// for square light -- https://www.cs.princeton.edu/courses/archive/fall16/cos526/lectures/03-photonmapping.pdf
 
 		//emit photons from diffuse point light source... 
-		public void emitPhotonsFromDPLS( World world, int totalPhotons = 1000 ) //was 1000
+		public void emitGlobalPhotonsFromDPLS( World world, int totalPhotons = 1000 ) //was 1000
 		{
 			float x;
 			float y;
@@ -57,10 +57,9 @@ namespace RayTracer_App.World
 			float photonW;
 			int ne = 0;
 			Point photonPos;
-			float photonPow = (this.power / totalPhotons) ;
 			world.photonMapper.maxGlobal = totalPhotons;
 			world.photonMapper.maxCaustics = totalPhotons;
-			while (ne != totalPhotons)
+			while (world.photonMapper.globalPL.Count < totalPhotons) //while we don't have the totalPhotons
 			{
 				do
 				{
@@ -75,6 +74,8 @@ namespace RayTracer_App.World
 				world.tracePhoton( photonRay, 1 );
 				ne++;
 			}
+			float photonPow = (this.power / ne); //according to Jensen, we only scale by EMITTED PHOTONS, not by total
+
 			//scale stored phtons by 1/ne
 			world.photonMapper.scaleStored( photonPow );
 		}

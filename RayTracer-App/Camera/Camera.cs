@@ -204,7 +204,7 @@ namespace RayTracer_App.Camera
 					if( doPM)
 					{
 						int samples = 1;
-						hitColor = Color.defaultBlack;
+						hitColor = Color.defaultBlack; //TOD make this genrate different fire origins per pixel...4/24
 						for (int sk = 0; sk < samples; sk++)
 							hitColor += world.spawnRayIS( fire, 1 );
 

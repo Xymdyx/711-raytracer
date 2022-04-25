@@ -184,7 +184,7 @@ namespace RayTracer_App.Photon_Mapping
 			this.causticPL.Add( p );
 		}
 
-		//after photon emission and tracing is complete, scale all stored by 1/phontonNum
+		//after photon emission and tracing is complete, scale all stored by 1/emiited.... 4/24
 		//currently some of these get manipulated twice
 		public void scaleStored( float powerScale )
 		{
@@ -338,7 +338,7 @@ namespace RayTracer_App.Photon_Mapping
 			}
 			else if (diffuse < chance && chance <= spec + diffuse)
 			{
-				//do we reflect or transmit?
+				//do we reflect or transmit? ... TODO... is this a valid way to do it?
 				chance = random01();
 				if ((0 <= chance && chance <= trans))
 				{

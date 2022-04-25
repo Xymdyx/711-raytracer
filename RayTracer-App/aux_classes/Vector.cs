@@ -10,6 +10,9 @@ public class Vector
 {
     public static Vector ZERO_VEC = new Vector( 0, 0, 0 );
     public static Vector UP_VEC = new Vector( 0, 1F, 0 );
+    public static Vector LEFT_VEC = new Vector( 1f, 0, 0 );
+    public static Vector FORWARD_VEC = new Vector( 0, 0, 1f );
+
 
 
     // fields
@@ -46,6 +49,8 @@ public class Vector
 
     public static Vector operator +(Vector vec1, Vector vec2) => new Vector(vec1.v1 + vec2.v1, vec1.v2 + vec2.v2, vec1.v3 + vec2.v3);
     public static Vector operator -(Vector vec1, Vector vec2) => vec1 + -vec2;
+
+    public static Vector operator *( Vector vec1, float k ) => new Vector( (vec1.v1 * k), (vec1.v2 * k), (vec1.v3 * k), false );
 
     public static bool operator ==( Vector lhs, Vector rhs ) 
     {
@@ -306,6 +311,43 @@ public class Vector
 	{
         return new Vector( this.v1, this.v2, this.v3, false );
 	}
+
+    //normal-space to space relative to normal functions...
+    // try using this once we get a random unit direction from is
+    //to convert back to camera space
+    //https://www.gamedev.net/blogs/entry/2261086-importance-sampling/
+    public static Vector findOrthoUnitVec( Vector normal )
+	{
+        if (normal.v1 == 0f) return LEFT_VEC;
+        else return UP_VEC.crossProduct(normal);
+	}
+
+    public static Vector findBitTangent( Vector normal )
+	{
+        Vector tangent = findOrthoUnitVec( normal );
+        return tangent.crossProduct( normal );
+	}
+
+    //convert from a local space back to the relative space of the current normal
+    public static Vector normaltoSpace( Vector normal, Vector hemiUnitVec )
+	{
+        Vector tangent = findOrthoUnitVec( normal );
+        Vector bitTangent = findBitTangent( normal );
+        Vector camSpaceVec = tangent.scale(hemiUnitVec.v1) + normal.scale( hemiUnitVec.v2 ) + bitTangent.scale(hemiUnitVec.v3);
+
+        return camSpaceVec;
+	}
+
+    //https://computergraphics.stackexchange.com/questions/10622/path-tracing-how-to-ensure-we-are-sampling-a-direction-vector-within-the-visibl
+    // calculating direction wrt hemisphere around normal...
+    public static Vector dirAroundNormalHemisphere( Vector normal, float theta, float phi )
+	{
+        Vector tangent = (normal.v1 > normal.v3) ? new Vector( -normal.v2, normal.v1, 0.0f, false ) : new Vector( 0.0f, -normal.v3, normal.v2, false );
+        Vector bitTangent = normal.crossProduct( tangent );
+        float sinTheta = (float)Math.Sin( theta );
+        return (tangent * sinTheta * (float)Math.Cos( phi )) + (bitTangent * (float)Math.Sin( phi ) * sinTheta) + (normal * (float)Math.Cos( theta ));
+        // and a bitangent vector orthogonal to both
+    }
 }
 
 ////// scratch REFLECT METHOD https://en.wikipedia.org/wiki/Phong_reflection_model

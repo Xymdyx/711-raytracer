@@ -137,7 +137,7 @@ namespace RayTracer_App.Illumination_Models
 		}
 
 		//sample in diffuse direction same as phong
-		public override Vector mcDiffuseDir( float u1, float u2 )
+		public override Vector mcDiffuseDir( float u1, float u2, Vector normal = null )
 		{
 			float u1Sqrt = (float)Math.Sqrt( u1 );
 			float sqrtScaler = (float)Math.Sqrt( 1 - u1 );
@@ -150,12 +150,15 @@ namespace RayTracer_App.Illumination_Models
 			float y = (float)(sqrtScaler * Math.Sin( azithumal )); // sqrt(1-u) *sinazi
 			float z = u1Sqrt; // sqrt(u1)
 
-			return new Vector( x, y, z ); //normalized
+			if( normal == null)
+				return new Vector( x, y, z ); //normalized vector wrt to the hemisphere only
+
+			return Vector.dirAroundNormalHemisphere( normal, theta, azithumal );
 		}
 
 		// specular direction for PHONG BRDF for Monte Carlo.. same as Phong
 		//u1 and u2 are random variables between 0 and 1 passed as variables
-		public override Vector mcSpecDir( float u1, float u2 )
+		public override Vector mcSpecDir( float u1, float u2 , Vector normal = null)
 		{
 			//from princeton... sopherical -> vector // sintheta * cosazi, sintheta * sizazi, costheta
 			float u1Pow = (float)Math.Pow( u1, (1 / (this.ke + 1)) ); // u1^ 1/ (n +1)
@@ -172,7 +175,10 @@ namespace RayTracer_App.Illumination_Models
 			float y = (float)(sqrtScaler * Math.Sin( azithumal )); // sqrtScaler *sinazi
 			float z = u1Pow;
 
-			return new Vector( x, y, z ); //normalized
+			if (normal == null)
+				return new Vector( x, y, z ); //normalized vector wrt to the hemisphere only
+
+			return Vector.dirAroundNormalHemisphere( normal, alpha, azithumal );
 		}
 	}
 }
