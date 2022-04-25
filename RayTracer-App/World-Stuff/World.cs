@@ -390,7 +390,7 @@ namespace RayTracer_App.World
 			this.photonMapper = new PhotonRNG();
 
 			foreach (LightSource l in this.lights) //187 visible using BFS photon list check on 500. Only lose about 30 with kd tree visuals, which makes sense
-				l.emitGlobalPhotonsFromDPLS( this, 1000); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
+				l.emitGlobalPhotonsFromDPLS( this); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
 
 			//construct photon maps from lists
 			photonMapper.makePMs();
