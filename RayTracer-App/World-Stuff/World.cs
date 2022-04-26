@@ -435,7 +435,7 @@ namespace RayTracer_App.World
 			bestW = findRayIntersect( photonRay );
 
 			//move this out for efficiency
-			if ((this.bestObj != null) && (bestW != float.MaxValue))
+			if ((this.bestObj != null) && (bestW != float.MaxValue))		// what happens to the light stored in photon ray
 			{
 				intersection = grabIntersectPt( photonRay, bestW );
 				if (intersection == null)
@@ -462,7 +462,7 @@ namespace RayTracer_App.World
 				if (bestObj as Sphere != null)
 					Console.WriteLine( "Hit sphere" );
 
-				flux = bestObjLightModel.illuminate( intersection, -photonRay.direction, this.lights, this.objects, this.bestObj, true, true ); //last flag is for giving photons a pass from shadows
+				//flux = bestObjLightModel.illuminate( intersection, -photonRay.direction, this.lights, this.objects, this.bestObj, true, true ); //last flag is for giving photons a pass from shadows
 				float u1 = this.photonMapper.random01();
 				float u2 = this.photonMapper.random01();
 				Vector travelDir = Vector.ZERO_VEC;
@@ -474,10 +474,10 @@ namespace RayTracer_App.World
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
 						travelDir = getRightDiffuse( bestObjLightModel, u1, u2, bestObj.normal ); //photon's flux needs to be multiplied by  stored surface color TODO???? -4/24
-						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
+						this.photonMapper.addGlobal( intersection, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
 						if (causticsMark)
 						{
-							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
+							this.photonMapper.addCaustic( intersection, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
 							causticsMark = false; 
 						}
 						break;
@@ -491,9 +491,9 @@ namespace RayTracer_App.World
 						causticsMark = true;
 						break;
 					case PhotonRNG.RR_OUTCOMES.ABSORB:
-						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
+						this.photonMapper.addGlobal( intersection, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
 						if (causticsMark)
-							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
+							this.photonMapper.addCaustic( intersection, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
 						break;
 					default:
 						break;
@@ -556,7 +556,7 @@ namespace RayTracer_App.World
 				MaxHeap<Photon> nearestPhotons =
 					this.photonMapper.kNearestPhotons( intersection, PhotonRNG.K_PHOTONS, defRadius );
 
-				if ( nearestPhotons.heapSize >= 8) //per Jensen's implementation. Reduces noise... 4/24
+				if ( nearestPhotons.heapSize >= 5) //per Jensen's implementation. Reduces noise... 4/24
 				{
 					float circleRad = (float)nearestPhotons.doubleMazHeap[1]; //stored as r^2
 					float radRoot = (float) Math.Sqrt(circleRad);
@@ -570,12 +570,12 @@ namespace RayTracer_App.World
 						if (p != null)
 						{
 							//if (objNormal.dotProduct( p.dir ) < 0f) //in Jensen's implementation for LAMBERTIAN surfaces
-							
-							float brdfScaler = this.bestObj.lightModel.mcBRDF( p.dir, -outgoing, objNormal ); //probability of this photon being visible from the eye
+
+							//float brdfScaler = this.bestObj.lightModel.mcBRDF( p.dir, -outgoing, objNormal ); //probability of this photon being visible from the eye
 							//float pConeWeight = 1f - (float)(pDist / (coneConst * radRoot)); //the cone filter!
-
-							Color tempColor = p.pColor.scale( brdfScaler ); //dividing by brdf did something strange... TODO does this need to be scaled by anything else...
-
+							//Color tempColor = p.pColor.scale( brdfScaler ); //dividing by brdf did something strange... TODO does this need to be scaled by anything else...
+							Color brdfColor = this.bestObj.lightModel.illuminate( intersection, p.dir, this.lights, this.objects, this.bestObj, true, true );
+							Color tempColor = p.pColor * brdfColor;
 							photonAdditive += tempColor;		//.scale( pConeWeight );
 						}
 					}
@@ -589,6 +589,8 @@ namespace RayTracer_App.World
 					this.allK += nearestPhotons.heapSize;
 				}
 			}
+			if (photonAdditive.whiteOrHigher()) Console.WriteLine( "Indirect illumination is white or higher" );
+
 			return photonAdditive;
 		}
 
@@ -622,7 +624,7 @@ namespace RayTracer_App.World
 				IlluminationModel bestObjLightModel = this.bestObj.lightModel;
 
 				//handle indirect global illumination here. Really shitty sampling
-				//calculate indirect illumination & caustics via PM queries...Only for diffuse
+				//calculate indirect illumination & caustics via PM queries...Only for diffuse... This should be gathered at original intersection point....
 				if (fromDiffuse)
 				{
 					Color photonCols = callPhotons( intersection, ray.direction, bestObj.normal );
@@ -662,10 +664,12 @@ namespace RayTracer_App.World
 				//https://blog.demofox.org/2017/01/09/raytracing-reflection-refraction-fresnel-total-internal-reflection-and-beers-law/
 				switch (rrOutcome)
 				{
-					case PhotonRNG.RR_OUTCOMES.DIFFUSE: 
-						travelDir = getRightDiffuse( bestObjLightModel, u1, u2, localBest.normal ); //this is wi... camera ray is outgoing
-						diffuseFlag = true;
+					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
+						//travelDir = getRightDiffuse( bestObjLightModel, u1, u2, localBest.normal ); //this is wi... camera ray is outgoing
+						//diffuseFlag = true;
 						//if we're diffuse then collect photons at this point...
+						Color photonCols = callPhotons( intersection, ray.direction, bestObj.normal );
+						currColor += photonCols;
 						break;
 					case PhotonRNG.RR_OUTCOMES.SPECULAR:
 						//travelDir = bestObjLightModel.mcSpecDir( u1, u2); //grainy when used in place of mirror, which is expected for 1 sample... 4/24

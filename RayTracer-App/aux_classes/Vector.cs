@@ -3,7 +3,7 @@
 date started: 1/26/22
 desc: class that represents a 3d vector
 */
-
+using System.Numerics;
 using System;
 //CONVERTED DOUBLE -> FLOAT!
 public class Vector
@@ -319,34 +319,88 @@ public class Vector
     public static Vector findOrthoUnitVec( Vector normal )
 	{
         if (normal.v1 == 0f) return LEFT_VEC;
-        else return UP_VEC.crossProduct(normal);
+        else return UP_VEC.crossProduct(normal, false);
 	}
 
     public static Vector findBitTangent( Vector normal )
 	{
         Vector tangent = findOrthoUnitVec( normal );
-        return tangent.crossProduct( normal );
+        return tangent.crossProduct( normal, false );
 	}
 
     //convert from a local space back to the relative space of the current normal
+    //https://www.scratchapixel.com/lessons/3d-basic-rendering/global-illumination-path-tracing/global-illumination-path-tracing-practical-implementation ... scratch time
     public static Vector normaltoSpace( Vector normal, Vector hemiUnitVec )
 	{
-        Vector tangent = findOrthoUnitVec( normal );
-        Vector bitTangent = findBitTangent( normal );
-        Vector camSpaceVec = tangent.scale(hemiUnitVec.v1) + normal.scale( hemiUnitVec.v2 ) + bitTangent.scale(hemiUnitVec.v3);
+        //Vector tangent = findOrthoUnitVec( normal );
+        //Vector bitTangent = findBitTangent( normal );
+        Vector tangent = (Math.Abs( normal.v1 ) > Math.Abs( normal.v2 )) ? new Vector( normal.v3, 0.0f, -normal.v1 ) : new Vector( 0.0f, -normal.v3, normal.v2 ); //oriented on y axis
+        Vector bitTangent = normal.crossProduct( tangent );
 
-        return camSpaceVec;
+        validateTBN( normal, tangent, bitTangent );
+        Vector camSpaceVec = tangent.scale(hemiUnitVec.v1) + normal.scale( hemiUnitVec.v2 ) + bitTangent.scale(hemiUnitVec.v3);
+        
+        //tbn way
+        Matrix4x4 tbnMAT = new Matrix4x4
+                            ( tangent.v1, tangent.v2, tangent.v3, 0,
+                            bitTangent.v1, bitTangent.v2, bitTangent.v3, 0,
+                            normal.v1, normal.v2, normal.v3, 0,
+                            0, 0, 0, 1 );
+        //Matrix4x4.Invert( tbnMAT, out tbnMAT );
+        Vector4 hmgVec = toHmgVec( hemiUnitVec );
+        Vector4 convVec = Vector4.Transform( hmgVec, tbnMAT );
+
+        // raw math
+        float xComp = hemiUnitVec.v1 * bitTangent.v1 + hemiUnitVec.v2 * normal.v1 + +hemiUnitVec.v3 * tangent.v1;
+        float yComp = hemiUnitVec.v1 * bitTangent.v2 + hemiUnitVec.v2 * normal.v2 + +hemiUnitVec.v3 * tangent.v2;
+        float zComp = hemiUnitVec.v1 * bitTangent.v3 + hemiUnitVec.v2 * normal.v3 + +hemiUnitVec.v3 * tangent.v3;
+
+        Vector scratchVec = new Vector( xComp, yComp, zComp );
+
+        Vector camSpaceVec2 = fromHmgVec( convVec );
+
+        return scratchVec;
 	}
 
     //https://computergraphics.stackexchange.com/questions/10622/path-tracing-how-to-ensure-we-are-sampling-a-direction-vector-within-the-visibl
     // calculating direction wrt hemisphere around normal...
     public static Vector dirAroundNormalHemisphere( Vector normal, float theta, float phi )
 	{
-        Vector tangent = (normal.v1 > normal.v3) ? new Vector( -normal.v2, normal.v1, 0.0f, false ) : new Vector( 0.0f, -normal.v3, normal.v2, false );
+       Vector tangent = (normal.v1 > normal.v3) ? new Vector( -normal.v2, normal.v1, 0.0f, false ) : new Vector( 0.0f, -normal.v3, normal.v2, false ); //oriented on z axis...
+
+       // Vector tangent = ( Math.Abs(normal.v1) > Math.Abs(normal.v2) ) ? new Vector( normal.v3, 0.0f, -normal.v1 ) : new Vector( 0.0f, -normal.v3, normal.v2); //oriented on y axis
         Vector bitTangent = normal.crossProduct( tangent );
+        
+        validateTBN( normal, tangent, bitTangent );
+
         float sinTheta = (float)Math.Sin( theta );
         return (tangent * sinTheta * (float)Math.Cos( phi )) + (bitTangent * (float)Math.Sin( phi ) * sinTheta) + (normal * (float)Math.Cos( theta )); //I've seen that bittangent and tangent change depending on which axis is UP
-        // and a bitangent vector orthogonal to both
+    }
+
+    //this validates if 3 vectors calculated from a hemisphere are orthogonal to each other
+    private static void validateTBN( Vector normal, Vector tangent, Vector bitTangent )
+	{
+        float tnDP = tangent.dotProduct( normal );
+        float tbDP = tangent.dotProduct( bitTangent );
+        float nbDP = normal.dotProduct( bitTangent );
+
+        if ((tnDP <= -1e-6f && tnDP >= 1e-6f) || (tbDP <= -1e-6f && tbDP >= 1e-6f) || (nbDP <= -1e-6f && nbDP >= 1e-6f))
+            Console.WriteLine( "Generated orthogonal vectors not orthogonal..." );
+    }
+
+    public static Vector4 toHmgVec( Vector vec )
+    {
+        return new Vector4( vec.v1, vec.v2, vec.v3, 1f ); //tested that this works fine
+    }
+
+    // reconvert to 3d coords after making transformations with toHmgCoords
+    public static Vector fromHmgVec( Vector4 hmgMat )
+    {
+        //convert from row-major hmg mat back to a new Point
+        return new Vector( hmgMat.X, hmgMat.Y, hmgMat.Z );
+        // / hmgMat.W; //the w may not be 1 here, do we still divide by it?
+        // / hmgMat.W; //the w may not be 1 here, do we still divide by it?
+        /// hmgMat.W;
     }
 }
 

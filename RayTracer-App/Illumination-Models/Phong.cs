@@ -156,10 +156,10 @@ namespace RayTracer_App.Illumination_Models
 			// sintheta * cosazi, sintheta * sizazi, costheta
 			Vector cartConv = Sphere.sphericalToCart( theta, azithumal ); // slides way seems to have helped but I am unsure if right... 4/24 TODO
 
-
 			if (normal == null)
 				return cartConv; //normalized vector wrt to the hemisphere only
 
+			
 			//return Vector.normaltoSpace( normal, cartConv );
 			return Vector.dirAroundNormalHemisphere( normal, theta, azithumal ); //tries to re-orient vector to point along the normal
 		}
@@ -190,8 +190,8 @@ namespace RayTracer_App.Illumination_Models
 			if (normal == null)
 				return cartConv; //normalized vector wrt to the hemisphere only
 
-			//return Vector.normaltoSpace( normal, cartConv );
-			return Vector.dirAroundNormalHemisphere( normal, alpha, azithumal );
+			return Vector.normaltoSpace( normal, cartConv );
+			//return Vector.dirAroundNormalHemisphere( normal, alpha, azithumal );
 		}
 	}
 }

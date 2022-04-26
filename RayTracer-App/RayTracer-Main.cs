@@ -109,7 +109,7 @@ public class RayTracerMain
 		float s1X = cbXLim - (sphereRad * 1.25f);
 		float s1Depth = 0f; //cbZLim - sphereRad; //+z into the scene... I am IN LHS
 		float s1Height = cbYLim - sphereRad; //1.75f.. 45 is good for lots of sky
-		float s1Trans = 0f;
+		float s1Trans = .5f;
 		float s1Refl = 1- s1Trans;
 		float s1RefIdx = SceneObject.AIR_REF_INDEX; // ni > nt for TIR
 
@@ -137,7 +137,7 @@ public class RayTracerMain
 		}
 
 		//place mainLight on top wall near its center
-		Point ceilLightPos = new Point( -.5f, -cbXLim + .25f, s1Depth ); ; // 0f, -cbYLim + .5f, 0f ... 0f, -2f, s1Depth - 1f
+		Point ceilLightPos = new Point( 0f, -cbXLim + 1.25f, s1Depth ); ; // 0f, -cbYLim + .5f, 0f ... 0f, -2f, s1Depth - 1f... Top left -.5f, -cbXLim + .25f, s1Depth 
 		Color ceilLightColor = Color.whiteSpecular;
 		LightSource ceilLight = new LightSource( ceilLightPos, ceilLightColor );
 
