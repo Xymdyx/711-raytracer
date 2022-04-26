@@ -159,9 +159,9 @@ namespace RayTracer_App.Camera
 
 			else if(doPM)
 			{
-				world.findBB(); //advanced cp 2
-				world.beginpmPassOne();
-				world.beginpmPassTwo();
+				world.findBB(); 
+				world.beginpmPassOne(); //phton trace
+				world.beginpmPassTwo(); // mark to gather phtons
 				//photonOverlay = true;
 			}
 
@@ -203,16 +203,18 @@ namespace RayTracer_App.Camera
 					//supersample branch here... have an array of hitcolors... average them then pass to TR below
 					if( doPM)
 					{
-						int samples = 5;
-						hitColor = Color.defaultBlack; //TOD make this genrate different fire origins per pixel...4/24
-						for (int sk = 0; sk < samples; sk++)
-						{
-							float randomX = world.photonMapper.randomRange( -pixWidth / 2f, pixWidth / 2f );
-							float randomY = world.photonMapper.randomRange( -pixHeight / 2f, pixHeight / 2f );
-							Vector randOffset = new Vector( randomX, randomY, 0f, false );
-							fire.direction = (fpPoint + randOffset) - this.eyePoint;
-							hitColor += world.spawnRayIS( fire, 1 );
-						}
+						int samples = 1;
+						hitColor = Color.defaultBlack; 
+						//TOD make this genrate different fire origins per pixel...4/24
+						//for (int sk = 0; sk < samples; sk++)
+						//{
+						//	float randomX = world.photonMapper.randomRange( -pixWidth / 2f, pixWidth / 2f );
+						//	float randomY = world.photonMapper.randomRange( -pixHeight / 2f, pixHeight / 2f );
+						//	Vector randOffset = new Vector( randomX, randomY, 0f, false );
+						//	fire.direction = (fpPoint + randOffset) - this.eyePoint;
+						//	hitColor += world.spawnRayIS( fire, 1 );
+						//}
+						hitColor += world.spawnRayIS( fire, 1 );
 						hitColor = hitColor.scale( (float) 1f / samples );
 						if (hitColor.whiteOrHigher()) 
 							;

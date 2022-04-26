@@ -120,7 +120,7 @@ namespace RayTracer_App.Illumination_Models
 			// We are backwards tracing from the eye...so wo = incoming = FROM EYE
 			// take dot product here
 			Vector refl = Vector.reflect2( incoming, normal );          // reflection = perfectly reflective direction of the incoming ray
-			Vector refl2 = Vector.reflect( incoming, normal );          // reflection = perfectly reflective direction of the incoming ray
+			Vector refl2 = Vector.reflect( -incoming, normal );          //sanity check with vec pointing away from pt to eye...
 			float reflDP = refl.dotProduct( outgoing );
 			float cos = (float) Math.Max( 0, reflDP ); //no negatives allowed
 
@@ -137,6 +137,7 @@ namespace RayTracer_App.Illumination_Models
 			return prob;
 		}
 
+		//these vectors are valid in local hemisphere space, need to transform to space the given normal is defined in...
 		public override Vector mcDiffuseDir( float u1, float u2, Vector normal = null ) // wi/incoming light/ we are randomly calculating
 		{
 			float u1Sqrt = (float) Math.Sqrt( u1 );
@@ -146,20 +147,21 @@ namespace RayTracer_App.Illumination_Models
 			float theta = (float) Math.Acos( u1Sqrt );
 			float azithumal = (float) (2 * Math.PI * u2);
 
-			//from princeton... sopherical -> vector // sintheta * cosazi, sintheta * sizazi, costheta
+			//princeton's quick conversion .. sopherical -> Cartesian coords 
 			float x = (float) (sqrtScaler * Math.Cos( azithumal )); // sqrt( 1-u1) * cosazi
 			float y = (float)(sqrtScaler * Math.Sin( azithumal )); // sqrt(1-u) *sinazi
 			float z = u1Sqrt; // sqrt(u1)
 
-			Vector quickVec = new Vector( x, y, z ); //normalized
+			Vector quickVec = new Vector( x, y, z );
+			// sintheta * cosazi, sintheta * sizazi, costheta
 			Vector cartConv = Sphere.sphericalToCart( theta, azithumal ); // slides way seems to have helped but I am unsure if right... 4/24 TODO
 
-			//these vectors are valid in local hemisphere space, need to transform to cam space, handled by caller
 
 			if (normal == null)
 				return cartConv; //normalized vector wrt to the hemisphere only
 
-			return Vector.dirAroundNormalHemisphere( normal, theta, azithumal );
+			//return Vector.normaltoSpace( normal, cartConv );
+			return Vector.dirAroundNormalHemisphere( normal, theta, azithumal ); //tries to re-orient vector to point along the normal
 		}
 
 		// specular direction for PHONG BRDF for Monte Carlo.. picks random specular direction on unit hemisphere
@@ -188,6 +190,7 @@ namespace RayTracer_App.Illumination_Models
 			if (normal == null)
 				return cartConv; //normalized vector wrt to the hemisphere only
 
+			//return Vector.normaltoSpace( normal, cartConv );
 			return Vector.dirAroundNormalHemisphere( normal, alpha, azithumal );
 		}
 	}

@@ -106,7 +106,7 @@ public class RayTracerMain
 		//left sphere params
 		float sphereRad = .5f; //1f
 
-		float s1X = cbXLim - (sphereRad * 2f);
+		float s1X = cbXLim - (sphereRad * 1.25f);
 		float s1Depth = 0f; //cbZLim - sphereRad; //+z into the scene... I am IN LHS
 		float s1Height = cbYLim - sphereRad; //1.75f.. 45 is good for lots of sky
 		float s1Trans = 0f;

@@ -28,7 +28,7 @@ namespace RayTracer_App.World
 			this._power = 0;
 		}
 
-		public LightSource( Point position, Color lightColor, float power = 1f)
+		public LightSource( Point position, Color lightColor, float power = 20f) //50 for debugging
 		{
 			this._position = position;
 			this._lightColor = lightColor;
@@ -43,6 +43,7 @@ namespace RayTracer_App.World
 			Vector4 posHmg = position.toHmgCoords(); // 1x4 Vector
 			Vector4 newVertVec = Vector4.Transform( posHmg, camViewMat ); // we postMultiply since we are is LHS w Row-major.. Vnew = Vold * A * B
 			position.fromHmgCoords( newVertVec ); // [x y z w] => (x/w, y/w, z/w) CP form
+
 			return;
 		}
 
@@ -65,7 +66,7 @@ namespace RayTracer_App.World
 				{
 					x = world.photonMapper.randomRange();
 					y = world.photonMapper.randomRange();
-					z = world.photonMapper.randomRange();
+					z = world.photonMapper.randomRange(); //shoot downwards only
 				} while( (x * x) + (y * y) + (z * z) > 1 ) ;
 
 				Vector dir = new Vector( x, y, z );
@@ -75,9 +76,9 @@ namespace RayTracer_App.World
 				ne++;
 			}
 			float photonPow = (this.power / ne); //according to Jensen, we only scale by EMITTED PHOTONS, not by total
-
-			//scale stored phtons by 1/ne
 			world.photonMapper.scaleStored( photonPow );
+
+			return;
 		}
 	}
 }

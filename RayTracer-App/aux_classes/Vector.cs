@@ -345,7 +345,7 @@ public class Vector
         Vector tangent = (normal.v1 > normal.v3) ? new Vector( -normal.v2, normal.v1, 0.0f, false ) : new Vector( 0.0f, -normal.v3, normal.v2, false );
         Vector bitTangent = normal.crossProduct( tangent );
         float sinTheta = (float)Math.Sin( theta );
-        return (tangent * sinTheta * (float)Math.Cos( phi )) + (bitTangent * (float)Math.Sin( phi ) * sinTheta) + (normal * (float)Math.Cos( theta ));
+        return (tangent * sinTheta * (float)Math.Cos( phi )) + (bitTangent * (float)Math.Sin( phi ) * sinTheta) + (normal * (float)Math.Cos( theta )); //I've seen that bittangent and tangent change depending on which axis is UP
         // and a bitangent vector orthogonal to both
     }
 }

@@ -469,19 +469,20 @@ namespace RayTracer_App.World
 				bool causticsMark = fromSpec;
 				bool transMark = transmitting;
 				Point pOrigin = offsetIntersect( intersection, travelDir, bestObj.normal );
-				switch (rrOutcome) //am I properly extending this for transmission??? - 4/24 TODO
+
+				switch (rrOutcome) //am I properly extending this for transmission??? - 4/24
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
-						travelDir = getRightDiffuse( bestObjLightModel, u1, u2, bestObj.normal ); //photon's flux needs to be multiplied by psurface color TODO???? -4/24
+						travelDir = getRightDiffuse( bestObjLightModel, u1, u2, bestObj.normal ); //photon's flux needs to be multiplied by  stored surface color TODO???? -4/24
 						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
 						if (causticsMark)
 						{
 							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
-							causticsMark = false; //do we add the photon to the caustic map?
+							causticsMark = false; 
 						}
 						break;
 					case PhotonRNG.RR_OUTCOMES.SPECULAR:
-						travelDir = Vector.reflect2( photonRay.direction, this.bestObj.normal );
+						travelDir = Vector.reflect2( photonRay.direction, this.bestObj.normal ); //way to do it passing in positive outgoing direction
 						causticsMark = true;
 						break;
 					case PhotonRNG.RR_OUTCOMES.TRANSMIT: //handles logic for negating normal and cos term inside method
@@ -560,7 +561,7 @@ namespace RayTracer_App.World
 					float circleRad = (float)nearestPhotons.doubleMazHeap[1]; //stored as r^2
 					float radRoot = (float) Math.Sqrt(circleRad);
 					photonAdditive = Color.defaultBlack;
-					float coneConst = PhotonRNG.CONE_FILTER_CONST;
+					//float coneConst = PhotonRNG.CONE_FILTER_CONST; //once we get it working without the filter
 
 					for (int el = 0; el <= nearestPhotons.heapSize; el++)
 					{
@@ -568,19 +569,20 @@ namespace RayTracer_App.World
 						float pDist = (float)nearestPhotons.doubleMazHeap[el];
 						if (p != null)
 						{
-							if (objNormal.dotProduct( p.dir ) < 0f)
-							{
-								float brdfScaler = this.bestObj.lightModel.mcBRDF( p.dir, -outgoing, objNormal ); //probability of this photon being visible from the eye
-								float pConeWeight = 1f - (float)(pDist / (coneConst * radRoot)); //the cone filter!
-								Color tempColor = p.pColor.scale( brdfScaler );
-								photonAdditive += tempColor;//.scale( pConeWeight );
-							}
+							//if (objNormal.dotProduct( p.dir ) < 0f) //in Jensen's implementation for LAMBERTIAN surfaces
+							
+							float brdfScaler = this.bestObj.lightModel.mcBRDF( p.dir, -outgoing, objNormal ); //probability of this photon being visible from the eye
+							//float pConeWeight = 1f - (float)(pDist / (coneConst * radRoot)); //the cone filter!
+
+							Color tempColor = p.pColor.scale( brdfScaler ); //dividing by brdf did something strange... TODO does this need to be scaled by anything else...
+
+							photonAdditive += tempColor;		//.scale( pConeWeight );
 						}
 					}
 
-					float coneDivisor = 1f - (2f / (coneConst * 3f));
-					float areaScaler = (float) ((1f / Math.PI)/ circleRad) ; //this gets insanely high without the check for 8 photons...4/24
-					photonAdditive = photonAdditive.scale( areaScaler ); //average
+					//float coneDivisor = 1f - (2f / (coneConst * 3f));
+					float areaScaler = (float) ((1f / Math.PI)/ circleRad) ; //this gets insanely high without the check for 8+ photons...4/24
+					photonAdditive = photonAdditive.scale( areaScaler ); //average over area
 
 					//debug
 					if (nearestPhotons.heapSize > this.highestK) this.highestK = nearestPhotons.heapSize;
@@ -633,7 +635,7 @@ namespace RayTracer_App.World
 
 				currColor = bestObjLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, this.bestObj, true ); //gather direct illumination
 
-				SceneObject localBest = this.bestObj; //needed since we can overwrite this
+				SceneObject localBest = this.bestObj; //needed since we can overwrite this next iteration
 				Vector nHit = localBest.normal;
 				bool inside = false;
 				float checkDp = nHit.dotProduct( ray.direction );
@@ -649,7 +651,6 @@ namespace RayTracer_App.World
 				float u2 = this.photonMapper.random01();
 				float materialScale = 1f;
 
-				float dirProb = float.MinValue; //for PDF
 				Vector travelDir = Vector.ZERO_VEC;
 				Point pOrigin = offsetIntersect( intersection, travelDir, bestObj.normal );
 				PhotonRNG.RR_OUTCOMES rrOutcome = PhotonRNG.RR_OUTCOMES.TRANSMIT; //assume we're transmitting for simplicity.

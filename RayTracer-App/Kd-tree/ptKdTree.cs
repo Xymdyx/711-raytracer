@@ -141,8 +141,8 @@ element in the direction which represents the largest interval.*/
 				return ptLeaf;
 			}
 
-			AABB vox = AABB.boxAroundPoints( points ); // form box from points
-			int axis = getLongestAxis( vox ); // choose dim of cube with biggest difference betw points.
+			AABB vox = AABB.boxAroundPoints( points ); 
+			int axis = getLongestAxis( vox );
 
 			//use lambda to sort points by longest axis value .. Tried sorting the y axis by descending FAILED.
 			points.Sort( ( p1, p2 ) => p1.getAxisCoord( axis ).CompareTo(p2.getAxisCoord( axis )) ); 
@@ -151,12 +151,12 @@ element in the direction which represents the largest interval.*/
 			int midIdx = (size - 1) / 2;
 			Point medianPt;
 
-			// if median is odd.. list[n/2]
 			if (size % 2 == 1)
 				medianPt = points[midIdx];
-			else
-				medianPt = (points[midIdx] + points[midIdx + 1].toVec()) * .5f; //works
-			//this will give median index of sorted list.. median https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/median/ ... Jensen gets MEDIAN INDEX using an efficient median algo
+			else            //this will give median point of sorted list.. median https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/median/
+				medianPt = (points[midIdx] + points[midIdx + 1].toVec()) * .5f;
+			
+			////... Jensen gets MEDIAN INDEX using an efficient median algo comprisied of 3 methods :/
 			int amount = size - (midIdx + 1) ;
 
 			float partitionVal = medianPt.getAxisCoord( axis ); //we split along median...
@@ -165,7 +165,7 @@ element in the direction which represents the largest interval.*/
 
 			if (frontPts.Count != rearPts.Count) Console.WriteLine("uneven list sizes in build");
 
-			stored = mapper.grabPhotonByPos( medianPt, sampleList ); //grab proper photon from photon list we're building from.. This can be null for interior nodes
+			stored = mapper.grabPhotonByPos( medianPt, sampleList ); //may be null in interor node
 			if (stored != null)
 				this.photonNum++;
 
@@ -176,12 +176,13 @@ element in the direction which represents the largest interval.*/
 			// the rightside of the tree is being built first....!!!!!!!! 4/24 LAST
 			ptKdInteriorNode ptInt = new ptKdInteriorNode( axis, partitionVal, vox,
 				balance( frontPts, depth + 1, mapper, axis, sampleList, frontIdx),
-				balance( rearPts, depth + 1, mapper, axis, sampleList, rearIdx ), medianPt, stored ); //swapping rear and front pts didn't seem to work
+				balance( rearPts, depth + 1, mapper, axis, sampleList, rearIdx ), medianPt, stored ); //swapping rear and front pts didn't seem to work... tried 2+ times
 
 			this.pmHeap[heapIdx - 1] = ptInt;
 			return ptInt;
 		}
 		
+		//helper for unused traversal algo...
 		private bool intersectGood( float currW )
 		{
 			if (currW < 0)
@@ -191,9 +192,9 @@ element in the direction which represents the largest interval.*/
 		}
 
 		// https://slideplayer.com/slide/4991637/
-		//https://dcgi.fel.cvut.cz/home/havran/DISSVH/dissvh.pdf ... C psuedocode on p. 171. It's good reference for actual implementation and HARD to find
-		// if you do read through my code, I strongly recommend adding this to the kdSlides since I misunderstood this algorithm immensely.
+		//https://dcgi.fel.cvut.cz/home/havran/DISSVH/dissvh.pdf ... C psuedocode on p. 171. It's good reference for iterative implementation. typo in thesis orginally "bCoord == splitOffset" Z1
 		//https://github.com/dragonbook/mitsuba-ctcloth/blob/master/include/mitsuba/render/sahkdtree2.h
+		// if you do read through my code, I strongly recommend adding this to the kdSlides since I misunderstood this algorithm immensely. It's a faster alternative approach
 		public float travelTAB( LightRay ray, World.World world, bool debug = false)
 		{
 //WORKS...photon shooting is jank
@@ -203,9 +204,10 @@ element in the direction which represents the largest interval.*/
 			//ray must intersect whole scene bounding box prior
 			Point entryPt;
 			Point exitPt;
-			// debug vars
+
 			int reached = 0;
 			int hit = 0;
+
 			//coords
 			float aCoord;
 			float bCoord;
@@ -216,17 +218,16 @@ element in the direction which represents the largest interval.*/
 			float bDist;
 			float splitDist;
 
-			//kick off with root
 			KdNode currNode = this.root;
 
 			float bestW = float.MaxValue; //initialize to error per convention so far
 
 			ptKdInteriorNode inner = currNode as ptKdInteriorNode;
 
-			if (inner == null) return bestW; //error as there is no root
+			if (inner == null) return bestW;
 	
 			inner.selfAABB.intersect( ray ); // update entry and exit points
-			if (ray.entryPt == null || ray.exitPt == null) // don't intersect scene box
+			if (ray.entryPt == null || ray.exitPt == null)
 				return bestW;
 
 			entryPt = ray.entryPt.copy();
@@ -274,12 +275,11 @@ element in the direction which represents the largest interval.*/
 					bCoord = stack[extIdx].pb.getAxisCoord( currAxis ); //the exit point should remain the same...
 
 					//distance not an issue, it's the coords
-
 					if (aCoord <= splitOffset)
 					{
 						if (bCoord <= splitOffset) //visit leftnode
 						{
-							currNode = currInner.rear; //N1, N2, N3, P5, Z3, Z2 						//Z2 visit arbitrary child node
+							currNode = currInner.rear; //N1, N2, N3, P5, Z3, Z2
 							continue;
 						}
 						if (aCoord == splitOffset) //typo in thesis orginally "bCoord == splitOffset" Z1
@@ -289,7 +289,7 @@ element in the direction which represents the largest interval.*/
 						}
 						// visit left then right (lower -> upper)
 						currNode = currInner.rear;
-						farChild = currInner.front; //getRight                //N4
+						farChild = currInner.front; //getRight //N4
 					}
 					else // aCoord > splitOffset
 					{
@@ -344,7 +344,7 @@ element in the direction which represents the largest interval.*/
 				currNode = stack[extIdx].kdNode; //retrieve next node, possible that ray traversal stops
 
 				extIdx = stack[entIdx].prev;
-			} // end outer search whi;e
+			} // end outer search while
 
 			//Console.WriteLine( $"Exited tab loop with no intersection. Terminated after {depth} iterations" );
 			return bestW; //found no intersection
@@ -354,7 +354,6 @@ element in the direction which represents the largest interval.*/
 		//given radius squared...Make sure to be consistent...
 		public unsafe void locatePhotons( int loc, int k, Point pos, float* radPtr, MaxHeap<Photon> heap )
 		{
-			//nearestHeap = queryMap.locatePhotons( 1, radPtr, k, nearestHeap );
 			float rad = *radPtr;
 			ptKdInteriorNode inside = pmHeap[loc - 1] as ptKdInteriorNode;
 			ptKdLeafNode leaf = pmHeap[loc - 1] as ptKdLeafNode;
