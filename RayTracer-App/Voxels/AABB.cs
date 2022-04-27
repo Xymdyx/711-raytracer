@@ -327,6 +327,19 @@ namespace RayTracer_App.Voxels
 			return new AABB( minPt, maxPt, -1 );	
 		}
 
+		//sanity check
+		public bool ptInBox( Point pt )
+		{
+			if ((pt.x <= this.max.x && pt.x >= this.min.x)
+			&& (pt.y <= this.max.y && pt.y >= this.min.y)
+			&& (pt.z <= this.max.z && pt.z >= this.min.z))
+			{
+				return true;
+			}
+
+			Console.WriteLine( $"{pt} not inside box with max {this.max}, min {this.min} " );
+			return false;
+		}
 	}
 }
 

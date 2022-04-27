@@ -137,7 +137,7 @@ public class RayTracerMain
 		}
 
 		//place mainLight on top wall near its center
-		Point ceilLightPos = new Point( 0f, -cbXLim + 1.25f, s1Depth ); ; // 0f, -cbYLim + .5f, 0f ... 0f, -2f, s1Depth - 1f... Top left -.5f, -cbXLim + .25f, s1Depth 
+		Point ceilLightPos = new Point( 0f, 0f, s1Depth ); ; // 0f, -cbYLim + .5f, 0f ... 0f, -2f, s1Depth - 1f... Top left -.5f, -cbXLim + .25f, s1Depth 
 		Color ceilLightColor = Color.whiteSpecular;
 		LightSource ceilLight = new LightSource( ceilLightPos, ceilLightColor );
 

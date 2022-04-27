@@ -59,6 +59,7 @@ namespace RayTracer_App.Scene_Objects
 
 		//convert from spherical to cartesian
 		//x=ρsinφcosθ,y=ρsinφsinθ, and z=ρcosφ. where rho = radius
+		// https://www.scratchapixel.com/lessons/3d-basic-rendering/global-illumination-path-tracing/global-illumination-path-tracing-practical-implementation
 		public static Vector sphericalToCart( float theta, float azi )
 		{
 			float sinTheta = (float) Math.Sin( theta );
@@ -66,7 +67,7 @@ namespace RayTracer_App.Scene_Objects
 			float sinAzi = (float)Math.Sin( azi );
 			float cosAzi = (float)Math.Cos( azi );
 
-			return new Vector( sinAzi * cosTheta, sinAzi * sinTheta, cosAzi ); //looked right... 4/24
+			return new Vector( sinTheta * cosAzi, cosTheta, sinAzi * sinTheta ); //looked right... 4/24 sinAzi * cosTheta, sinAzi * sinTheta, cosAzi
 		}
 
 		// function for getting where along ray intersection happens with a sphere

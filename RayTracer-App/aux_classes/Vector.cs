@@ -334,30 +334,35 @@ public class Vector
 	{
         //Vector tangent = findOrthoUnitVec( normal );
         //Vector bitTangent = findBitTangent( normal );
+        // Vector camSpaceVec = tangent.scale(hemiUnitVec.v1) + normal.scale( hemiUnitVec.v2 ) + bitTangent.scale(hemiUnitVec.v3);
+
+        //tbn way
+        //Matrix4x4 tbnMAT = new Matrix4x4
+        //                    ( tangent.v1, tangent.v2, tangent.v3, 0,
+        //                    bitTangent.v1, bitTangent.v2, bitTangent.v3, 0,
+        //                    normal.v1, normal.v2, normal.v3, 0,
+        //                    0, 0, 0, 1 );
+        ////Matrix4x4.Invert( tbnMAT, out tbnMAT );
+        //Vector4 hmgVec = toHmgVec( hemiUnitVec );
+        //Vector4 convVec = Vector4.Transform( hmgVec, tbnMAT );
+        // Vector camSpaceVec2 = fromHmgVec( convVec );
+
+        // raw math from Scratch a pixel
         Vector tangent = (Math.Abs( normal.v1 ) > Math.Abs( normal.v2 )) ? new Vector( normal.v3, 0.0f, -normal.v1 ) : new Vector( 0.0f, -normal.v3, normal.v2 ); //oriented on y axis
         Vector bitTangent = normal.crossProduct( tangent );
 
         validateTBN( normal, tangent, bitTangent );
-        Vector camSpaceVec = tangent.scale(hemiUnitVec.v1) + normal.scale( hemiUnitVec.v2 ) + bitTangent.scale(hemiUnitVec.v3);
-        
-        //tbn way
-        Matrix4x4 tbnMAT = new Matrix4x4
-                            ( tangent.v1, tangent.v2, tangent.v3, 0,
-                            bitTangent.v1, bitTangent.v2, bitTangent.v3, 0,
-                            normal.v1, normal.v2, normal.v3, 0,
-                            0, 0, 0, 1 );
-        //Matrix4x4.Invert( tbnMAT, out tbnMAT );
-        Vector4 hmgVec = toHmgVec( hemiUnitVec );
-        Vector4 convVec = Vector4.Transform( hmgVec, tbnMAT );
 
-        // raw math
-        float xComp = hemiUnitVec.v1 * bitTangent.v1 + hemiUnitVec.v2 * normal.v1 + +hemiUnitVec.v3 * tangent.v1;
-        float yComp = hemiUnitVec.v1 * bitTangent.v2 + hemiUnitVec.v2 * normal.v2 + +hemiUnitVec.v3 * tangent.v2;
-        float zComp = hemiUnitVec.v1 * bitTangent.v3 + hemiUnitVec.v2 * normal.v3 + +hemiUnitVec.v3 * tangent.v3;
+        float xComp = (hemiUnitVec.v1 * bitTangent.v1) + (hemiUnitVec.v2 * normal.v1) + (hemiUnitVec.v3 * tangent.v1);
+        float yComp = (hemiUnitVec.v1 * bitTangent.v2) + (hemiUnitVec.v2 * normal.v2) + (hemiUnitVec.v3 * tangent.v2);
+        float zComp = (hemiUnitVec.v1 * bitTangent.v3) + (hemiUnitVec.v2 * normal.v3) + (hemiUnitVec.v3 * tangent.v3);
 
         Vector scratchVec = new Vector( xComp, yComp, zComp );
 
-        Vector camSpaceVec2 = fromHmgVec( convVec );
+        float dpCheck = scratchVec.dotProduct( normal );
+
+        if (dpCheck <= 0) //check if we are aligned with the surface normal...
+            Console.WriteLine( "Transformed hemisphere vec opposite of normal" );
 
         return scratchVec;
 	}

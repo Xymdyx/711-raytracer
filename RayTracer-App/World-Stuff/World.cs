@@ -474,10 +474,10 @@ namespace RayTracer_App.World
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
 						travelDir = getRightDiffuse( bestObjLightModel, u1, u2, bestObj.normal ); //photon's flux needs to be multiplied by  stored surface color TODO???? -4/24
-						this.photonMapper.addGlobal( intersection, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
+						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
 						if (causticsMark)
 						{
-							this.photonMapper.addCaustic( intersection, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
+							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
 							causticsMark = false; 
 						}
 						break;
@@ -491,9 +491,9 @@ namespace RayTracer_App.World
 						causticsMark = true;
 						break;
 					case PhotonRNG.RR_OUTCOMES.ABSORB:
-						this.photonMapper.addGlobal( intersection, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
+						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
 						if (causticsMark)
-							this.photonMapper.addCaustic( intersection, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
+							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
 						break;
 					default:
 						break;
@@ -574,8 +574,9 @@ namespace RayTracer_App.World
 							//float brdfScaler = this.bestObj.lightModel.mcBRDF( p.dir, -outgoing, objNormal ); //probability of this photon being visible from the eye
 							//float pConeWeight = 1f - (float)(pDist / (coneConst * radRoot)); //the cone filter!
 							//Color tempColor = p.pColor.scale( brdfScaler ); //dividing by brdf did something strange... TODO does this need to be scaled by anything else...
-							Color brdfColor = this.bestObj.lightModel.illuminate( intersection, p.dir, this.lights, this.objects, this.bestObj, true, true );
+							Color brdfColor = this.bestObj.lightModel.illuminate( intersection, -p.dir, this.lights, this.objects, this.bestObj, true, true );
 							Color tempColor = p.pColor * brdfColor;
+							if (tempColor.isShadowed()) Console.WriteLine( "Photons are in shadow." );
 							photonAdditive += tempColor;		//.scale( pConeWeight );
 						}
 					}

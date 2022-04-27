@@ -161,6 +161,7 @@ namespace RayTracer_App.Camera
 			{
 				world.findBB(); 
 				world.beginpmPassOne(); //phton trace
+				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
 				world.beginpmPassTwo(); // mark to gather phtons
 				//photonOverlay = true;
 			}

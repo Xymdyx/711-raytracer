@@ -17,7 +17,7 @@ namespace RayTracer_App.Illumination_Models
 		//best 0f, .55f, .05f, 20f 
 		public static Phong regularPhong = new Phong( 0f, .65f, .25f, 12f );
 		public static Phong floorPhong = new Phong( 0f, .45f, .35f, 128f );
-		public static Phong cornellPhong = new Phong( 0f, .5f, 0f, 128f );
+		public static Phong cornellPhong = new Phong( 0f, .75f, 0f, 128f );
 
 		private float _ka; // not going to implement since ambient will be shaved later
 		//private float _kd; // Lambertian diffuse
@@ -140,6 +140,8 @@ namespace RayTracer_App.Illumination_Models
 		//these vectors are valid in local hemisphere space, need to transform to space the given normal is defined in...
 		public override Vector mcDiffuseDir( float u1, float u2, Vector normal = null ) // wi/incoming light/ we are randomly calculating
 		{
+			if ( (u1 < 0 && u1 > 1) || (u2 < 0 && u2 > 1) )
+				Console.WriteLine("Random vars out of range");
 			float u1Sqrt = (float) Math.Sqrt( u1 );
 			float sqrtScaler = (float) Math.Sqrt( 1 - u1 );
 
@@ -159,9 +161,9 @@ namespace RayTracer_App.Illumination_Models
 			if (normal == null)
 				return cartConv; //normalized vector wrt to the hemisphere only
 
-			
-			//return Vector.normaltoSpace( normal, cartConv );
-			return Vector.dirAroundNormalHemisphere( normal, theta, azithumal ); //tries to re-orient vector to point along the normal
+			//return cartConv;
+			return Vector.normaltoSpace( normal, cartConv );
+			//return Vector.dirAroundNormalHemisphere( normal, theta, azithumal ); //tries to re-orient vector to point along the normal
 		}
 
 		// specular direction for PHONG BRDF for Monte Carlo.. picks random specular direction on unit hemisphere
@@ -190,8 +192,9 @@ namespace RayTracer_App.Illumination_Models
 			if (normal == null)
 				return cartConv; //normalized vector wrt to the hemisphere only
 
-			return Vector.normaltoSpace( normal, cartConv );
-			//return Vector.dirAroundNormalHemisphere( normal, alpha, azithumal );
+
+			//return Vector.normaltoSpace( normal, cartConv );
+			return Vector.dirAroundNormalHemisphere( normal, alpha, azithumal );
 		}
 	}
 }
