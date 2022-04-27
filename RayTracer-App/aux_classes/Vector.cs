@@ -332,23 +332,9 @@ public class Vector
     //https://www.scratchapixel.com/lessons/3d-basic-rendering/global-illumination-path-tracing/global-illumination-path-tracing-practical-implementation ... scratch time
     public static Vector normaltoSpace( Vector normal, Vector hemiUnitVec )
 	{
-        //Vector tangent = findOrthoUnitVec( normal );
-        //Vector bitTangent = findBitTangent( normal );
-        // Vector camSpaceVec = tangent.scale(hemiUnitVec.v1) + normal.scale( hemiUnitVec.v2 ) + bitTangent.scale(hemiUnitVec.v3);
-
-        //tbn way
-        //Matrix4x4 tbnMAT = new Matrix4x4
-        //                    ( tangent.v1, tangent.v2, tangent.v3, 0,
-        //                    bitTangent.v1, bitTangent.v2, bitTangent.v3, 0,
-        //                    normal.v1, normal.v2, normal.v3, 0,
-        //                    0, 0, 0, 1 );
-        ////Matrix4x4.Invert( tbnMAT, out tbnMAT );
-        //Vector4 hmgVec = toHmgVec( hemiUnitVec );
-        //Vector4 convVec = Vector4.Transform( hmgVec, tbnMAT );
-        // Vector camSpaceVec2 = fromHmgVec( convVec );
 
         // raw math from Scratch a pixel
-        Vector tangent = (Math.Abs( normal.v1 ) > Math.Abs( normal.v2 )) ? new Vector( normal.v3, 0.0f, -normal.v1 ) : new Vector( 0.0f, -normal.v3, normal.v2 ); //oriented on y axis
+        Vector tangent = (Math.Abs( normal.v1 ) > Math.Abs( normal.v2 )) ? new Vector( normal.v3, 0.0f, -normal.v1 ) : new Vector( 0.0f, -normal.v3, normal.v2 ); //oriented on y axis...also supported by Physically Based Rendering
         Vector bitTangent = normal.crossProduct( tangent );
 
         validateTBN( normal, tangent, bitTangent );
@@ -426,5 +412,22 @@ public class Vector
 // cosi = -(i dot n)
 // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
 // https://www.scratchapixel.com/code.php?id=3&origin=/lessons/3d-basic-rendering/introduction-to-ray-tracing
+
+/* TBN MATRIX 
+ *         //Vector tangent = findOrthoUnitVec( normal );
+        //Vector bitTangent = findBitTangent( normal );
+        // Vector camSpaceVec = tangent.scale(hemiUnitVec.v1) + normal.scale( hemiUnitVec.v2 ) + bitTangent.scale(hemiUnitVec.v3);
+
+        //tbn way
+        //Matrix4x4 tbnMAT = new Matrix4x4
+        //                    ( tangent.v1, tangent.v2, tangent.v3, 0,
+        //                    bitTangent.v1, bitTangent.v2, bitTangent.v3, 0,
+        //                    normal.v1, normal.v2, normal.v3, 0,
+        //                    0, 0, 0, 1 );
+        ////Matrix4x4.Invert( tbnMAT, out tbnMAT );
+        //Vector4 hmgVec = toHmgVec( hemiUnitVec );
+        //Vector4 convVec = Vector4.Transform( hmgVec, tbnMAT );
+        // Vector camSpaceVec2 = fromHmgVec( convVec );
+*/
 
 

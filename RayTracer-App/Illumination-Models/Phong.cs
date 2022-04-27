@@ -55,8 +55,8 @@ namespace RayTracer_App.Illumination_Models
 			return Color.defaultBlack;
 		}
 
-		//precondiiton: the negative of the cameraRay gets passed so it is going TO the viewer's eye, not from
-		//TODO IMPLEMENT ILLUMINATE... this returns an irradiance triplet, which will be converted by the camera via TR to a color.
+		//precondiiton: the negative of the cameraRay gets passed so it is going TO the viewer's eye, not from. This is because of the reflect method used
+		// calculates DIRECT ILLUMINATION caused by BRDF... the Le term in the rendering equation
 		public override Color illuminate( Point intersect, Vector cameraRay, List<LightSource> lights, List<SceneObject> allObjs, SceneObject litObj,
 			bool transShadows = false, bool shadowPass = false, float shadowBias = 1e-4f ) //add list of lights, addObject list both from world, remove incoming, mirrorReflect
 		{
@@ -66,8 +66,8 @@ namespace RayTracer_App.Illumination_Models
 				foreach( LightSource light in lights ) 
 				{
 				//get normal vectors dependent on type of object. spawn shadow ray
-					Vector shadowDisplacement = litObj.normal.scale( shadowBias );
-					Point displacedOrigin = intersect + shadowDisplacement;
+
+					Point displacedOrigin = intersect.displaceMe( litObj.normal );
 					LightRay shadowRay = new LightRay( light.position - displacedOrigin, displacedOrigin );
 
 					SceneObject blocking = World.World.checkRayIntersectionObj( shadowRay, allObjs, light );
@@ -106,7 +106,7 @@ namespace RayTracer_App.Illumination_Models
 		}
 
 		//POSSIBLE ISSUE TODO
-		// BRDF used for Monte Carlo Distributed Ray Tracing as described in 9-2 slide deck
+		// BRDF used for Monte Carlo Distributed Ray Tracing as described in 9-2 slide deck. 
 		//https://www.cs.princeton.edu/courses/archive/fall16/cos526/papers/importance.pdf
 		//https://www.cs.princeton.edu/courses/archive/fall03/cs526/papers/lafortune94.pdf
 		//https://www.researchgate.net/publication/342837181_Real-Time_Shading_with_Phong_BRDF_Model
@@ -119,7 +119,7 @@ namespace RayTracer_App.Illumination_Models
 			// kd + ks <= 1
 			// We are backwards tracing from the eye...so wo = incoming = FROM EYE
 			// take dot product here
-			Vector refl = Vector.reflect2( incoming, normal );          // reflection = perfectly reflective direction of the incoming ray
+			Vector refl = Vector.reflect2( incoming, normal );          // reflection = perfectly reflective Gives random Gives random direction of the incoming ray
 			Vector refl2 = Vector.reflect( -incoming, normal );          //sanity check with vec pointing away from pt to eye...
 			float reflDP = refl.dotProduct( outgoing );
 			float cos = (float) Math.Max( 0, reflDP ); //no negatives allowed
@@ -138,6 +138,7 @@ namespace RayTracer_App.Illumination_Models
 		}
 
 		//these vectors are valid in local hemisphere space, need to transform to space the given normal is defined in...
+		// Gives random direction
 		public override Vector mcDiffuseDir( float u1, float u2, Vector normal = null ) // wi/incoming light/ we are randomly calculating
 		{
 			if ( (u1 < 0 && u1 > 1) || (u2 < 0 && u2 > 1) )

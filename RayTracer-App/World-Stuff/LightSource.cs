@@ -28,7 +28,7 @@ namespace RayTracer_App.World
 			this._power = 0;
 		}
 
-		public LightSource( Point position, Color lightColor, float power = 15f) //50 for debugging
+		public LightSource( Point position, Color lightColor, float power = 1f) //50 for debugging
 		{
 			this._position = position;
 			this._lightColor = lightColor;
@@ -50,7 +50,7 @@ namespace RayTracer_App.World
 		// for square light -- https://www.cs.princeton.edu/courses/archive/fall16/cos526/lectures/03-photonmapping.pdf
 
 		//emit photons from diffuse point light source... 
-		public void emitGlobalPhotonsFromDPLS( World world, int totalPhotons = 100 ) //was 1000
+		public void emitGlobalPhotonsFromDPLS( World world, int totalPhotons = 5000 ) //was 1000
 		{
 			float x;
 			float y;

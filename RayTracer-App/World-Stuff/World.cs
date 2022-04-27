@@ -462,7 +462,10 @@ namespace RayTracer_App.World
 				if (bestObj as Sphere != null)
 					Console.WriteLine( "Hit sphere" );
 
-				//flux = bestObjLightModel.illuminate( intersection, -photonRay.direction, this.lights, this.objects, this.bestObj, true, true ); //last flag is for giving photons a pass from shadows
+				flux = bestObjLightModel.illuminate( intersection, photonRay.direction, this.lights, this.objects, this.bestObj, true, true ); //last flag is for giving photons a pass from shadows
+				if (flux.isShadowed())
+					this.photonMapper.powerless++;
+
 				float u1 = this.photonMapper.random01();
 				float u2 = this.photonMapper.random01();
 				Vector travelDir = Vector.ZERO_VEC;
@@ -569,15 +572,11 @@ namespace RayTracer_App.World
 						float pDist = (float)nearestPhotons.doubleMazHeap[el];
 						if (p != null)
 						{
-							//if (objNormal.dotProduct( p.dir ) < 0f) //in Jensen's implementation for LAMBERTIAN surfaces
-
 							//float brdfScaler = this.bestObj.lightModel.mcBRDF( p.dir, -outgoing, objNormal ); //probability of this photon being visible from the eye
-							//float pConeWeight = 1f - (float)(pDist / (coneConst * radRoot)); //the cone filter!
 							//Color tempColor = p.pColor.scale( brdfScaler ); //dividing by brdf did something strange... TODO does this need to be scaled by anything else...
-							Color brdfColor = this.bestObj.lightModel.illuminate( intersection, -p.dir, this.lights, this.objects, this.bestObj, true, true );
-							Color tempColor = p.pColor * brdfColor;
-							if (tempColor.isShadowed()) Console.WriteLine( "Photons are in shadow." );
-							photonAdditive += tempColor;		//.scale( pConeWeight );
+							//Color brdfColor = this.bestObj.lightModel.illuminate( intersection, outgoing, this.lights, this.objects, this.bestObj, true, true );
+							Color tempColor = p.pColor;
+							photonAdditive += tempColor;        //.scale( pConeWeight );//float pConeWeight = 1f - (float)(pDist / (coneConst * radRoot)); //the cone filter!
 						}
 					}
 
@@ -623,21 +622,17 @@ namespace RayTracer_App.World
 
 				IlluminationModel localLightModel = this.bestObj.lightModel;
 				SceneObject localBest = this.bestObj;
-
-				//handle indirect global illumination here. Really shitty sampling
-				//calculate indirect illumination & caustics via PM queries...Only for diffuse... This should be gathered at original intersection point....
-				if (fromDiffuse)
-				{
-					Color photonCols = callPhotons( intersection, ray.direction, localBest.normal );
-					if (photonCols.whiteOrHigher()) Console.WriteLine( "Indirect illumination is white or higher" );
-					return photonCols;
-				}
-
 				if ((t != null) && (t.hasTexCoord())) 
 					localBest.diffuse = this.checkerboard.illuminate( t, CheckerBoardPattern.DEFAULT_DIMS, CheckerBoardPattern.DEFAULT_DIMS );
 
 				currColor = localLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, localBest, true ); //gather direct illumination
 
+
+				//calculate indirect illumination & caustics via PM queries...Only for diffuse... This should be gathered at original intersection point....
+				if(localBest.kRefl == 0 && localBest.kTrans == 0){
+					Color photonCols = callPhotons( intersection, -ray.direction, localBest.normal );
+					currColor += photonCols;
+				}
 				Vector nHit = localBest.normal;
 				bool inside = false;
 				float checkDp = nHit.dotProduct( ray.direction );
@@ -668,8 +663,6 @@ namespace RayTracer_App.World
 						//travelDir = getRightDiffuse( localBestLightModel, u1, u2, localBest.normal ); //this is wi... camera ray is outgoing
 						//diffuseFlag = true;
 						//if we're diffuse then collect photons at this point...
-						Color photonCols = callPhotons( intersection, -ray.direction, localBest.normal );
-						currColor += photonCols;
 						break;
 					case PhotonRNG.RR_OUTCOMES.SPECULAR:
 						//travelDir = localBestLightModel.mcSpecDir( u1, u2); //grainy when used in place of mirror, which is expected for 1 sample... 4/24
@@ -685,12 +678,12 @@ namespace RayTracer_App.World
 						break;
 				}
 
-				if (rrOutcome == PhotonRNG.RR_OUTCOMES.DIFFUSE && recDepth < maxBounces && localBest.kRefl == 0 && localBest.kTrans == 0)
-				{ //we diffusely or specularly reflect
-					LightRay pRay = new LightRay( travelDir, pOrigin );
-					float prob = localLightModel.mcBRDF( travelDir, -ray.direction, localBest.normal );
-					currColor += spawnRayPM( pRay, recDepth + 1, diffuseFlag );
-				}
+				//if (rrOutcome == PhotonRNG.RR_OUTCOMES.DIFFUSE && recDepth < maxBounces && localBest.kRefl == 0 && localBest.kTrans == 0)
+				//{ //we diffusely or specularly reflect
+				//	LightRay pRay = new LightRay( travelDir, pOrigin );
+				//	float prob = localLightModel.mcBRDF( travelDir, -ray.direction, localBest.normal );
+				//	currColor += spawnRayPM( pRay, recDepth + 1, diffuseFlag );
+				//}
 
 				diffuseFlag = false;
 				if (recDepth < maxBounces) //handle reflection and transmission here...
