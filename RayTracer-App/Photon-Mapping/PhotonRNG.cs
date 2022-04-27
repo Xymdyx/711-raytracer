@@ -16,7 +16,7 @@ namespace RayTracer_App.Photon_Mapping
 	{
 		public const int MAX_SHOOT_DEPTH = 100; //30 .15
 		public const int K_PHOTONS = 100; //15... able to gather 449 on 1000? usually 50 -500 used in estimate
-		public const float DEF_SEARCH_RAD = .35f; //.1f for w direct illum
+		public const float DEF_SEARCH_RAD = .25f; //.1f for w direct illum
 		public const float CONE_FILTER_CONST = 1f; //for cone filter... >=1
 
 		//RR debug
