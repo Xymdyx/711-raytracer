@@ -157,9 +157,11 @@ namespace RayTracer_App.Camera
 				world.buildKd();
 			}
 
-			else if(doPM)
+			if(doPM)
 			{
-				world.findBB(); 
+				if( world.sceneBB == null)
+					world.findBB(); 
+
 				world.beginpmPassOne(); //phton trace
 				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
 				world.beginpmPassTwo(); // mark to gather phtons
@@ -194,6 +196,7 @@ namespace RayTracer_App.Camera
 			bool isSuperSampling = false;
 			bool photonOverlay = false;
 			bool justPhotons = false;
+			bool pathTrace = false;
 
 			int hits = 0;
 			for ( int y = 0; y < imageHeight; y++) // positive x ->, positive y V
@@ -204,27 +207,30 @@ namespace RayTracer_App.Camera
 					//supersample branch here... have an array of hitcolors... average them then pass to TR below
 					if( doPM)
 					{
-						int samples = 5;
 						hitColor = Color.defaultBlack;
-						//TOD make this genrate different fire origins per pixel...4/24
-						//for (int sk = 0; sk < samples; sk++)
-						//{
-						//	float randomX = world.photonMapper.randomRange( -pixWidth / 2f, pixWidth / 2f );
-						//	float randomY = world.photonMapper.randomRange( -pixHeight / 2f, pixHeight / 2f );
-						//	Vector randOffset = new Vector( randomX, randomY, 0f, false );
-						//	fire.direction = (fpPoint + randOffset) - this.eyePoint;
-						//	hitColor += world.spawnRayPath( fire, 1 );
-						//}
-						hitColor += world.spawnRayIS( fire, 1 );
-						//hitColor = hitColor.scale( (float) 1f / samples );
+						hitColor += world.spawnRayPM( fire, 1 );
+						//if (hitColor.whiteOrHigher())
+						//	Console.WriteLine( "PM sample output white or higher" );		
+					}
+
+					else if(pathTrace)
+					{
+						int samples = 1;
+						hitColor = Color.defaultBlack;
+						for (int sk = 0; sk < samples; sk++)
+						{
+							float randomX = world.photonMapper.randomRange( -pixWidth / 2f, pixWidth / 2f );
+							float randomY = world.photonMapper.randomRange( -pixHeight / 2f, pixHeight / 2f );
+							Vector randOffset = new Vector( randomX, randomY, 0f, false );
+							fire.direction = (fpPoint + randOffset) - this.eyePoint;
+							hitColor += world.spawnRayPath( fire, 1 );
+						}
+						hitColor = hitColor.scale( (float)1f / samples );
 						if (hitColor.whiteOrHigher())
 							Console.WriteLine( "Pathtrace sample output white or higher" );
-							
 					}
 					else if (!isSuperSampling && !justPhotons)
-					{
 						hitColor = world.spawnRay( fire, 1 ); //this will be irradiance.... CP5	
-					}
 					else if (!isSuperSampling && justPhotons) //quick PM debug
 						hitColor = renderPhotons( hitColor, fire, world, true );
 					else

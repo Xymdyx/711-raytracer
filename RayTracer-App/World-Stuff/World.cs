@@ -597,8 +597,7 @@ namespace RayTracer_App.World
 
 		// Importance sampling using Phong-Bassed BRDF, Russian Roulette.
 		// Implemented for Photon Mapping ease.
-		// TODO: Decompose into smaller methods
-		public Color spawnRayIS( LightRay ray, int recDepth, bool fromDiffuse = false, int maxBounces = 4 )
+		public Color spawnRayPM( LightRay ray, int recDepth, bool fromDiffuse = false, int maxBounces = 4 )
 		{
 
 			Color currColor = Color.defaultBlack;
@@ -690,7 +689,7 @@ namespace RayTracer_App.World
 				{ //we diffusely or specularly reflect
 					LightRay pRay = new LightRay( travelDir, pOrigin );
 					float prob = localLightModel.mcBRDF( travelDir, -ray.direction, localBest.normal );
-					currColor += spawnRayIS( pRay, recDepth + 1, diffuseFlag );
+					currColor += spawnRayPM( pRay, recDepth + 1, diffuseFlag );
 				}
 
 				diffuseFlag = false;
@@ -705,7 +704,7 @@ namespace RayTracer_App.World
 						Vector reflDir = Vector.reflect2( ray.direction, localBest.normal ); //equivalent way with what I did for Phong. But this is just reflecting back the same ray
 						Point reflOrigin = offsetIntersect( intersection, reflDir, localBest.normal );
 						LightRay reflRay = new LightRay( reflDir, reflOrigin );
-						recColor = spawnRayIS( reflRay, recDepth + 1 );
+						recColor = spawnRayPM( reflRay, recDepth + 1 );
 
 						if (recColor != null)
 							currColor += recColor.scale( localBest.kRefl );
@@ -728,7 +727,7 @@ namespace RayTracer_App.World
 						transOrigin = offsetIntersect( intersection, transDir, localBest.normal );
 						LightRay translRay = new LightRay( transDir, transOrigin );
 						ray.entryPt = intersection; //keep track of if we're in an object or not
-						recColor = spawnRayIS( translRay, recDepth + 1 );
+						recColor = spawnRayPM( translRay, recDepth + 1 );
 
 						ray.entryPt = null; // we've exited
 
@@ -742,7 +741,7 @@ namespace RayTracer_App.World
 
 		//path-tracing test
 		// Implemented to test hemisphere sampling
-		public Color spawnRayPath( LightRay ray, int recDepth, bool fromDiffuse = false, int maxBounces = 3 )
+		public Color spawnRayPath( LightRay ray, int recDepth, bool fromDiffuse = false, int maxBounces = 5 )
 		{
 
 			Color currColor = Color.defaultBlack;
@@ -792,6 +791,8 @@ namespace RayTracer_App.World
 				Vector travelDir = Vector.ZERO_VEC;
 				Point pOrigin = offsetIntersect( intersection, travelDir, localBest.normal );
 				PhotonRNG.RR_OUTCOMES rrOutcome = PhotonRNG.RR_OUTCOMES.TRANSMIT; //assume we're transmitting for simplicity.
+				float prob = 1f;
+				float dpScale = 1f;
 
 				if (!inside)
 					rrOutcome = this.photonMapper.RussianRoulette( localLightModel.kd, localLightModel.ks, localBest.kRefl, localBest.kTrans );
@@ -802,14 +803,17 @@ namespace RayTracer_App.World
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
 						travelDir = getRightDiffuse( localLightModel, u1, u2, localBest.normal ); //this is wi... camera ray is outgoing
+						prob = localLightModel.diffuseContribution( travelDir, localBest.normal );
+						dpScale = travelDir.dotProduct( localBest.normal );
 						//if we're diffuse then collect photons at this point...
 						break;
 					case PhotonRNG.RR_OUTCOMES.SPECULAR:
 						travelDir = localLightModel.mcSpecDir( u1, u2); //grainy when used in place of mirror, which is expected for 1 sample... 4/24
-						diffuseFlag = false;
+						prob = localLightModel.specContribution( travelDir, ray.direction, localBest.normal );
+						dpScale = travelDir.dotProduct( localBest.normal );
 						break;
 					case PhotonRNG.RR_OUTCOMES.TRANSMIT: //handles logic for negating normal and cos term inside method
-						travelDir = Vector.transmit2( ray.direction, localBest.normal, localBest.refIndex, SceneObject.AIR_REF_INDEX );
+						travelDir = Vector.transmit2( ray.direction, localBest.normal, SceneObject.AIR_REF_INDEX, localBest.refIndex );
 						break;
 					case PhotonRNG.RR_OUTCOMES.ABSORB:
 						break;
@@ -820,9 +824,9 @@ namespace RayTracer_App.World
 				if (!travelDir.isZeroVector() && recDepth <= maxBounces)
 				{ //we diffusely or specularly reflect
 					LightRay pRay = new LightRay( travelDir, pOrigin );
-					float prob = localLightModel.mcBRDF( travelDir, ray.direction, localBest.normal );
-					float dpScale = travelDir.dotProduct( localBest.normal );
 					Color indirect = spawnRayPath( pRay, recDepth + 1, diffuseFlag );
+					if (prob <= 0)
+						Console.WriteLine( "Negative proability in path trace?" );
 					currColor += indirect.scale( dpScale/ prob);
 				}
 
@@ -838,7 +842,7 @@ namespace RayTracer_App.World
 				//		Vector reflDir = Vector.reflect2( ray.direction, localBest.normal ); //equivalent way with what I did for Phong. But this is just reflecting back the same ray
 				//		Point reflOrigin = offsetIntersect( intersection, reflDir, localBest.normal );
 				//		LightRay reflRay = new LightRay( reflDir, reflOrigin );
-				//		recColor = spawnRayIS( reflRay, recDepth + 1 );
+				//		recColor = spawnRayPM( reflRay, recDepth + 1 );
 
 				//		if (recColor != null)
 				//			currColor += recColor.scale( localBest.kRefl );
@@ -861,7 +865,7 @@ namespace RayTracer_App.World
 				//		transOrigin = offsetIntersect( intersection, transDir, localBest.normal );
 				//		LightRay translRay = new LightRay( transDir, transOrigin );
 				//		ray.entryPt = intersection; //keep track of if we're in an object or not
-				//		recColor = spawnRayIS( translRay, recDepth + 1 );
+				//		recColor = spawnRayPM( translRay, recDepth + 1 );
 
 				//		ray.entryPt = null; // we've exited
 

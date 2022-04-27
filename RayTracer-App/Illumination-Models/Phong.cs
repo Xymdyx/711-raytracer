@@ -196,5 +196,27 @@ namespace RayTracer_App.Illumination_Models
 			//return Vector.normaltoSpace( normal, cartConv );
 			return Vector.dirAroundNormalHemisphere( normal, alpha, azithumal );
 		}
+
+		//pdf for specular component
+		public override float specContribution( Vector incoming, Vector outgoing, Vector normal )
+		{
+			Vector refl = Vector.reflect2( incoming, normal );          // reflection = perfectly reflective direction of the incoming ray
+			float reflDP = refl.dotProduct( outgoing );
+			float cos = (float)Math.Max( 0, reflDP ); //no negatives allowed
+
+			//raise cosine to nth
+			cos = (float)Math.Pow( cos, ke );
+			float specContribution = (float)((this.ke + 1) / (2 * Math.PI) * cos);
+
+			return specContribution;
+		}
+
+		//pdf for diffuse direction
+		public override float diffuseContribution( Vector incoming, Vector normal )
+		{
+			float cosDP = incoming.dotProduct( normal );
+			float diffuseContribution = (float) ( cosDP / Math.PI);
+			return diffuseContribution;
+		}
 	}
 }

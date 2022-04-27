@@ -54,5 +54,11 @@ namespace RayTracer_App.Illumination_Models
 		// specular direction for PHONG BRDF for Monte Carlo.. picks random specular direction on unit hemisphere
 		//u1 and u2 are random variables between 0 and 1 passed as variables
 		public abstract Vector mcSpecDir( float u1, float u2, Vector normal = null );
+
+		//pdf for specular component
+		public abstract float specContribution( Vector incoming, Vector outgoing, Vector normal );
+
+		//pdf for diffuse direction
+		public abstract float diffuseContribution( Vector incoming, Vector normal );
 	}
 }

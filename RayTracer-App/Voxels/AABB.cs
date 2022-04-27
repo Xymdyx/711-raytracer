@@ -41,6 +41,10 @@ namespace RayTracer_App.Voxels
 			if( center != null)
 			{
 				Vector extents = this.center.ptSub(this.min);
+				Vector extents2 = this.max.ptSub( this.center );
+
+				if (extents != extents2)
+					//Console.WriteLine( "Error in find extents" );
 
 				extents.v1 = Math.Abs( extents.v1 );
 				extents.v2 = Math.Abs( extents.v2 );

@@ -109,9 +109,9 @@ public class RayTracerMain
 		float s1X = cbXLim - (sphereRad * 1.25f);
 		float s1Depth = 0f; //cbZLim - sphereRad; //+z into the scene... I am IN LHS
 		float s1Height = cbYLim - sphereRad; //1.75f.. 45 is good for lots of sky
-		float s1Trans = .5f;
+		float s1Trans = .05f;
 		float s1Refl = 1- s1Trans;
-		float s1RefIdx = SceneObject.AIR_REF_INDEX; // ni > nt for TIR
+		float s1RefIdx = .995f; // ni > nt for TIR
 
 		//right sphere param
 		float s2X = -cbXLim + sphereRad;
@@ -127,8 +127,8 @@ public class RayTracerMain
 
 		if (includeBunny)
 		{
-			float bunnyDepth = s1Depth - 10f; //s1Depth - 4f;
-			Point bunnyOrigin = new Point( 1.25f, 0f, bunnyDepth );
+			float bunnyDepth = 0f; //s1Depth - 4f;
+			Point bunnyOrigin = new Point( -.5f, 0f, bunnyDepth );
 			List<Polygon> bunnyTris = PlyParser.parseEdgePly( bunnyOrigin.toVec() );
 
 			//bunny loop
@@ -177,7 +177,7 @@ public class RayTracerMain
 
 		//reflective right sphere
 		float s2Depth = s1Depth + 1.75f; //1.85.. like Whitted... 2.75 for far apart
-		float sphereRad = 1.75f;
+		float sphereRad = 1.5f;
 		float s2Refl = 1f;
 		float s2Trans = 1- s2Refl;
 		float s2RefIdx = SceneObject.AIR_REF_INDEX;
@@ -217,7 +217,7 @@ public class RayTracerMain
 		//adv cp 1... parse Bunny
 		if (includeBunny)
 		{
-			Point bunnyOrigin = new Point( 1.25f, 0f, bunnyDepth );
+			Point bunnyOrigin = new Point( -.5f, 0f, bunnyDepth );
 			List<Polygon> bunnyTris = PlyParser.parseEdgePly( bunnyOrigin.toVec() );
 
 			//bunny loop
@@ -251,6 +251,13 @@ public class RayTracerMain
 	//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
 	public static void doRayTracing()
 	{
+		/* PHOTON MAPPING TODO LIST (page 47 onwards in Jensen's 2008 notes) :
+		* * figure out how to shoot photons ( the points where photons land will be sent into the kdTree as splitting criterion)  //confident this works
+		* * figure out how to balance photons in kdTree as we go (implement Jensen's method)
+		* * photon tracing
+		* * * collect the k nearest photons and make calculation for global and caustic PMs
+		* figure out caustics and indirect illumination
+		*/
 		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25, -1.25
 
 		World world = new World();
@@ -259,23 +266,11 @@ public class RayTracerMain
 		imageWidth = 1000;
 		imageHeight = imageWidth;
 
-		/* PHOTON MAPPING TODO LIST (page 47 onwards in Jensen's 2008 notes) :
-		* * make photon and pointKdTree classes (PM maps are kdTrees)
-		* * make Russian roulette
-		* * figure out how to shoot photons ( the points where photons land will be sent into the kdTree as splitting criterion)  //buggy right now
- 		* * setup Cornell box scene with Whitted method
-		* * figure out how to balance photons in kdTree as we go
-		* * photon tracing
-		* * * collect the k nearest photons and make calculation for global and caustic PMs
-		* figure out caustics and indirect illumination
-		* * * implement a cone filter if ambitious
-		*/
-
 		//Camera cam = setupWhitted( world, false );
-		Camera cam = setupCornell( world, false );
+		Camera cam = setupCornell( world);
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
-		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen, false, true );
+		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen, true, true );
 
 		unsafe //this is how to work with pointers in C#
 		{
