@@ -15,8 +15,8 @@ namespace RayTracer_App.Photon_Mapping
 	public class PhotonRNG
 	{
 		public const int MAX_SHOOT_DEPTH = 100; //30 .15
-		public const int K_PHOTONS = 100; //15... able to gather 449 on 1000? usually 50 -500 used in estimate
-		public const float DEF_SEARCH_RAD = .17f; //.1f for w direct illum
+		public const int K_PHOTONS = 250; //15... able to gather 449 on 1000? usually 50 -500 used in estimate
+		public const float DEF_SEARCH_RAD = .15f; //.1f for w direct illum
 		public const float CONE_FILTER_CONST = 1f; //for cone filter... >=1
 
 		//RR debug
@@ -208,17 +208,37 @@ namespace RayTracer_App.Photon_Mapping
 			//List<Point> tempPoses = globalPoses.ConvertAll( pos => pos.copy() );
 			//this.globalPM.root = globalPM.balance( tempPoses, 0, this, float.MaxValue, MAP_TYPE.GLOBAL );
 
-			List<Photon> globalCopy = globalPL.ConvertAll( phot => phot.copy() );
-			globalPM.balanceJensen(globalCopy);
+			if (globalPL.Count > 0)
+			{
+				List<Photon> globalCopy = globalPL.ConvertAll( phot => phot.copy() );
+				globalPM.balanceJensen( globalCopy );
+				foreach (Photon p in globalPL)
+				{
+					if (!globalPM.jensenHeap.Contains( p )) //sanity check
+						Console.WriteLine( $"Missing {p} in Global Jensen Heap" );
+				}
+			}
 			return;
 		}
 
 		public void makeCausticPM()
 		{
-			List<Point> causticPoses = grabPosByType( MAP_TYPE.CAUSTIC );
-			List<Point> tempPoses = causticPoses.ConvertAll( pos => pos.copy() );
-			if ( causticPoses.Count > 0)
-				this.causticPM.root = causticPM.balance( tempPoses, 0, this, float.MaxValue, MAP_TYPE.CAUSTIC );
+			//List<Point> causticPoses = grabPosByType( MAP_TYPE.CAUSTIC );
+			//List<Point> tempPoses = causticPoses.ConvertAll( pos => pos.copy() );
+			//if ( causticPoses.Count > 0)
+			//	this.causticPM.root = causticPM.balance( tempPoses, 0, this, float.MaxValue, MAP_TYPE.CAUSTIC );
+
+			if (causticPL.Count > 0)
+			{
+				List<Photon> causticCopy = causticPL.ConvertAll( phot => phot.copy() );
+				causticPM.balanceJensen( causticCopy );
+				foreach (Photon p in globalPL)
+				{
+					if (!causticPM.jensenHeap.Contains( p )) //sanity check
+						Console.WriteLine( $"Missing {p} in Caustic Jensen Heap" );
+				}
+			}
+
 			return;
 		}
 
@@ -423,7 +443,15 @@ namespace RayTracer_App.Photon_Mapping
 			}
 
 			Console.WriteLine( $" {inScene}/{desired.Count} photons in scene bounds" );
+			return;
 			}
+
+		//show the power, gather, and search radius stats
+		public String photonSearchStats()
+		{
+			int allPhotons = globalPL.Count + causticPL.Count;
+			return $"Shot {allPhotons} with { globalPL[0].power} watts. Looked for {K_PHOTONS} photns. Search rad: {DEF_SEARCH_RAD}";
+		}
 		}
 }
 

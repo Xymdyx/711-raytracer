@@ -268,10 +268,9 @@ namespace RayTracer_App.Camera
 			{
 				world.photonMapper.rrStats();
 				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
-				Console.WriteLine( "Global PM: " + world.photonMapper.globalPM.pmPrint() );
+				Console.WriteLine( world.photonMapper.photonSearchStats() );
+				Console.WriteLine( "Global PM: " + world.photonMapper.globalPM.heapPrint() );
 				Console.WriteLine( $"Most photons gathered : {world.highestK}/ {world.allK}" );
-				//world.photonMapper.globalPM.pmHeapPrint(false, true);
-				//world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
 			}
 			if (photonOverlay || justPhotons)
 				Console.WriteLine( $"Lit caustics: {world.causticHits}\n Total hits {world.photoHits}" );

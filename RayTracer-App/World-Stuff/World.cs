@@ -675,7 +675,7 @@ namespace RayTracer_App.World
 
 						if ((localBest.kRefl == 0 && localBest.kTrans == 0)){
 							Color colorBleed = Color.defaultBlack;
-							int samps = 1;
+							int samps = 10;
 							for (int sk = 0; sk < samps; sk++) //attempt for color-bleeding via Importance sampling
 							{
 								travelDir = getRightDiffuse( localLightModel, u1, u2, localBest.normal ); //this is wi... camera ray is outgoing

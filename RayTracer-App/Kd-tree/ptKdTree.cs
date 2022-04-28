@@ -201,10 +201,9 @@ namespace RayTracer_App.Kd_tree
 		// https://slideplayer.com/slide/4991637/
 		//https://dcgi.fel.cvut.cz/home/havran/DISSVH/dissvh.pdf ... C psuedocode on p. 171. It's good reference for iterative implementation. typo in thesis orginally "bCoord == splitOffset" Z1
 		//https://github.com/dragonbook/mitsuba-ctcloth/blob/master/include/mitsuba/render/sahkdtree2.h
-		// if you do read through my code, I strongly recommend adding this to the kdSlides since I misunderstood this algorithm immensely. It's a faster alternative approach
+		// if you do read through my code, I think this might be a helpful addition to the kdSlides. It's a faster alternative approach since it doesn't use the call stack
 		public float travelTAB( LightRay ray, World.World world, bool debug = false)
 		{
-//WORKS...photon shooting is jank
 			// a[coord] = proper coord of entry pt
 			// b[coord] = proper coord of exit point
 			// s = splitting plane offset... from splitting-plane ray intersection
@@ -414,23 +413,6 @@ namespace RayTracer_App.Kd_tree
 
 
 /////////////////////////////////jensen version of methods... ONE BIG SANITY CHECK/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-		//find indexOffset without pointers... I hate this but it works for calculating offset between objects in arrays
-		private int findIndexOffset( int targetIdx, Photon target, List<Photon> queryList )
-		{
-			int queriedIdx = 0;
-			foreach( Photon p in queryList)
-			{
-				if (p.Equals( target ))
-					break;
-
-				queriedIdx++;
-			}
-
-			int diff = targetIdx - queriedIdx;
-			return diff; //this indicates how far away 
-		}
-
 		// Jensen building method for quasi-heap rep of left-balanced kd tree
 		// postcondition: photons will be re-arranged and assigned to Jensen heap
 		public void balanceJensen( List<Photon> photons )
@@ -467,11 +449,11 @@ namespace RayTracer_App.Kd_tree
 				//tracker 1 and 2
 				int j = 1;
 				int foo = 1;
-				Photon fooPhoton = photons[j]; //temp that matches foo
+				Photon fooPhoton = photons[j]; //photon that matches foo tracker
 				for (int i = 1; i <= totalPhots; i++)
 				{
 					origIdx = memList.IndexOf( temp1[j] ); //find the corresponding index of the balanced el in memory... from his book: "pbal[j] - photons"
-					temp1[j] = null; // we're balancing this photon now
+					temp1[j] = null; // we've reordered this photon so set to null to ensure we don't use it again
 					if (origIdx != foo)
 						photons[j] = photons[origIdx];
 					else
@@ -494,9 +476,10 @@ namespace RayTracer_App.Kd_tree
 			}
 
 			this._jensenHeap = photons; //we've made the heap in Jensen's quirky way
-
+			this.photonNum = _jensenHeap.Count - 1;
 			return;
 		}
+
 		//swap using tuples
 		private void swap( List<Photon> photonList, int a, int b )
 		{
@@ -515,7 +498,7 @@ namespace RayTracer_App.Kd_tree
 				int i = left - 1;
 				int j = right;
 
-				//twirling loops
+				//twirling loops to get from point a to b
 				for(; ; )
 				{
 					while (temp2[++i].pos.getAxisCoord( axis ) < pivot)
@@ -540,10 +523,10 @@ namespace RayTracer_App.Kd_tree
 		//helper method for Jensen's building of a left-balanced kdtree
 		// he basically inserts all the left-plane nodes first and then the right-plane nodes
 		//he's a fan of 1-indexing
-		//temp1 becomes a balanced kdTree and uses temp2 as a reference
+		//temp1 becomes a balanced kdTree and uses temp2 as original reference
 		private void balanceSegment( List<Photon> temp1, List<Photon> temp2, int index, int start, int end )
 		{
-			// compute new median
+			// compute new median. 
 			int median = 1;
 			while ((4 * median) <= (end - start + 1))
 				median += median;
@@ -578,9 +561,7 @@ namespace RayTracer_App.Kd_tree
 					this.bBox.max.setAxisCoord( axis, holdMax ); //double-check
 				}
 				else
-				{
 					temp1[2 * index] = temp2[start];
-				}
 			}
 
 			//balance right segment
@@ -593,18 +574,15 @@ namespace RayTracer_App.Kd_tree
 					this.bBox.min.setAxisCoord( axis, tempMin );
 					balanceSegment( temp1, temp2, 2 * index + 1, median + 1, end );
 					this.bBox.min.setAxisCoord( axis, holdMin ); //double-check
-
 				}
 				else
-				{
 					temp1[2 * index + 1] = temp2[end];
-				}
 			}
 			return;
 		}
 
 		// locate the photons given a ray's intersection position with an object
-		//given radius squared...Make sure to be consistent...
+		//given radius squared via radPtr so we omit squaring operations. Uses kdFlags for split axis
 		public unsafe void locatePhotonsJensen( int loc, int k, Point pos, float* radPtr, MaxHeap<Photon> heap )
 		{
 			float rad = *radPtr;
@@ -631,9 +609,7 @@ namespace RayTracer_App.Kd_tree
 				}
 			}
 
-			//must check since a few interior nodes may NOT have photons
 			rad = *radPtr;
-
 			Point pLeaf = phot.pos;
 			float xD = (pLeaf.x - pos.x);
 			float yD = (pLeaf.y - pos.y);
@@ -663,6 +639,12 @@ namespace RayTracer_App.Kd_tree
 			return $" PM with {this.photonNum} photons and {this.kdSize} nodes with {this.kdLevels} levels";
 		}
 
+		//print general PM stats
+		public String jensenPrint()
+		{
+			return $" PM with {this.photonNum} photons organized via Jensen's method ";
+		}
+
 		//print the max heap we use for gathering photons
 		public void pmHeapPrint( bool showInt = true, bool showLeaf = true )
 		{
@@ -688,7 +670,7 @@ namespace RayTracer_App.Kd_tree
 		}
 
 		//print the jensen heap we use for gathering photons
-		public void jensenPrint( bool showInt = true, bool showLeaf = true )
+		public void jensenHeapPrint( bool showInt = true, bool showLeaf = true )
 		{
 			int heapEl = 1;
 			foreach (Photon phot in jensenHeap)
@@ -697,6 +679,17 @@ namespace RayTracer_App.Kd_tree
 				heapEl++;
 			}
 			return;
+		}
+
+		//choose proper heap debug
+		public String heapPrint()
+		{
+			if (this.pmHeap.Count > 0)
+				return pmPrint();
+			else if (this.jensenHeap.Count > 0)
+				return jensenPrint();
+			else
+				return "Lol there's no heap here";
 		}
 
 	}

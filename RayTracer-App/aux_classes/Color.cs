@@ -22,7 +22,8 @@ public class Color
 
     public static Color cbBlue = new Color( 0.237f, 0.486f, 0.790f );
     public static Color cbRed = new Color( 0.760f, 0.0988f, 0.187f );
-    public static Color cbGrey = new Color( 0.362f, 0.580f, 0.342f ); //0.810f, 0.802f, 0.803f
+    public static Color cbGrey = new Color( 0.810f, 0.802f, 0.803f ); //0.810f, 0.802f, 0.803f
+    public static Color cbGreen = new Color( 0.362f, 0.580f, 0.342f );
     public static Color cbChrome = new Color( 0.690f, 0.669f, 0.669f ); //chrome
     // 0.362, 0.580, 0.342
     // photon colors
