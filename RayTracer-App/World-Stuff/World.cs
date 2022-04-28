@@ -478,10 +478,101 @@ namespace RayTracer_App.World
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
 						travelDir = getRightDiffuse( bestObjLightModel, u1, u2, bestObj.normal ); //photon's flux needs to be multiplied by  stored surface color TODO???? -4/24
 						this.photonMapper.addGlobal( pOrigin.copy(), photonRay.direction.v1, photonRay.direction.v2, photonRay.direction.copy(), flux, 1.0f );
+						//if (causticsMark)
+						//{
+						//	this.photonMapper.addCaustic( pOrigin.copy(), photonRay.direction.v1, photonRay.direction.v2, photonRay.direction.copy(), flux, 1.0f );
+						//	causticsMark = false; 
+						//}
+						break;
+					case PhotonRNG.RR_OUTCOMES.SPECULAR:
+						travelDir = Vector.reflect2( photonRay.direction, this.bestObj.normal );
+						//causticsMark = true;
+						break;
+					case PhotonRNG.RR_OUTCOMES.TRANSMIT:
+						travelDir = Vector.transmit2( photonRay.direction, this.bestObj.normal, SceneObject.AIR_REF_INDEX, bestObj.refIndex );
+						transMark = !transMark; //toggle current transmission setting since we're only doing single refraction
+						//causticsMark = true;
+						break;
+					case PhotonRNG.RR_OUTCOMES.ABSORB:
+						if (bestObj.kRefl == 0 && bestObj.kTrans == 0) //we only store at NON-SPECULAR surfaces
+						{
+							this.photonMapper.addGlobal( pOrigin.copy(), photonRay.direction.v1, photonRay.direction.v2, photonRay.direction.copy(), flux, 1.0f );
+							//if (causticsMark)
+							//	this.photonMapper.addCaustic( pOrigin.copy(), photonRay.direction.v1, photonRay.direction.v2, photonRay.direction.copy(), flux, 1.0f );
+						}
+						break;
+					default:
+						break;
+				}
+
+				if (!travelDir.isZeroVector() && depth <= PhotonRNG.MAX_SHOOT_DEPTH)
+				{ //we survived
+					LightRay pRay = new LightRay( travelDir, pOrigin);
+					tracePhoton( pRay, depth + 1, causticsMark, transMark );
+				}
+			}
+			return; // end of path for this photon
+		}
+
+		//called by lightsources in the scene when shooting photons to build Caustic Map
+		// uses Russian roulette to determine photons' fates. Stores photons in the PhotonMapper's caustic list
+		//https://users.csc.calpoly.edu/~zwood/teaching/csc572/final15/dschulz/index.html... photon implementation with params
+		public void tracePhotonCaustic( LightRay photonRay, int depth, bool fromSpec = false, bool transmitting = false )
+		{
+			//TODO try having it where the Photon absorbs color along its path.
+			float bestW = float.MaxValue;
+			Color flux = null;
+			Point intersection = null;
+			PhotonRNG.RR_OUTCOMES rrOutcome = PhotonRNG.RR_OUTCOMES.TRANSMIT; //assume we're transmitting for simplicity.
+																			  //no kdTree for now TODO
+			bestW = findRayIntersect( photonRay );
+
+			if ((this.bestObj != null) && (bestW != float.MaxValue))        // what happens to the light stored in photon ray
+			{
+				intersection = grabIntersectPt( photonRay, bestW );
+				if (intersection == null)
+				{
+					Console.WriteLine( " Null intersection return... Aborting!" );
+					Environment.Exit( -1 );
+				}
+
+				IlluminationModel bestObjLightModel = this.bestObj.lightModel;
+				Phong p = bestObjLightModel as Phong;
+				PhongBlinn pb = bestObjLightModel as PhongBlinn;
+
+				if (p == null && pb == null) //error
+				{
+					Console.WriteLine( "No illumination model aborting..." );
+					Environment.Exit( -1 );
+				}
+
+				//Russian roulette to determine if we go again or not...Only when we are outside objects for now
+				if (!transmitting)
+					rrOutcome = this.photonMapper.RussianRoulette( bestObjLightModel.kd, bestObjLightModel.ks, bestObj.kRefl, bestObj.kTrans );
+
+				//debug
+				if (bestObj as Sphere != null)
+					Console.WriteLine( "Hit sphere" );
+
+				flux = bestObjLightModel.illuminate( intersection, photonRay.direction, this.lights, this.objects, this.bestObj, true, true ); //last flag is for giving photons a pass from shadows
+				if (flux.isShadowed())
+					this.photonMapper.powerless++;
+
+				float u1 = this.photonMapper.random01();
+				float u2 = this.photonMapper.random01();
+				Vector travelDir = Vector.ZERO_VEC;
+				bool causticsMark = fromSpec;
+				bool transMark = transmitting;
+				Point pOrigin = offsetIntersect( intersection, travelDir, bestObj.normal );
+
+				switch (rrOutcome) //am I properly extending this for transmission??? - 4/24
+				{
+					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
+						travelDir = getRightDiffuse( bestObjLightModel, u1, u2, bestObj.normal ); //photon's flux needs to be multiplied by stored surface color TODO???? -4/24
 						if (causticsMark)
 						{
 							this.photonMapper.addCaustic( pOrigin.copy(), photonRay.direction.v1, photonRay.direction.v2, photonRay.direction.copy(), flux, 1.0f );
-							causticsMark = false; 
+							causticsMark = false;
 						}
 						break;
 					case PhotonRNG.RR_OUTCOMES.SPECULAR:
@@ -496,7 +587,6 @@ namespace RayTracer_App.World
 					case PhotonRNG.RR_OUTCOMES.ABSORB:
 						if (bestObj.kRefl == 0 && bestObj.kTrans == 0) //we only store at NON-SPECULAR surfaces
 						{
-							this.photonMapper.addGlobal( pOrigin.copy(), photonRay.direction.v1, photonRay.direction.v2, photonRay.direction.copy(), flux, 1.0f );
 							if (causticsMark)
 								this.photonMapper.addCaustic( pOrigin.copy(), photonRay.direction.v1, photonRay.direction.v2, photonRay.direction.copy(), flux, 1.0f );
 						}
@@ -507,13 +597,12 @@ namespace RayTracer_App.World
 
 				if (!travelDir.isZeroVector() && depth <= PhotonRNG.MAX_SHOOT_DEPTH)
 				{ //we survived
-					LightRay pRay = new LightRay( travelDir, pOrigin);
-					tracePhoton( pRay, depth + 1, causticsMark, transMark );
+					LightRay pRay = new LightRay( travelDir, pOrigin );
+					tracePhotonCaustic( pRay, depth + 1, causticsMark, transMark );
 				}
-
-				return; // end of path for this photon
 			}
-			return;
+
+			return; // end of path for this photon
 		}
 
 		//helper to call PhotonMapper to find photon intersections. I don't think the TAB algo visits all of them
@@ -553,14 +642,15 @@ namespace RayTracer_App.World
 * indirect illumination comes from photon maps
 * figure out caustics and indirect illumination
 ** implement a cone filter if ambitious */
-		public Color callPhotons( Point intersection, Vector outgoing, Vector objNormal ) //incoming to a point, outgoing from a point to the eye...
+		public Color callPhotons( Point intersection, Vector outgoing, Vector objNormal,
+			PhotonRNG.MAP_TYPE desired = PhotonRNG.MAP_TYPE.GLOBAL ) //incoming to a point, outgoing from a point to the eye...
 		{
 			Color photonAdditive = Color.defaultBlack;
 			if (pmOn && intersection != null)
 			{
 				float defRadius = PhotonRNG.DEF_SEARCH_RAD; //this is r^2 already
 				MaxHeap<Photon> nearestPhotons =
-					this.photonMapper.kNearestPhotons( intersection, PhotonRNG.K_PHOTONS, defRadius );
+					this.photonMapper.kNearestPhotons( intersection, PhotonRNG.K_PHOTONS, defRadius, desired );
 
 				if ( nearestPhotons.heapSize >= 5) //per Jensen's implementation. Reduces noise... 4/24
 				{
@@ -632,16 +722,19 @@ namespace RayTracer_App.World
 
 
 				//calculate indirect illumination & caustics via PM queries...directly at diffuse surfaces. Results made sense but no color bleeding
-				//if(localBest.kRefl == 0 && localBest.kTrans == 0){
-				//	Color photonCols = callPhotons( intersection, -ray.direction, localBest.normal );
-				//	currColor += photonCols;
-				//}
+				if(localLightModel.kd > 0 && localBest.kRefl == 0 && localBest.kTrans == 0){
+					Color photonCols = callPhotons( intersection, -ray.direction, localBest.normal );
+					currColor += photonCols;
+				}
+
+				//check for caustics directly
+				//currColor += callPhotons( intersection, -ray.direction, localBest.normal, PhotonRNG.MAP_TYPE.CAUSTIC );
 
 				//attempt 2 using importance sampling via PMs
 
 				// this approach of final gather gives grainy images when coupled with importance sampling. - 4/27
 				if( fromDiffuse ){
-					Color photonCols = callPhotons( intersection, -ray.direction, localBest.normal );
+					Color photonCols = callPhotons( intersection, -ray.direction, localBest.normal);
 					return photonCols;
 				}
 
@@ -672,22 +765,22 @@ namespace RayTracer_App.World
 				switch (rrOutcome)
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
-
-						if ((localBest.kRefl == 0 && localBest.kTrans == 0)){
-							Color colorBleed = Color.defaultBlack;
-							int samps = 10;
-							for (int sk = 0; sk < samps; sk++) //attempt for color-bleeding via Importance sampling
-							{
-								travelDir = getRightDiffuse( localLightModel, u1, u2, localBest.normal ); //this is wi... camera ray is outgoing
-								LightRay pRay = new LightRay( travelDir, pOrigin );
-								float p = localLightModel.diffuseContribution( travelDir, localBest.normal );
-								diffuseFlag = true;
-								float cosTheta = travelDir.dotProduct( localBest.normal );
-								Color mdAdd = spawnRayPM( pRay, recDepth + 1, diffuseFlag );
-								colorBleed += mdAdd.scale( cosTheta / p );
-							}
-							currColor += (colorBleed.scale( 1f / samps ));
-						}
+						//Importance sampling Indirect
+						//if ((localBest.kRefl == 0 && localBest.kTrans == 0)){
+						//	Color colorBleed = Color.defaultBlack;
+						//	int samps = 10;
+						//	for (int sk = 0; sk < samps; sk++) //attempt for color-bleeding via Importance sampling
+						//	{
+						//		travelDir = getRightDiffuse( localLightModel, u1, u2, localBest.normal ); //this is wi... camera ray is outgoing
+						//		LightRay pRay = new LightRay( travelDir, pOrigin );
+						//		float p = localLightModel.diffuseContribution( travelDir, localBest.normal );
+						//		diffuseFlag = true;
+						//		float cosTheta = travelDir.dotProduct( localBest.normal );
+						//		Color mdAdd = spawnRayPM( pRay, recDepth + 1, diffuseFlag );
+						//		colorBleed += mdAdd.scale( cosTheta / p );
+						//	}
+						//	currColor += (colorBleed.scale( 1f / samps ));
+						//}
 						//if we're diffuse then collect photons at this point...
 						break;
 					case PhotonRNG.RR_OUTCOMES.SPECULAR:

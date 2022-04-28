@@ -58,11 +58,11 @@ namespace RayTracer_App.Photon_Mapping
 		private List<Photon> _volumePL;
 
 		//include photn maps here
-		private ptKdTree _globalPM; // LS+D
-		private ptKdTree _causticPM; // L{S|D|V }∗D
+		private ptKdTree _globalPM; // L{S|D|V }∗D
+		private ptKdTree _causticPM; //  LS+D
 		private ptKdTree _volumePM; //L{S|D|V }+V
 
-		/*
+		/* Light Transport Notation:
 		 * S is specular reflection or transmission, 
 		 * D is diffuse	(ie.non-specular) reflection or transmission,
 		 * and V is volume scattering.
@@ -186,19 +186,39 @@ namespace RayTracer_App.Photon_Mapping
 		}
 
 		//after photon emission and tracing is complete, scale all stored by 1/emiited.... 4/24
-		//currently some of these get manipulated twice
-		public void scaleStored( float powerScale )
+		//currently some of these get manipulated twice.. Assumes you want to scale all photons emitted
+		public void scaleStored( float powerScale, MAP_TYPE only = MAP_TYPE.NONE )
 		{
-			foreach (Photon g in this.globalPL)
+			//scale all photons
+			if (only == MAP_TYPE.NONE)
 			{
-				g.power *= powerScale;
-				g.pColor = g.pColor.scale(g.power);
+				foreach (Photon g in this.globalPL)
+				{
+					g.power *= powerScale;
+					g.pColor = g.pColor.scale( g.power );
+				}
+				foreach (Photon c in this.causticPL)
+				{
+					c.power *= powerScale;
+					c.pColor = c.pColor.scale( c.power );
+				}
+				foreach (Photon v in this.volumePL)
+				{
+					v.power *= powerScale;
+					v.pColor = v.pColor.scale( v.power );
+				}
 			}
-			foreach (Photon c in this.causticPL)
+			else
 			{
-				c.power *= powerScale;
-				c.pColor = c.pColor.scale( c.power );
+				List<Photon> chosen = this.getPLbyType( only );
+				foreach (Photon p in chosen)
+				{
+					p.power *= powerScale;
+					p.pColor = p.pColor.scale( p.power );
+				}
 			}
+
+			return;
 		}
 
 		//MAKE THE PMS... my way vs. Jensen's... 4/27

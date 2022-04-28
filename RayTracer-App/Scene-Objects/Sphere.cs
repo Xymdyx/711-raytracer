@@ -214,10 +214,37 @@ namespace RayTracer_App.Scene_Objects
 			return this.center - minAxisDir;
 		}
 
+		//texture coord bool for cp4
 		public override bool hasTexCoord()
 		{
 			
 			return ( this.center.texCoord != null );
+		}
+
+		//method for getting a random point on this sphere
+		public Point randomPointOn( Photon_Mapping.PhotonRNG pMapper = null)
+		{
+			Point randPt = null;
+			if (pMapper == null)
+				return randPt; //need photonMapper for now
+
+			float minX = this.center.x - this.radius;
+			float minY = this.center.y - this.radius;
+			float minZ = this.center.z - this.radius;
+			float maxX = this.center.x + this.radius;
+			float maxY = this.center.y + this.radius;
+			float maxZ = this.center.z + this.radius;
+
+			float x, y, z;
+			do
+			{
+				x = pMapper.randomRange(minX,maxX);
+				y = pMapper.randomRange(minY,maxY);
+				z = pMapper.randomRange(minZ,maxZ);
+			} while ((x * x) + (y * y) + (z * z) > this.radius);
+
+			randPt = new Point( x, y, z ); 
+			return randPt;
 		}
 
 		//toString

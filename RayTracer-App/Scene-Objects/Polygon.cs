@@ -243,6 +243,8 @@ namespace RayTracer_App.Scene_Objects
 
 			return minPt;
 		}
+
+		//helper for cp4 to see if we need to apply a texture
 		public override bool hasTexCoord()
 		{
 			foreach( Point vertex in this.vertices)
@@ -251,6 +253,17 @@ namespace RayTracer_App.Scene_Objects
 					return false;
 			}
 			return true;
+		}
+
+		//method for getting a random point on this sphere
+		public Point randomPointOn( Photon_Mapping.PhotonRNG pMapper = null )
+		{
+			Point randPt = null;
+			if (pMapper == null)
+				return randPt; //need photonMapper for now
+			
+			//need to make via barycentric coords TODO
+			return randPt;
 		}
 		public override string ToString()
 		{
