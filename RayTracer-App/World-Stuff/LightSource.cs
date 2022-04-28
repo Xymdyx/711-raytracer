@@ -50,7 +50,7 @@ namespace RayTracer_App.World
 		// for square light -- https://www.cs.princeton.edu/courses/archive/fall16/cos526/lectures/03-photonmapping.pdf
 
 		//emit photons from diffuse point light source... 
-		public void emitGlobalPhotonsFromDPLS( World world, int totalPhotons = 5000 ) //was 1000
+		public void emitGlobalPhotonsFromDPLS( World world, int totalPhotons = 30000 ) //was 1000
 		{
 			float x;
 			float y;

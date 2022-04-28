@@ -265,6 +265,8 @@ public class RayTracerMain
 		KdTree gets approximately same results as pure Whitted
 
 		* Currently several photons have 0 flux and many patches contribute no ID at shaded points
+		* 
+		* Attempt 1: try firing several diffuse rays via importance sampling for color bleeding. Caustics can be visualized directly
 		 */
 		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25, -1.25
 

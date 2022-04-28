@@ -16,7 +16,7 @@ namespace RayTracer_App.Photon_Mapping
 	{
 		public const int MAX_SHOOT_DEPTH = 100; //30 .15
 		public const int K_PHOTONS = 100; //15... able to gather 449 on 1000? usually 50 -500 used in estimate
-		public const float DEF_SEARCH_RAD = .07f; //.1f for w direct illum
+		public const float DEF_SEARCH_RAD = .17f; //.1f for w direct illum
 		public const float CONE_FILTER_CONST = 1f; //for cone filter... >=1
 
 		//RR debug
@@ -201,21 +201,24 @@ namespace RayTracer_App.Photon_Mapping
 			}
 		}
 
-		//MAKE THE PMS
+		//MAKE THE PMS... my way vs. Jensen's... 4/27
 		public void makeGlobalPM()
 		{
-			List<Point> globalPoses = grabPosByType( MAP_TYPE.GLOBAL );
-			//globalPM.fillHeap( globalPoses.Count );
-			this.globalPM.root = globalPM.balance( globalPoses, 0, this, float.MaxValue, MAP_TYPE.GLOBAL );
+			//List<Point> globalPoses = grabPosByType( MAP_TYPE.GLOBAL );
+			//List<Point> tempPoses = globalPoses.ConvertAll( pos => pos.copy() );
+			//this.globalPM.root = globalPM.balance( tempPoses, 0, this, float.MaxValue, MAP_TYPE.GLOBAL );
+
+			List<Photon> globalCopy = globalPL.ConvertAll( phot => phot.copy() );
+			globalPM.balanceJensen(globalCopy);
 			return;
 		}
 
 		public void makeCausticPM()
 		{
 			List<Point> causticPoses = grabPosByType( MAP_TYPE.CAUSTIC );
-			//globalPM.fillHeap( causticPoses.Count );
-			if( causticPoses.Count > 0)
-				this.causticPM.root = causticPM.balance( causticPoses, 0, this, float.MaxValue, MAP_TYPE.CAUSTIC );
+			List<Point> tempPoses = causticPoses.ConvertAll( pos => pos.copy() );
+			if ( causticPoses.Count > 0)
+				this.causticPM.root = causticPM.balance( tempPoses, 0, this, float.MaxValue, MAP_TYPE.CAUSTIC );
 			return;
 		}
 
@@ -230,7 +233,7 @@ namespace RayTracer_App.Photon_Mapping
 		public void makePMs()
 		{
 			makeGlobalPM();
-			makeCausticPM();
+			//makeCausticPM();
 			//makeVolumePM();
 			return;
 		}
@@ -380,7 +383,8 @@ namespace RayTracer_App.Photon_Mapping
 
 			if (queryMap != null)
 			{
-				queryMap.locatePhotons( 1, k, pos, radPtr, nearestHeap );
+				//queryMap.locatePhotons( 1, k, pos, radPtr, nearestHeap );
+				queryMap.locatePhotonsJensen( 1, k, pos, radPtr, nearestHeap );
 				if (nearestHeap.heapFull() && debug)
 					Console.WriteLine( $"Actually found {nearestHeap.heapSize} photons near pt {pos}" );
 			}

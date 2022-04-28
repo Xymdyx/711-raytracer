@@ -477,26 +477,29 @@ namespace RayTracer_App.World
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
 						travelDir = getRightDiffuse( bestObjLightModel, u1, u2, bestObj.normal ); //photon's flux needs to be multiplied by  stored surface color TODO???? -4/24
-						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
+						this.photonMapper.addGlobal( pOrigin.copy(), photonRay.direction.v1, photonRay.direction.v2, photonRay.direction.copy(), flux, 1.0f );
 						if (causticsMark)
 						{
-							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
+							this.photonMapper.addCaustic( pOrigin.copy(), photonRay.direction.v1, photonRay.direction.v2, photonRay.direction.copy(), flux, 1.0f );
 							causticsMark = false; 
 						}
 						break;
 					case PhotonRNG.RR_OUTCOMES.SPECULAR:
-						travelDir = Vector.reflect2( photonRay.direction, this.bestObj.normal ); //way to do it passing in positive outgoing direction
+						travelDir = Vector.reflect2( photonRay.direction, this.bestObj.normal );
 						causticsMark = true;
 						break;
-					case PhotonRNG.RR_OUTCOMES.TRANSMIT: //handles logic for negating normal and cos term inside method
+					case PhotonRNG.RR_OUTCOMES.TRANSMIT:
 						travelDir = Vector.transmit2( photonRay.direction, this.bestObj.normal, SceneObject.AIR_REF_INDEX, bestObj.refIndex );
 						transMark = !transMark; //toggle current transmission setting since we're only doing single refraction
 						causticsMark = true;
 						break;
 					case PhotonRNG.RR_OUTCOMES.ABSORB:
-						this.photonMapper.addGlobal( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
-						if (causticsMark)
-							this.photonMapper.addCaustic( pOrigin, photonRay.direction.v1, photonRay.direction.v2, photonRay.direction, flux, 1.0f );
+						if (bestObj.kRefl == 0 && bestObj.kTrans == 0) //we only store at NON-SPECULAR surfaces
+						{
+							this.photonMapper.addGlobal( pOrigin.copy(), photonRay.direction.v1, photonRay.direction.v2, photonRay.direction.copy(), flux, 1.0f );
+							if (causticsMark)
+								this.photonMapper.addCaustic( pOrigin.copy(), photonRay.direction.v1, photonRay.direction.v2, photonRay.direction.copy(), flux, 1.0f );
+						}
 						break;
 					default:
 						break;
@@ -628,11 +631,20 @@ namespace RayTracer_App.World
 				currColor = localLightModel.illuminate( intersection, -ray.direction, this.lights, this.objects, localBest, true ); //gather direct illumination
 
 
-				//calculate indirect illumination & caustics via PM queries...Only for diffuse... This should be gathered at original intersection point....
-				if(localBest.kRefl == 0 && localBest.kTrans == 0){
+				//calculate indirect illumination & caustics via PM queries...directly at diffuse surfaces. Results made sense but no color bleeding
+				//if(localBest.kRefl == 0 && localBest.kTrans == 0){
+				//	Color photonCols = callPhotons( intersection, -ray.direction, localBest.normal );
+				//	currColor += photonCols;
+				//}
+
+				//attempt 2 using importance sampling via PMs
+
+				// this approach of final gather gives grainy images when coupled with importance sampling. - 4/27
+				if( fromDiffuse ){
 					Color photonCols = callPhotons( intersection, -ray.direction, localBest.normal );
-					currColor += photonCols;
+					return photonCols;
 				}
+
 				Vector nHit = localBest.normal;
 				bool inside = false;
 				float checkDp = nHit.dotProduct( ray.direction );
@@ -652,7 +664,7 @@ namespace RayTracer_App.World
 				Point pOrigin = offsetIntersect( intersection, travelDir, localBest.normal );
 				PhotonRNG.RR_OUTCOMES rrOutcome = PhotonRNG.RR_OUTCOMES.TRANSMIT; //assume we're transmitting for simplicity.
 
-				if (!inside)
+				if (!inside && localLightModel.kd > 0)
 					rrOutcome = this.photonMapper.RussianRoulette( localLightModel.kd, localLightModel.ks, localBest.kRefl, localBest.kTrans );
 
 				//https://henrikdahlberg.github.io/2016/09/12/fresnel-reflection-and-refraction.html
@@ -660,8 +672,22 @@ namespace RayTracer_App.World
 				switch (rrOutcome)
 				{
 					case PhotonRNG.RR_OUTCOMES.DIFFUSE:
-						//travelDir = getRightDiffuse( localBestLightModel, u1, u2, localBest.normal ); //this is wi... camera ray is outgoing
-						//diffuseFlag = true;
+
+						if ((localBest.kRefl == 0 && localBest.kTrans == 0)){
+							Color colorBleed = Color.defaultBlack;
+							int samps = 1;
+							for (int sk = 0; sk < samps; sk++) //attempt for color-bleeding via Importance sampling
+							{
+								travelDir = getRightDiffuse( localLightModel, u1, u2, localBest.normal ); //this is wi... camera ray is outgoing
+								LightRay pRay = new LightRay( travelDir, pOrigin );
+								float p = localLightModel.diffuseContribution( travelDir, localBest.normal );
+								diffuseFlag = true;
+								float cosTheta = travelDir.dotProduct( localBest.normal );
+								Color mdAdd = spawnRayPM( pRay, recDepth + 1, diffuseFlag );
+								colorBleed += mdAdd.scale( cosTheta / p );
+							}
+							currColor += (colorBleed.scale( 1f / samps ));
+						}
 						//if we're diffuse then collect photons at this point...
 						break;
 					case PhotonRNG.RR_OUTCOMES.SPECULAR:
@@ -677,13 +703,6 @@ namespace RayTracer_App.World
 						diffuseFlag = false;
 						break;
 				}
-
-				//if (rrOutcome == PhotonRNG.RR_OUTCOMES.DIFFUSE && recDepth < maxBounces && localBest.kRefl == 0 && localBest.kTrans == 0)
-				//{ //we diffusely or specularly reflect
-				//	LightRay pRay = new LightRay( travelDir, pOrigin );
-				//	float prob = localLightModel.mcBRDF( travelDir, -ray.direction, localBest.normal );
-				//	currColor += spawnRayPM( pRay, recDepth + 1, diffuseFlag );
-				//}
 
 				diffuseFlag = false;
 				if (recDepth < maxBounces) //handle reflection and transmission here...
@@ -736,7 +755,6 @@ namespace RayTracer_App.World
 		// Implemented to test hemisphere sampling
 		public Color spawnRayPath( LightRay ray, int recDepth, bool fromDiffuse = false, int maxBounces = 5 )
 		{
-
 			Color currColor = Color.defaultBlack;
 			float bestW = float.MaxValue;
 			float currW = float.MaxValue;
@@ -744,13 +762,11 @@ namespace RayTracer_App.World
 			Point intersection = null;
 			bool diffuseFlag = fromDiffuse;
 
-			//no kdTree
 			if (this.kdTree.root == null)
 				bestW = findRayIntersect( ray );
 			else
 				bestW = this.kdTree.travelTAB( ray, this );
 
-			//move this out for efficiency
 			if ((this.bestObj != null) && (bestW != float.MaxValue))
 			{
 				Sphere s = this.bestObj as Sphere;
@@ -822,50 +838,6 @@ namespace RayTracer_App.World
 						Console.WriteLine( "Negative proability in path trace?" );
 					currColor += indirect.scale( dpScale/ prob);
 				}
-
-				//diffuseFlag = false;
-				//if (recDepth < maxBounces) //handle reflection and transmission here...
-				//{
-				//	Color recColor = null;
-				//	//reflection
-				//	if (localBest.kRefl > 0)
-				//	{
-				//		//importance sampling here if on
-				//		//Point reflOrigin;
-				//		Vector reflDir = Vector.reflect2( ray.direction, localBest.normal ); //equivalent way with what I did for Phong. But this is just reflecting back the same ray
-				//		Point reflOrigin = offsetIntersect( intersection, reflDir, localBest.normal );
-				//		LightRay reflRay = new LightRay( reflDir, reflOrigin );
-				//		recColor = spawnRayPM( reflRay, recDepth + 1 );
-
-				//		if (recColor != null)
-				//			currColor += recColor.scale( localBest.kRefl );
-				//	}
-
-				//	//refraction - cp6
-				//	//https://phet.colorado.edu/sims/html/bending-light/latest/bending-light_en.html... app
-				//	//https://www.scratchapixel.com/code.php?id=8&origin=/lessons/3d-basic-rendering/ray-tracing-overview... better
-				//	if (localBest.kTrans > 0) //cp6 TODO, handle ray passing through an object!
-				//	{
-				//		//spawn transmission ray
-				//		Vector transDir;
-				//		Point transOrigin;
-
-				//		if (inside) //these do alternate
-				//			transDir = Vector.transmit( ray.direction, nHit, localBest.refIndex, SceneObject.AIR_REF_INDEX );
-				//		else
-				//			transDir = Vector.transmit( ray.direction, nHit, SceneObject.AIR_REF_INDEX, localBest.refIndex );
-
-				//		transOrigin = offsetIntersect( intersection, transDir, localBest.normal );
-				//		LightRay translRay = new LightRay( transDir, transOrigin );
-				//		ray.entryPt = intersection; //keep track of if we're in an object or not
-				//		recColor = spawnRayPM( translRay, recDepth + 1 );
-
-				//		ray.entryPt = null; // we've exited
-
-				//		if (recColor != null)
-				//			currColor += recColor.scale( localBest.kTrans );
-				//	}
-				//}
 			}
 			return currColor;
 		}
@@ -882,4 +854,12 @@ Vector reflDir = Vector.reflect( -ray.direction, localBest.normal );
 {Vector (u1, u2, u3) = (0.12933731, 0.3664578 , 0.92140144)
 
 //Old code archive:
+
+Indirect via PM attempts:
+//if (rrOutcome == PhotonRNG.RR_OUTCOMES.DIFFUSE && recDepth < maxBounces && localBest.kRefl == 0 && localBest.kTrans == 0)
+//{ //we diffusely or specularly reflect
+//	LightRay pRay = new LightRay( travelDir, pOrigin );
+//	float prob = localLightModel.mcBRDF( travelDir, -ray.direction, localBest.normal );
+//	currColor += spawnRayPM( pRay, recDepth + 1, diffuseFlag );
+//}
  */

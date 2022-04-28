@@ -68,6 +68,42 @@ namespace RayTracer_App.Photon_Mapping
 			this.litFlag = litFlag;
 		}
 
+
+		//full constructor used by copy in the event I must store separate photons in the lists and maps
+		public Photon( Point pos, float power, float phi, float theta, float _kdFlag, bool litFlag, Vector dir, Color pColor)
+		{
+			this._pos = pos;
+			this._power = power;
+			this.pColor = pColor;
+			this._phi = phi; //from Cartesian -> Spherical
+			this._theta = theta;
+			this._kdFlag = kdFlag; // this is for the splitting plane axis in the kd-tree),
+			this.litFlag = litFlag;
+			this.dir = dir;
+		}
+
+		//operator
+		public static bool operator ==( Photon lhs, Photon rhs )
+		{
+			if (lhs is null)
+			{
+				if (rhs is null)
+				{
+					// null == null = true.
+					return true;
+				}
+
+				// Only the left side is null.
+				return false;
+			}
+			// Equals handles the case of null on right side.
+			return lhs.Equals( rhs );
+		}
+
+		public static bool operator !=( Photon lhs, Photon rhs ) => !(lhs == rhs);
+
+		//METHODS
+
 		//ray intersect formula is simply if the photon lies on a ray's path
 		public float rayPhotonIntersect( LightRay ray )
 		{
@@ -89,12 +125,27 @@ namespace RayTracer_App.Photon_Mapping
 		//return a new object with this Photon's exact info
 		public Photon copy()
 		{
-			return new Photon( this.pos, this.power, this.phi, this.theta, this.kdFlag, this.litFlag );
+			return new Photon( this.pos, this.power, this.phi, this.theta, this.kdFlag, this.litFlag, this.dir, this.pColor );
 		}
 
 		public override string ToString()
 		{
 			return $" Photon w pos {pos} , phi = {phi}, theta = {theta}, {power} watts ";
+		}
+
+		//longest equals method ever
+		public override bool Equals( object obj )
+		{
+			if ((obj == null) || !(this.GetType().Equals( obj.GetType() )))
+				return false;
+
+			Photon phot = (Photon)obj;
+			bool posCheck = (this.pos == phot.pos);
+			bool colCheck = this.pColor.Equals( phot.pColor );
+			bool floatChecks = this.power == phot.power && this.phi == phot.phi && this.theta == phot.theta;
+			bool flagChecks = this.litFlag == phot.litFlag;
+			bool dirCheck = this.dir == phot.dir;
+			return posCheck && colCheck && floatChecks && flagChecks && dirCheck ;
 		}
 	}
 }

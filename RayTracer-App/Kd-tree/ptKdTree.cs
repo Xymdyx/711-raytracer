@@ -27,6 +27,9 @@ namespace RayTracer_App.Kd_tree
 		private int _photonNum;
 
 		private List<KdNode> _pmHeap; //for locating photons helper... some nodes won't have photons...
+		private List<Photon> _jensenHeap; //jensen heap
+
+		private AABB bBox;
 
 		private static int MAX_KD_DEPTH = 5 * 4;
 		public KdNode root { get => this._root; set => this._root = value; }
@@ -35,6 +38,7 @@ namespace RayTracer_App.Kd_tree
 		public int kdSize { get => this._kdSize; set => this._kdSize = value; }
 		public int photonNum { get => this._photonNum; set => this._photonNum = value; }
 		public List<KdNode> pmHeap { get => this._pmHeap;}
+		public List<Photon> jensenHeap { get => this._jensenHeap; }
 
 		// constructors
 		public ptKdTree( )
@@ -56,7 +60,10 @@ namespace RayTracer_App.Kd_tree
 			this.kdSize = 1;
 			this.photonNum = 0;
 		}
-
+/// 
+/// /////////////////////////////////////////////////////////ORIGINAL METHODS////////////////////////////////////////////////
+/// 
+/// 
 		//methods
 		//called before building photon maps so we can fill up the heap as we go.
 		public void fillHeap( int total )
@@ -109,10 +116,10 @@ namespace RayTracer_App.Kd_tree
 			return -1;
 		}
 
-/* FOR PM: The balancing http://graphics.ucsd.edu/~henrik/papers/rendering_caustics/rendering_caustics_gi96.pdf
-algorithm converts the unordered list of photons into a balanced kd-tree
-by recursively selecting the root node among the data-set as the median
-element in the direction which represents the largest interval.*/
+		/* FOR PM: The balancing http://graphics.ucsd.edu/~henrik/papers/rendering_caustics/rendering_caustics_gi96.pdf
+		algorithm converts the unordered list of photons into a balanced kd-tree
+		by recursively selecting the root node among the data-set as the median
+		element in the direction which represents the largest interval.*/
 		public KdNode balance( List<Point> points, int depth, PhotonRNG mapper,
 			float prevAxis = float.MaxValue, PhotonRNG.MAP_TYPE sampleList = PhotonRNG.MAP_TYPE.GLOBAL, int heapIdx = 1 ) //need two extra defaults for initial purposes
 		{
@@ -350,8 +357,10 @@ element in the direction which represents the largest interval.*/
 			return bestW; //found no intersection
 		}
 
-		// locate the photons given a ray's intersection position with an object
-		//given radius squared...Make sure to be consistent...
+
+
+// locate the photons given a ray's intersection position with an object
+//given radius squared...Make sure to be consistent...
 		public unsafe void locatePhotons( int loc, int k, Point pos, float* radPtr, MaxHeap<Photon> heap )
 		{
 			float rad = *radPtr;
@@ -402,7 +411,252 @@ element in the direction which represents the largest interval.*/
 
 			return;
 		}
-		
+
+
+/////////////////////////////////jensen version of methods... ONE BIG SANITY CHECK/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+		//find indexOffset without pointers... I hate this but it works for calculating offset between objects in arrays
+		private int findIndexOffset( int targetIdx, Photon target, List<Photon> queryList )
+		{
+			int queriedIdx = 0;
+			foreach( Photon p in queryList)
+			{
+				if (p.Equals( target ))
+					break;
+
+				queriedIdx++;
+			}
+
+			int diff = targetIdx - queriedIdx;
+			return diff; //this indicates how far away 
+		}
+
+		// Jensen building method for quasi-heap rep of left-balanced kd tree
+		// postcondition: photons will be re-arranged and assigned to Jensen heap
+		public void balanceJensen( List<Photon> photons )
+		{
+			int totalPhots = photons.Count;
+			if (totalPhots > 1)
+			{
+				//temp arrays for balancing
+				List<Photon> temp1 = new List<Photon>();
+				for (int i = 0; i < totalPhots + 1; i++)
+					temp1.Add( null );
+
+				List<Photon> temp2 = photons.ConvertAll( phot => phot.copy() );
+				List<Point> photPts = photons.ConvertAll( phot => phot.pos.copy() );
+
+				//we purely need this because Jensen uses ptr arithmetic to determine offset between photons in memory.
+				// It's like a blank template memory block for the C# equivalent
+				List<Photon> memList = photons.ConvertAll( phot => phot.copy() ); 
+
+				//placeholders to match Jensen's 1-indexing
+				temp2.Insert( 0, null ); 
+				photons.Insert( 0, null );
+				memList.Insert( 0, null );
+
+				//make a bounding box for this tree
+				this.bBox = AABB.boxAroundPoints( photPts );
+
+				//this builds a balanced kd tree
+				balanceSegment( temp1, temp2, 1, 1, totalPhots );
+
+				//tracks balanced photon in temp1 location in the original photons list
+				int origIdx;
+
+				//tracker 1 and 2
+				int j = 1;
+				int foo = 1;
+				Photon fooPhoton = photons[j]; //temp that matches foo
+				for (int i = 1; i <= totalPhots; i++)
+				{
+					origIdx = memList.IndexOf( temp1[j] ); //find the corresponding index of the balanced el in memory... from his book: "pbal[j] - photons"
+					temp1[j] = null; // we're balancing this photon now
+					if (origIdx != foo)
+						photons[j] = photons[origIdx];
+					else
+					{
+						photons[j] = fooPhoton; //if in same location as the balanced tree and the original list
+						if (i < totalPhots)
+						{
+							// WEEEEEEEEEEE until we find a new kd photon to reorder
+							for (; foo <= totalPhots; foo++) 
+								if (temp1[foo] != null)
+									break;
+
+							fooPhoton = photons[foo];
+							j = foo;
+						}
+						continue;
+					}
+					j = origIdx;
+				}
+			}
+
+			this._jensenHeap = photons; //we've made the heap in Jensen's quirky way
+
+			return;
+		}
+		//swap using tuples
+		private void swap( List<Photon> photonList, int a, int b )
+		{
+			(photonList[a] , photonList[b]) = (photonList[b] , photonList[a]);
+		}
+
+		//split list along index median... organizing them into the left-plane and right-plane
+		private void medianSplit( List<Photon> temp2, int start, int end, int median, int axis )
+		{
+			int left = start;
+			int right = end;
+
+			while( right > left)
+			{
+				float pivot = temp2[right].pos.getAxisCoord( axis );
+				int i = left - 1;
+				int j = right;
+
+				//twirling loops
+				for(; ; )
+				{
+					while (temp2[++i].pos.getAxisCoord( axis ) < pivot)
+						;
+					while (temp2[--j].pos.getAxisCoord( axis ) > pivot && j > left)
+						;
+					if (i >= j)
+						break; //break out of inner for
+					swap( temp2, i, j ); //move points around median
+				}
+
+				swap( temp2, i, right );
+				if (i >= median)
+					right = i - 1;
+				if (i <= median)
+					left = i + 1;
+			} //end outer while
+
+			return;
+		}
+
+		//helper method for Jensen's building of a left-balanced kdtree
+		// he basically inserts all the left-plane nodes first and then the right-plane nodes
+		//he's a fan of 1-indexing
+		//temp1 becomes a balanced kdTree and uses temp2 as a reference
+		private void balanceSegment( List<Photon> temp1, List<Photon> temp2, int index, int start, int end )
+		{
+			// compute new median
+			int median = 1;
+			while ((4 * median) <= (end - start + 1))
+				median += median;
+
+			if(  (3 * median) <= ( end - start + 1))
+			{
+				median += median;
+				median += start - 1;
+			}
+			else
+			{
+				median = end - median + 1;
+			}
+
+			//find split axis and partition photon block
+			int axis = getLongestAxis( this.bBox );
+			medianSplit( temp2, start, end, median, axis );
+
+			temp1[index] = temp2[median];
+			temp1[index].kdFlag = axis; //kdflags store split axis
+
+			// recursively balance left and right block
+			if( median > start)
+			{
+				//balance left seg
+				if( start < median - 1)
+				{
+					float holdMax = this.bBox.max.getAxisCoord( axis );
+					float tempMax = temp1[index].pos.getAxisCoord( axis );
+					this.bBox.max.setAxisCoord( axis, tempMax );
+					balanceSegment( temp1, temp2, 2 * index, start, median - 1 );
+					this.bBox.max.setAxisCoord( axis, holdMax ); //double-check
+				}
+				else
+				{
+					temp1[2 * index] = temp2[start];
+				}
+			}
+
+			//balance right segment
+			if( median < end)
+			{
+				if (median + 1 < end)
+				{
+					float holdMin = this.bBox.min.getAxisCoord( axis );
+					float tempMin = temp1[index].pos.getAxisCoord( axis );
+					this.bBox.min.setAxisCoord( axis, tempMin );
+					balanceSegment( temp1, temp2, 2 * index + 1, median + 1, end );
+					this.bBox.min.setAxisCoord( axis, holdMin ); //double-check
+
+				}
+				else
+				{
+					temp1[2 * index + 1] = temp2[end];
+				}
+			}
+			return;
+		}
+
+		// locate the photons given a ray's intersection position with an object
+		//given radius squared...Make sure to be consistent...
+		public unsafe void locatePhotonsJensen( int loc, int k, Point pos, float* radPtr, MaxHeap<Photon> heap )
+		{
+			float rad = *radPtr;
+			Photon phot = jensenHeap[loc];
+			int axis = (int)phot.kdFlag; //here we use the kdFlag to store the split plane value
+			if (((loc * 2) + 1) < this.jensenHeap.Count)
+			{
+				//examine children via recursion
+				if (phot != null)
+				{
+					float dist1 = pos.getAxisCoord( axis ) - phot.pos.getAxisCoord( axis ); //switching this around seems to help...
+					if (dist1 < 0)
+					{
+						locatePhotonsJensen( 2 * loc, k, pos, radPtr, heap ); //visit the left/rear child
+						if (dist1 * dist1 < *radPtr)
+							locatePhotonsJensen( (2 * loc) + 1, k, pos, radPtr, heap ); //then visit the right/front child
+					}
+					else
+					{
+						locatePhotonsJensen( (2 * loc) + 1, k, pos, radPtr, heap ); //visit the right/front child
+						if (dist1 * dist1 < *radPtr)
+							locatePhotonsJensen( 2 * loc, k, pos, radPtr, heap ); //then visit the left/rear child
+					}
+				}
+			}
+
+			//must check since a few interior nodes may NOT have photons
+			rad = *radPtr;
+
+			Point pLeaf = phot.pos;
+			float xD = (pLeaf.x - pos.x);
+			float yD = (pLeaf.y - pos.y);
+			float zD = (pLeaf.z - pos.z);
+			float dist2 = xD * xD + yD * yD + zD * zD;
+
+			//insert into max heap and update search squared radius
+			if (dist2 < rad)
+			{
+				heap.InsertElementInHeap( dist2, phot ); //tested this...4/24
+				*radPtr = (float)heap.doubleMazHeap[1]; //the search radius is the distance to root node in max heap -_-. I was assigning it to dist2
+			}
+
+			return;
+		}
+
+
+////////////////////////////////////.........................../DEBUG METHODS
+		public override string ToString()
+		{
+			return $" PM with {this.photonNum} photons and {this.kdSize} nodes with {this.kdLevels} levels\n" + this.root.ToString();
+		}
+
 		//print general PM stats
 		public String pmPrint()
 		{
@@ -410,31 +664,41 @@ element in the direction which represents the largest interval.*/
 		}
 
 		//print the max heap we use for gathering photons
-		public void pmHeapPrint( bool showInt = true, bool showLeaf = true)
+		public void pmHeapPrint( bool showInt = true, bool showLeaf = true )
 		{
 			int heapEl = 1;
-			foreach( KdNode kd in pmHeap)
+			foreach (KdNode kd in pmHeap)
 			{
 				ptKdInteriorNode ptIn;
 				ptKdLeafNode pLeaf;
-				if ( (showInt) && (ptIn = kd as ptKdInteriorNode) != null)
+				if ((showInt) && (ptIn = kd as ptKdInteriorNode) != null)
 				{
 					Console.WriteLine( $"Heap element {heapEl}:" );
 					ptIn.debugPrint();
 				}
-				else if ( (showLeaf) && (pLeaf = kd as ptKdLeafNode) != null)
+				else if ((showLeaf) && (pLeaf = kd as ptKdLeafNode) != null)
 				{
 					Console.WriteLine( $"Heap element {heapEl}:" );
 					pLeaf.debugPrint();
 				}
 				heapEl++;
 			}
+
+			return;
 		}
 
-		public override string ToString()
+		//print the jensen heap we use for gathering photons
+		public void jensenPrint( bool showInt = true, bool showLeaf = true )
 		{
-			return $" PM with {this.photonNum} photons and {this.kdSize} nodes with {this.kdLevels} levels\n" + this.root.ToString();
+			int heapEl = 1;
+			foreach (Photon phot in jensenHeap)
+			{
+				Console.WriteLine( $" Jensen Photon {heapEl}" );
+				heapEl++;
+			}
+			return;
 		}
+
 	}
 }
 
@@ -522,102 +786,4 @@ element in the direction which represents the largest interval.*/
 			return bestW; //error
 		}
  
-// using same ray entry and exit whole time
-		public float travelTAB( LightRay ray, World.World world , int depth, KdNode node = null, Point a = null, Point b = null)
-		{
-			// a[coord] = proper coord of entry pt
-			// b[coord] = proper coord of exit point
-			// s = splitting plane offset... from splitting-plane ray intersection
-			//ray must intersect whole scene bounding box prior
-			Point entryPt = null;
-			Point exitPt = null;
-			Point sPlanePt;
-			Vector sVec;
-			float aCoord;
-			float bCoord;
-			float splitOffset;
-
-			ptKdLeafNode leaf;
-			ptKdInteriorNode inner;
-
-			float bestW = float.MaxValue; //initialize to error per convention so far
-
-			leaf = node as ptKdLeafNode;
-			inner = node as ptKdInteriorNode;
-
-			if (node == null && leaf == null && inner == null) //this works
-			{
-				leaf = this.root as ptKdLeafNode;
-				inner = this.root as ptKdInteriorNode;
-
-				if (inner != null)
-				{
-					inner.selfAABB.intersect( ray ); // update entry and exit points
-					entryPt = ray.entryPt.copy();
-					exitPt = ray.exitPt.copy();
-					if (ray.entryPt == null || ray.exitPt == null)
-						return bestW;
-				}
-			}
-
-			if (leaf != null)
-				return leaf.stored.rayPhotonIntersect( ray ) ;// test ray photon intersection;
-			
-			// N = negative, P = positive, Z = along splitting plane
-			else if( inner != null)
-			{
-				// need this to account for N4 and P4, where we recompute s to sub into a or b in children
-				if( entryPt == null)
-					entryPt = a.copy();
-				if( exitPt == null)
-					exitPt = b.copy();
-				float originOffset = ray.origin.getAxisCoord( inner.axis );
-				aCoord = entryPt.getAxisCoord( inner.axis );
-				bCoord = exitPt.getAxisCoord( inner.axis ); //the exit point should remain the same...
-
-				if (aCoord > bCoord) //a must be smaller than b
-				{
-					(aCoord, bCoord) = (bCoord, aCoord); // tuples let me swap variables w/o temps
-					//Console.WriteLine( $" a is not smaller than b here for a = {entryPt} , b = {exitPt} " );
-				}
-				splitOffset = inner.axisVal; // - ray.origin.getAxisCoord(inner.axis);
-
-				if( aCoord <= splitOffset)
-				{
-					if (bCoord < splitOffset) //visit leftnode
-						bestW = travelTAB( ray, world, depth + 1, inner.rear, entryPt, exitPt ); //N1, N2, N3, P5, Z3
-					else
-					{
-						if (bCoord == splitOffset)
-							bestW = travelTAB( ray, world, depth + 1, inner.front, entryPt, exitPt ); //traverse arbitrary child node.. Z2
-						else
-						{ // visit left then right (lower -> upper)
-							//compute and store COMPLETE location of splitOffset....this means that the offset's full point is needed...replace a or b?
-							//recommends a stack since the newly computer s is used later
-							bestW = travelTAB( ray, world, depth + 1, inner.rear, entryPt, inner.partitionPt ); //tried
-
-							if ( intersectGood( bestW ) ) return bestW; //return here since we know first check will def be closer
-
-							bestW = travelTAB( ray, world, depth + 1, inner.front, inner.partitionPt, exitPt ); //N4.. front has s as entry, b same
-						}
-					}
-				}
-				else // aCoord > splitOffset
-				{
-					if (bCoord > splitOffset) //visit right
-						bestW = travelTAB( ray, world, depth + 1, inner.front, entryPt, exitPt ); // P1, P2, P3, N5, Z1
-					else
-					{ //visit right then left (upper -> lower)
-						//compute and store location of splitOffset....I believe this is already done(?)
-						bestW = travelTAB( ray, world, depth + 1,  inner.front, entryPt, inner.partitionPt );
-
-						if ( intersectGood( bestW ) ) return bestW; //return here since we know first check will def be closer
-
-						bestW = travelTAB( ray, world, depth + 1, inner.rear, inner.partitionPt, exitPt ); //P4
-					}
-				}
-			}
-
-			return bestW; //error
-		}
  */
