@@ -593,7 +593,7 @@ namespace RayTracer_App.World
 						causticsMark = true;
 						break;
 					case PhotonRNG.RR_OUTCOMES.ABSORB:
-						if (bestObj.kRefl == 0 && bestObj.kTrans == 0) //we only store at NON-SPECULAR surfaces
+						if (bestObj.kRefl == 0 && bestObj.kTrans == 0)
 						{
 							if (causticsMark)
 								this.photonMapper.addCaustic( pOrigin.copy(), photonRay.direction.v1, photonRay.direction.v2, photonRay.direction.copy(), flux, 1.0f );
@@ -730,13 +730,16 @@ namespace RayTracer_App.World
 
 
 				//calculate indirect illumination & caustics via PM queries...directly at diffuse surfaces. Results made sense but no color bleeding
-				if(localLightModel.kd > 0 && localBest.kRefl == 0 && localBest.kTrans == 0){
-					Color photonCols = callPhotons( intersection, -ray.direction, localBest.normal );
-					currColor += photonCols;
-				}
+				if( localLightModel.kd > 0 && localBest.kRefl == 0 && localBest.kTrans == 0 &&
+					(photonMapper.globalPM.jensenHeap.Count > 0 || photonMapper.globalPM.pmHeap.Count > 0) )
+					{ 
+						Color photonCols = callPhotons( intersection, -ray.direction, localBest.normal );
+						currColor += photonCols;
+					}
 
 				//check for caustics directly
-				currColor += callPhotons( intersection, -ray.direction, localBest.normal, PhotonRNG.MAP_TYPE.CAUSTIC );
+				if( photonMapper.causticPM.jensenHeap.Count > 0 || photonMapper.causticPM.pmHeap.Count > 0)
+					currColor += callPhotons( intersection, -ray.direction, localBest.normal, PhotonRNG.MAP_TYPE.CAUSTIC );
 
 				//attempt 2 using importance sampling via PMs
 

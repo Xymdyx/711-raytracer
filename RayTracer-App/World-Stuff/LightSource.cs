@@ -37,7 +37,7 @@ namespace RayTracer_App.World
 			this._defPhots = 0;
 		}
 
-		public LightSource( Point position, Color lightColor, float power = 1f, int defPhots = 10000) //50 pow for debugging
+		public LightSource( Point position, Color lightColor, float power = 10f, int defPhots = 1000) //50 pow for debugging
 		{
 			this._position = position;
 			this._lightColor = lightColor;
@@ -110,8 +110,12 @@ namespace RayTracer_App.World
 					Point randPt = targets[item].randomPointOn( pMapper ); //this should get a randomPoint on the appropriate target
 					Vector dir = randPt - this.position;
 					LightRay photonRay = new LightRay( dir, this.position );
+					int countBefore = pMapper.causticPL.Count;
 					world.tracePhotonCaustic( photonRay, 1 );
-					ne++;
+					if (countBefore == pMapper.causticPL.Count)
+						continue;
+
+					ne++; //bad acuuracy for sphere...
 				}
 			}
 

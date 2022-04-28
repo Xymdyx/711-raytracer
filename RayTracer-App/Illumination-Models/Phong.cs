@@ -18,6 +18,7 @@ namespace RayTracer_App.Illumination_Models
 		public static Phong regularPhong = new Phong( 0f, .65f, .25f, 12f );
 		public static Phong floorPhong = new Phong( 0f, .45f, .35f, 128f );
 		public static Phong cornellPhong = new Phong( 0f, .75f, 0f, 128f );
+		public static Phong cornellBallPhong = new Phong( 0f, .35f, .65f, 128f );
 
 		private float _ka; // not going to implement since ambient will be shaved later
 		//private float _kd; // Lambertian diffuse

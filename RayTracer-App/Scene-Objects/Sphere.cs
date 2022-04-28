@@ -45,16 +45,21 @@ namespace RayTracer_App.Scene_Objects
 				this._lightModel = lightModel;
 		}
 
-		public Sphere( Point center, float radius, Color diffuse, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX )
+		public Sphere( Point center, float radius, Color diffuse, float kRefl = 0.0f, 
+			float kTrans = 0.0f, float refIndex = AIR_REF_INDEX ,IlluminationModel lightModel = null )
 		{
 			this._center = center;
 			this._radius = radius;
 			this._normal = null;
 			this._diffuse = diffuse;
-			this._specular = Color.whiteSpecular; ;
+			this._specular = Color.whiteSpecular;
 			this._kRefl = kRefl;
 			this._kTrans = kTrans;
 			this.refIndex = refIndex;
+			this.lightModel = lightModel;
+			if (lightModel == null)
+				this.lightModel = Phong.regularPhong;
+
 		}
 
 		//convert from spherical to cartesian
@@ -235,9 +240,9 @@ namespace RayTracer_App.Scene_Objects
 			float v = pMapper.randomRange(0f,1f);
 			float theta = (float) (2 * Math.PI * u);
 			float phi = (float) Math.Acos( 2 * v - 1 );
-			float x = (float) (center.x + (radius * Math.Sin( theta ) * Math.Cos( phi )) ); //swapped theta & phi from original
-			float y = (float)(center.z + (radius * Math.Cos( phi ))); //swapped z & y from original code
-			float z =  (float)(center.y + (radius * Math.Sin( phi ) * Math.Sin( theta )));
+			float x = (float) (center.x + (radius * Math.Sin( phi ) * Math.Cos( theta )) ); //swapped theta & phi from original sin(phi) cos(theta)
+			float y = (float)(center.y + (radius * Math.Sin( phi ) * Math.Sin( theta ))); //swapped z & y from original code.. z = rad ( cos(phI));
+			float z = (float)(center.z + (radius * Math.Cos( phi )));
 
 			randPt = new Point( x, y, z );
 			//if (x * x + y * y + z * z > radius)

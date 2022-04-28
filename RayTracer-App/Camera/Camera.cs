@@ -273,6 +273,12 @@ namespace RayTracer_App.Camera
 				Console.WriteLine( world.photonMapper.photonSearchStats() );
 				Console.WriteLine( "Global PM: " + world.photonMapper.globalPM.heapPrint() );
 				Console.WriteLine( $"Most photons gathered : {world.highestK}/ {world.allK}" );
+				int lightNum = 1;
+				foreach( LightSource l in world.lights) 
+				{ 
+					Console.WriteLine( $"Light {lightNum} @ {l.position} had {l.power} watts and shot {l.ne} photons" );
+					lightNum++;
+				}
 			}
 			if (photonOverlay || justPhotons)
 				Console.WriteLine( $"Lit caustics: {world.causticHits}\n Total hits {world.photoHits}" );

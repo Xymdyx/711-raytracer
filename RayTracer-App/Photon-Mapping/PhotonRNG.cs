@@ -91,6 +91,7 @@ namespace RayTracer_App.Photon_Mapping
 			this.globalPM = new ptKdTree();
 			//Spec n times and then Diffuse
 			this.causticPM = new ptKdTree();
+
 			this.volumePM = null; //over summer.
 		}
 
@@ -449,6 +450,12 @@ namespace RayTracer_App.Photon_Mapping
 			return nearestHeap; //this way we have the photons nd their distances for use
 		}
 
+		//counts all photons
+		public int getTotalPhots()
+		{
+			return this.globalPL.Count + this.causticPL.Count + this.volumePL.Count;
+		}
+
 		//debug RR stats
 		public void rrStats()
 		{
@@ -456,7 +463,7 @@ namespace RayTracer_App.Photon_Mapping
 			Console.WriteLine( $"{this.reflected} reflected" );
 			Console.WriteLine( $"{this.transmitted} transmitted" );
 			Console.WriteLine( $"{this.absorbed} absorbed" );
-			Console.WriteLine( $" {this.powerless} powerless / {this.globalPL.Count}" );
+			Console.WriteLine( $" {this.powerless} powerless / {this.getTotalPhots()}" );
 		}
 
 		//debug how many photons are in scene bounds
