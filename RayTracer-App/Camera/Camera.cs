@@ -164,6 +164,7 @@ namespace RayTracer_App.Camera
 
 				world.beginpmPassOne(); //phton trace
 				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
+				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
 				world.beginpmPassTwo(); // mark to gather phtons
 				//photonOverlay = true;
 			}
@@ -268,6 +269,7 @@ namespace RayTracer_App.Camera
 			{
 				world.photonMapper.rrStats();
 				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
+				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
 				Console.WriteLine( world.photonMapper.photonSearchStats() );
 				Console.WriteLine( "Global PM: " + world.photonMapper.globalPM.heapPrint() );
 				Console.WriteLine( $"Most photons gathered : {world.highestK}/ {world.allK}" );

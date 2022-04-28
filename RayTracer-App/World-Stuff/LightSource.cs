@@ -20,30 +20,31 @@ namespace RayTracer_App.World
 		private Color _lightColor;
 		private float _power; // for photon mapping
 		private int _ne;//number of emitted photons for this lightsource
+		private int _defPhots;
 
 		public Point position { get => this._position; set => this._position = value; }
 		public Color lightColor { get => this._lightColor; set => this._lightColor = value; }
 		public float power { get => this._power; set => this._power = value; }
 		public int ne { get => this._ne; }
+		public int defPhots { get => this._defPhots; }
 
 
 		public LightSource ()
 		{
 			this._position = new Point();
-
 			this._lightColor = new Color();
-
 			this._power = 0;
+			this._defPhots = 0;
 		}
 
-		public LightSource( Point position, Color lightColor, float power = 5.5f) //50 pow for debugging
+		public LightSource( Point position, Color lightColor, float power = 1f, int defPhots = 10000) //50 pow for debugging
 		{
 			this._position = position;
 			this._lightColor = lightColor;
-			this._power = power; 
+			this._power = power;
+			this._defPhots = defPhots;
 		}
 
-		
 		//transform light with the camera..
 		public void transform( Matrix4x4 camViewMat )
 		{
@@ -56,12 +57,13 @@ namespace RayTracer_App.World
 
 		// for square light -- https://www.cs.princeton.edu/courses/archive/fall16/cos526/lectures/03-photonmapping.pdf
 		//emit photons from diffuse point light source... 
-		public void emitGlobalPhotonsFromDPLS( World world, int totalPhotons = 10000 )
+		public void emitGlobalPhotonsFromDPLS( World world)
 		{
 			float x;
 			float y;
 			float z;
 			int ne = 0;
+			int totalPhotons = defPhots;
 			Point photonPos;
 			world.photonMapper.maxGlobal = totalPhotons;
 			while (world.photonMapper.globalPL.Count < totalPhotons) //while we don't have the totalPhotons
@@ -88,21 +90,22 @@ namespace RayTracer_App.World
 
 		// for square light -- https://www.cs.princeton.edu/courses/archive/fall16/cos526/lectures/03-photonmapping.pdf
 		//emit photons from diffuse point light source and aim at targets we know will make caustics
-		public void emitCausticsFromDPLS( World world, List<SceneObj> targets, int basePhotons = 500 )
+		public void emitCausticsFromDPLS( World world, List<SceneObj> targets)
 		{
 			float x;
 			float y;
 			float z;
 			int targetCount = targets.Count;
+			int basePhotons = defPhots;
 			int totalPhotons =  targetCount * basePhotons;
 			int ne = 0;
 			Point photonPos;
 			PhotonRNG pMapper = world.photonMapper;
 			pMapper.maxCaustics = totalPhotons;
 
-			for (int item = 1; item <= targetCount; item++)
+			for (int item = 0; item < targetCount; item++)
 			{
-				while (pMapper.causticPL.Count < basePhotons * item)
+				while (pMapper.causticPL.Count < basePhotons * (item + 1) )
 				{
 					Point randPt = targets[item].randomPointOn( pMapper ); //this should get a randomPoint on the appropriate target
 					Vector dir = randPt - this.position;

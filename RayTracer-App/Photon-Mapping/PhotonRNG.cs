@@ -26,10 +26,12 @@ namespace RayTracer_App.Photon_Mapping
 		private int diffused;
 		private int _maxGlobal;
 		private int _maxCaustic;
+		private int _causticHits;
 		public int powerless = 0;
 
 		public int maxGlobal { get => this._maxGlobal; set => this._maxGlobal = value; }
 		public int maxCaustics { get => this._maxCaustic; set => this._maxCaustic = value; }
+		public int caustics { get => this._causticHits; set => this._causticHits = value; }
 
 		public enum RR_OUTCOMES
 		{
@@ -153,6 +155,22 @@ namespace RayTracer_App.Photon_Mapping
 			}
 		}
 
+		// getter for colors for each photon map
+		public String getPStringbyType( MAP_TYPE listType = MAP_TYPE.GLOBAL )
+		{
+			switch (listType)
+			{
+				case MAP_TYPE.GLOBAL:
+					return "globaL";
+				case MAP_TYPE.CAUSTIC:
+					return "caustic";
+				case MAP_TYPE.VOLUME:
+					return "volume";
+				default:
+					return "nonexistent";
+			}
+		}
+
 		// helper for getting photon positions of a given type
 		public List<Point> grabPosByType( MAP_TYPE desired = MAP_TYPE.GLOBAL )
 		{
@@ -252,7 +270,7 @@ namespace RayTracer_App.Photon_Mapping
 			{
 				List<Photon> causticCopy = causticPL.ConvertAll( phot => phot.copy() );
 				causticPM.balanceJensen( causticCopy );
-				foreach (Photon p in globalPL)
+				foreach (Photon p in causticPL)
 				{
 					if (!causticPM.jensenHeap.Contains( p )) //sanity check
 						Console.WriteLine( $"Missing {p} in Caustic Jensen Heap" );
@@ -273,7 +291,7 @@ namespace RayTracer_App.Photon_Mapping
 		public void makePMs()
 		{
 			makeGlobalPM();
-			//makeCausticPM();
+			makeCausticPM();
 			//makeVolumePM();
 			return;
 		}
@@ -446,8 +464,9 @@ namespace RayTracer_App.Photon_Mapping
 		public void printPhotonsInScene( AABB sceneBox, MAP_TYPE mapType = MAP_TYPE.GLOBAL )
 		{
 			List<Photon> desired = getPLbyType( mapType );
+			String mapName = getPStringbyType( mapType );
 			int inScene = 0;
-			
+
 			foreach (Photon p in desired)
 			{
 				Point pPos = p.pos;
@@ -462,7 +481,11 @@ namespace RayTracer_App.Photon_Mapping
 					}
 			}
 
-			Console.WriteLine( $" {inScene}/{desired.Count} photons in scene bounds" );
+			Console.WriteLine( $" {inScene}/{desired.Count} {mapName} photons in scene bounds" );
+
+			if (mapType == MAP_TYPE.CAUSTIC)
+				Console.WriteLine( $"{this._causticHits} caustics hit aimed at targets" );
+
 			return;
 			}
 

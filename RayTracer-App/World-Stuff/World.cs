@@ -8,6 +8,7 @@ using RayTracer_App.Illumination_Models;
 using RayTracer_App.Voxels;
 using RayTracer_App.Kd_tree;
 using RayTracer_App.Photon_Mapping;
+using System.Linq;
 //MATRIX 4D -> MATRIX4X4
 
 namespace RayTracer_App.World
@@ -388,9 +389,13 @@ namespace RayTracer_App.World
 		public void beginpmPassOne()
 		{
 			this.photonMapper = new PhotonRNG();
+			List<SceneObject> targets = this.objects.FindAll( so => (so.kRefl > 0 || so.kTrans > 0) ); //get all objects that are somewhat specular to aim at
 
-			foreach (LightSource l in this.lights) //187 visible using BFS photon list check on 500. Only lose about 30 with kd tree visuals, which makes sense
-				l.emitGlobalPhotonsFromDPLS( this); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
+			foreach (LightSource l in this.lights)
+			{
+				l.emitGlobalPhotonsFromDPLS( this ); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
+				l.emitCausticsFromDPLS( this, targets );
+			}
 
 			//construct photon maps from lists
 			photonMapper.makePMs();
@@ -552,7 +557,10 @@ namespace RayTracer_App.World
 
 				//debug
 				if (bestObj as Sphere != null)
+				{
 					Console.WriteLine( "Hit sphere" );
+					this.photonMapper.caustics++;
+				}
 
 				flux = bestObjLightModel.illuminate( intersection, photonRay.direction, this.lights, this.objects, this.bestObj, true, true ); //last flag is for giving photons a pass from shadows
 				if (flux.isShadowed())
@@ -728,7 +736,7 @@ namespace RayTracer_App.World
 				}
 
 				//check for caustics directly
-				//currColor += callPhotons( intersection, -ray.direction, localBest.normal, PhotonRNG.MAP_TYPE.CAUSTIC );
+				currColor += callPhotons( intersection, -ray.direction, localBest.normal, PhotonRNG.MAP_TYPE.CAUSTIC );
 
 				//attempt 2 using importance sampling via PMs
 
@@ -805,7 +813,6 @@ namespace RayTracer_App.World
 					if (localBest.kRefl > 0)
 					{
 						//importance sampling here if on
-						//Point reflOrigin;
 						Vector reflDir = Vector.reflect2( ray.direction, localBest.normal ); //equivalent way with what I did for Phong. But this is just reflecting back the same ray
 						Point reflOrigin = offsetIntersect( intersection, reflDir, localBest.normal );
 						LightRay reflRay = new LightRay( reflDir, reflOrigin );
@@ -845,7 +852,7 @@ namespace RayTracer_App.World
 		}
 
 		//path-tracing test
-		// Implemented to test hemisphere sampling
+		// Implemented to test hemisphere sampling (kinda works)
 		public Color spawnRayPath( LightRay ray, int recDepth, bool fromDiffuse = false, int maxBounces = 5 )
 		{
 			Color currColor = Color.defaultBlack;

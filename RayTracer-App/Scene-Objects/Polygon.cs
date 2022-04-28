@@ -256,7 +256,7 @@ namespace RayTracer_App.Scene_Objects
 		}
 
 		//method for getting a random point on this sphere
-		public Point randomPointOn( Photon_Mapping.PhotonRNG pMapper = null )
+		public override Point randomPointOn( Photon_Mapping.PhotonRNG pMapper = null )
 		{
 			Point randPt = null;
 			if (pMapper == null)

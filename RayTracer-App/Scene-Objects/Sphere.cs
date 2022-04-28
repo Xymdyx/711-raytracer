@@ -58,8 +58,8 @@ namespace RayTracer_App.Scene_Objects
 		}
 
 		//convert from spherical to cartesian
-		//x=ρsinφcosθ,y=ρsinφsinθ, and z=ρcosφ. where rho = radius
-		// https://www.scratchapixel.com/lessons/3d-basic-rendering/global-illumination-path-tracing/global-illumination-path-tracing-practical-implementation
+		//x=ρsinφcosθ,y=ρsinφsinθ, and z=ρcosφ. where rho = radius.. z = up vector.
+		// https://www.scratchapixel.com/lessons/3d-basic-rendering/global-illumination-path-tracing/global-illumination-path-tracing-practical-implementation //also supported by wikipedia
 		public static Vector sphericalToCart( float theta, float azi )
 		{
 			float sinTheta = (float) Math.Sin( theta );
@@ -67,6 +67,7 @@ namespace RayTracer_App.Scene_Objects
 			float sinAzi = (float)Math.Sin( azi );
 			float cosAzi = (float)Math.Cos( azi );
 
+			//since y vector is up here, it gets cos azi
 			return new Vector( sinTheta * cosAzi, cosTheta, sinAzi * sinTheta ); //looked right... 4/24 sinAzi * cosTheta, sinAzi * sinTheta, cosAzi
 		}
 
@@ -222,28 +223,25 @@ namespace RayTracer_App.Scene_Objects
 		}
 
 		//method for getting a random point on this sphere
-		public Point randomPointOn( Photon_Mapping.PhotonRNG pMapper = null)
+		//https://stackoverflow.com/questions/5531827/random-point-on-a-given-sphere
+		public override Point randomPointOn( Photon_Mapping.PhotonRNG pMapper = null)
 		{
 			Point randPt = null;
 			if (pMapper == null)
 				return randPt; //need photonMapper for now
 
-			float minX = this.center.x - this.radius;
-			float minY = this.center.y - this.radius;
-			float minZ = this.center.z - this.radius;
-			float maxX = this.center.x + this.radius;
-			float maxY = this.center.y + this.radius;
-			float maxZ = this.center.z + this.radius;
+			
+			float u = pMapper.randomRange(0f,1f);
+			float v = pMapper.randomRange(0f,1f);
+			float theta = (float) (2 * Math.PI * u);
+			float phi = (float) Math.Acos( 2 * v - 1 );
+			float x = (float) (center.x + (radius * Math.Sin( theta ) * Math.Cos( phi )) ); //swapped theta & phi from original
+			float y = (float)(center.z + (radius * Math.Cos( phi ))); //swapped z & y from original code
+			float z =  (float)(center.y + (radius * Math.Sin( phi ) * Math.Sin( theta )));
 
-			float x, y, z;
-			do
-			{
-				x = pMapper.randomRange(minX,maxX);
-				y = pMapper.randomRange(minY,maxY);
-				z = pMapper.randomRange(minZ,maxZ);
-			} while ((x * x) + (y * y) + (z * z) > this.radius);
-
-			randPt = new Point( x, y, z ); 
+			randPt = new Point( x, y, z );
+			//if (x * x + y * y + z * z > radius)
+			//	Console.WriteLine( "Random point on sphere out of bounds!" );
 			return randPt;
 		}
 
