@@ -11,6 +11,7 @@ using OpenGLDotNet;
 public class Color
 {
     //TODO DEFINE STATIC CONSTANTS FOR SPHERE COLOR, FLOOR COLOR, AND BACKGROUND COLOR
+    //https://antongerdelan.net/colour/
     const int COLOR_MAX = 255;
 
     //whitted colors

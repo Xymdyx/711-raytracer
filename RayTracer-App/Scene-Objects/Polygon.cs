@@ -259,14 +259,34 @@ namespace RayTracer_App.Scene_Objects
 			return true;
 		}
 
-		//method for getting a random point on this sphere
+		//method for getting a random point on this triangle via barycentric coords
+		//found from a random power point
 		public override Point randomPointOn( Photon_Mapping.PhotonRNG pMapper = null )
 		{
 			Point randPt = null;
 			if (pMapper == null)
 				return randPt; //need photonMapper for now
-			
+
 			//need to make via barycentric coords TODO
+			float u = pMapper.randomRange( 0f, 1f );
+			float v = pMapper.randomRange( 0f, 1f );
+
+			if( u + v > 1)
+			{
+				u = 1f - u;
+				v = 1f - v;
+			}
+
+			Vector uVec = this.vertices[1].ptSub( this.vertices[0] ); //not normalized
+			//Vector uVec = this.vertices[1] - vertices[0]; //not normalized
+			uVec = uVec.scale( u );
+			Vector vVec = this.vertices[2].ptSub(this.vertices[0] );
+			//Vector vVec = this.vertices[2] - this.vertices[0];
+			vVec = vVec.scale( v );
+
+			randPt = this.vertices[0] + uVec;
+			randPt += vVec;
+
 			return randPt;
 		}
 		public override string ToString()

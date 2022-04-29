@@ -37,7 +37,7 @@ namespace RayTracer_App.World
 			this._defPhots = 0;
 		}
 
-		public LightSource( Point position, Color lightColor, float power = 10f, int defPhots = 100) //50 pow for debugging
+		public LightSource( Point position, Color lightColor, float power = 10f, int defPhots = 10000) //50 pow for debugging
 		{
 			this._position = position;
 			this._lightColor = lightColor;
@@ -84,6 +84,7 @@ namespace RayTracer_App.World
 			this._ne += ne;
 			float photonPow = (this.power / ne); //according to Jensen, we only scale by EMITTED PHOTONS, not by total
 			world.photonMapper.scaleStored( photonPow, PhotonRNG.MAP_TYPE.GLOBAL );
+			Console.WriteLine( "Finished global" );
 
 			return;
 		}
@@ -127,6 +128,7 @@ namespace RayTracer_App.World
 			this._ne += ne;
 			float photonPow = (this.power / ne); //according to Jensen, we only scale by EMITTED PHOTONS, not by total
 			pMapper.scaleStored( photonPow, PhotonRNG.MAP_TYPE.CAUSTIC );
+			Console.WriteLine( "Finished caustics" );
 
 			return;
 		}
