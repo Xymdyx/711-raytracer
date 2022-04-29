@@ -453,7 +453,11 @@ namespace RayTracer_App.Photon_Mapping
 		//counts all photons
 		public int getTotalPhots()
 		{
-			return this.globalPL.Count + this.causticPL.Count + this.volumePL.Count;
+			int all = 0;
+			if (globalPL != null) all += globalPL.Count;
+			if (causticPL != null) all += causticPL.Count;
+			if (volumePL != null) all += volumePL.Count;
+			return all;
 		}
 
 		//debug RR stats

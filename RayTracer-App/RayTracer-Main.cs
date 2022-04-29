@@ -258,14 +258,7 @@ public class RayTracerMain
 		*/
 
 		/*
-		 Try: Implementing Jensen's way of forming the tree
-		Currently, the  BRDF gets applied to a photon at an intersection point, but I don't think this causes color bleeding.
-		Photons only bounce around right now, they don't store the objects color at a surface...Something said to apply photon direction rather than surface normal...
-		KdTree gets approximately same results as pure Whitted
-
-		* Currently several photons have 0 flux and many patches contribute no ID at shaded points
-		* 
-		* Attempt 1: try firing several diffuse rays via importance sampling for color bleeding. Caustics can be visualized directly
+		* Current behavior: indirect and & caustics are visualized at the point of intersection in pass2. Bottleneck is caustics firing at spheres if on.
 		 */
 		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25, -1.25
 
@@ -279,7 +272,7 @@ public class RayTracerMain
 		Camera cam = setupCornell( world);
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
-		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen, false, true );
+		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen, false, true, true ); //last 3 bools control... kdTree (buggy), globalPM, causticsPM
 
 		unsafe //this is how to work with pointers in C#
 		{

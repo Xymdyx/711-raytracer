@@ -145,7 +145,7 @@ namespace RayTracer_App.Camera
 		}
 
 		//tried list of float[] and float[]...
-		public byte[] render( World.World world, int imageHeight, int imageWidth, float focalLen, bool makeKd = false, bool doPM = false )
+		public byte[] render( World.World world, int imageHeight, int imageWidth, float focalLen, bool makeKd = false, bool doPM = false, bool doCaustics = false )
 		{
 			// this converts everything to camera coords
 			makeCamMat();
@@ -162,7 +162,7 @@ namespace RayTracer_App.Camera
 				if( world.sceneBB == null)
 					world.findBB(); 
 
-				world.beginpmPassOne(); //phton trace
+				world.beginpmPassOne( doCaustics ); //phton trace
 				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
 				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
 				world.beginpmPassTwo(); // mark to gather phtons
@@ -209,12 +209,9 @@ namespace RayTracer_App.Camera
 					if( doPM)
 					{
 						hitColor = Color.defaultBlack;
-						hitColor += world.spawnRayPM( fire, 1 );
-						//if (hitColor.whiteOrHigher())
-						//	Console.WriteLine( "PM sample output white or higher" );		
+						hitColor += world.spawnRayPM( fire, 1 );	
 					}
-
-					else if(pathTrace)
+					else if(pathTrace) //my not so very good pathtracing implementation.
 					{
 						int samples = 1;
 						hitColor = Color.defaultBlack;

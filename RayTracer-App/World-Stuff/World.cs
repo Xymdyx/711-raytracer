@@ -386,7 +386,7 @@ namespace RayTracer_App.World
 //PHOTON-MAPPING METHODS
 
 		//called by the camera to start Photon mapping
-		public void beginpmPassOne()
+		public void beginpmPassOne( bool doCaustics = false)
 		{
 			this.photonMapper = new PhotonRNG();
 			List<SceneObject> targets = this.objects.FindAll( so => (so.kRefl > 0 || so.kTrans > 0) ); //get all objects that are somewhat specular to aim at
@@ -394,7 +394,8 @@ namespace RayTracer_App.World
 			foreach (LightSource l in this.lights)
 			{
 				l.emitGlobalPhotonsFromDPLS( this ); //rendering took 34 minutes with 20k photons. All of these wind up in scene.
-				l.emitCausticsFromDPLS( this, targets );
+				if( doCaustics)
+					l.emitCausticsFromDPLS( this, targets );
 			}
 
 			//construct photon maps from lists
@@ -731,14 +732,15 @@ namespace RayTracer_App.World
 
 				//calculate indirect illumination & caustics via PM queries...directly at diffuse surfaces. Results made sense but no color bleeding
 				if( localLightModel.kd > 0 && localBest.kRefl == 0 && localBest.kTrans == 0 &&
-					(photonMapper.globalPM.jensenHeap.Count > 0 || photonMapper.globalPM.pmHeap.Count > 0) )
+					( photonMapper.globalPL.Count > 0 && (photonMapper.globalPM.jensenHeap.Count > 0 || photonMapper.globalPM.pmHeap.Count > 0)) )
 					{ 
 						Color photonCols = callPhotons( intersection, -ray.direction, localBest.normal );
 						currColor += photonCols;
 					}
 
 				//check for caustics directly
-				if( photonMapper.causticPM.jensenHeap.Count > 0 || photonMapper.causticPM.pmHeap.Count > 0)
+				if( photonMapper.causticPL.Count > 0 &&
+					(photonMapper.causticPM.jensenHeap.Count > 0 || photonMapper.causticPM.pmHeap.Count > 0 ) )
 					currColor += callPhotons( intersection, -ray.direction, localBest.normal, PhotonRNG.MAP_TYPE.CAUSTIC );
 
 				//attempt 2 using importance sampling via PMs

@@ -37,7 +37,7 @@ namespace RayTracer_App.World
 			this._defPhots = 0;
 		}
 
-		public LightSource( Point position, Color lightColor, float power = 10f, int defPhots = 1000) //50 pow for debugging
+		public LightSource( Point position, Color lightColor, float power = 10f, int defPhots = 100) //50 pow for debugging
 		{
 			this._position = position;
 			this._lightColor = lightColor;
