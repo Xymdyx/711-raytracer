@@ -11,7 +11,8 @@ using System.Numerics;
 public class Point
 {
     // CONSTANTS
-    public static Point floorOrigin = new Point( -6f, 1.25f, 60.5f ); // floor origin for cp4
+    public static Point DEFAULTEYE = new Point( 0f, -1f, -5f ); //whitted default look at
+
     public enum Axes { X, Y, Z }
 
     private float _x;
@@ -82,7 +83,6 @@ public class Point
         return ((p.x == this.x) && (p.y == this.y) && (p.z == this.z));
     }
 
-    //METHODS
 //METHODS
     public float getAxisCoord( int axis )
 	{
@@ -92,6 +92,34 @@ public class Point
 
         return float.NaN;
 	}
+
+    public void setAxisCoord( int axis, float val )
+    {
+        if (axis == 0) this.x = val;
+        else if (axis == 1) this.y = val;
+        else if (axis == 2) this.z = val;
+
+        return;
+    }
+
+    //getters for TAB traversal
+    public static int getNextAxis( int axis )
+	{
+        if (axis == 0) return 1; //x -> y
+        else if (axis == 1) return 2; //y -> z
+        else if (axis == 2) return 0; // z -> x
+
+        return -1; // invalid axis
+    }
+
+    public static int getPrevAxis( int axis )
+    {
+        if (axis == 0) return 2; //z before x
+        else if (axis == 1) return 0; //x before y
+        else if (axis == 2) return 1; // y before z
+
+        return -1; // invalid axis
+    }
 
     //calculate distance
     public float distance( Point p2)
@@ -234,10 +262,50 @@ public class Point
 	{
 		return $"Point [{this.x}, {this.y}, {this.z}]";
     }
-
-
+    
+    //meeded so multiple objects don't share same point value
     public Point copy()
     {
         return new Point( this.x, this.y, this.z );
+    }
+
+    // needed for Photon Visualization
+    //does a point lie in a ray's path? If the DP is 0 then it's parallel, meaning on the same line here
+    public float ptRayIntersect( LightRay ray )
+	{
+        Vector ptRay = this - ray.origin;
+        float dp = ptRay.dotProduct( ray.direction );
+        float rayMagn = ray.direction.getLen();
+        rayMagn *= rayMagn;
+        // two vectors are in the same direction if they're scaler multiples of each other..
+        // same unit vector, basically.
+
+        if ((dp == rayMagn) || (ptRay == ray.direction)) // point is in path of ray
+        {
+            //Console.WriteLine( "Photon along path of ray! Returning distance." );
+            return distance( ray.origin ); //sqrt is expensive...
+        }
+
+        return float.MaxValue; 
+	}
+
+    // needed for Photon Visualization
+    //does a point lie in a ray's path? If the DP is 0 then it's parallel, meaning on the same line here
+    public bool ptRayIntersectQuick( LightRay ray )
+    {
+        Vector ptRay = this - ray.origin;
+        float dp = ptRay.dotProduct( ray.direction );
+        float rayMagn = ray.direction.getLen();
+        rayMagn *= rayMagn;
+        // two vectors are in the same direction if they're scaler multiples of each other..
+        // same unit vector, basically.
+
+        if ((dp == rayMagn) || (ptRay == ray.direction)) // point is in path of ray
+        {
+            //Console.WriteLine( "Photon along path of ray!" );
+            return true;
+        }
+
+        return false;
     }
 }

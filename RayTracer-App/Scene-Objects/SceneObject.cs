@@ -97,6 +97,9 @@ namespace RayTracer_App.Scene_Objects
 
 		public virtual bool hasTexCoord() { return false; }
 
+		//method for getting a random point on the object
+		public virtual Point randomPointOn( Photon_Mapping.PhotonRNG pMapper = null ){ return new Point(); }
+
 
 		//override ToString()
 	}

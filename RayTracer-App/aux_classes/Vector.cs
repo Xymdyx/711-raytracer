@@ -3,12 +3,17 @@
 date started: 1/26/22
 desc: class that represents a 3d vector
 */
-
+using System.Numerics;
 using System;
 //CONVERTED DOUBLE -> FLOAT!
 public class Vector
 {
     public static Vector ZERO_VEC = new Vector( 0, 0, 0 );
+    public static Vector UP_VEC = new Vector( 0, 1F, 0 );
+    public static Vector LEFT_VEC = new Vector( 1f, 0, 0 );
+    public static Vector FORWARD_VEC = new Vector( 0, 0, 1f );
+
+
 
     // fields
     private float _v1;
@@ -45,6 +50,8 @@ public class Vector
     public static Vector operator +(Vector vec1, Vector vec2) => new Vector(vec1.v1 + vec2.v1, vec1.v2 + vec2.v2, vec1.v3 + vec2.v3);
     public static Vector operator -(Vector vec1, Vector vec2) => vec1 + -vec2;
 
+    public static Vector operator *( Vector vec1, float k ) => new Vector( (vec1.v1 * k), (vec1.v2 * k), (vec1.v3 * k), false );
+
     public static bool operator ==( Vector lhs, Vector rhs ) 
     {
         if (lhs is null)
@@ -61,9 +68,28 @@ public class Vector
         // Equals handles the case of null on right side.
         return lhs.Equals( rhs );
     }
-
     public static bool operator !=( Vector lhs, Vector rhs ) => !(lhs == rhs);
 
+
+    // weird getters
+    public float getAxisComp( int axis )
+    {
+        if (axis == 0) return this.v1;
+        else if (axis == 1) return this.v2;
+        else if (axis == 2) return this.v3;
+
+        return float.NaN;
+    }
+
+    //weird setters.. 0 = x, 1 = 1, 2 = z
+    public void setAxisComp( int axis, float val )
+    {
+        if (axis == 0) this.v1 = val;
+        else if (axis == 1) this.v2 = val;
+        else if (axis == 2) this.v3 = val;
+
+        return;
+    }
 
     // self-operations
     public Vector scale(float k)
@@ -218,18 +244,55 @@ public class Vector
         Vector leftTerm = dir.scale( nRat );
 		float sqrtTerm = (float)(1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi)))); //this is sometimes negative...
 
-		if (sqrtTerm < 0) //transmission direction doesn't exist
-			return reflect2( dir, normal );
-
+        if (sqrtTerm < 0) //transmission direction doesn't exist
+            return reflect2( dir, normal );
+            
 		float rightScale = (float)((nRat * cosi) - Math.Sqrt( sqrtTerm ));  //getting NAN here
 		Vector rightTerm = normal.scale( rightScale );
 
 		return leftTerm + rightTerm;
 	}
 
-	//FACEFORWARD method
-	// for cp6. Use negative normal for calculations
-	public static Vector faceForward( Vector normal, Vector traveling )
+    // scratchapixel method that handles logic for flipping normal inside of the method
+    public static Vector transmit2( Vector dir, Vector normal, float ni, float nt )
+    {
+        //same direction if indices of refraction are the same
+        if (ni == nt)
+            return dir;
+
+        // t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
+        float cosi = normal.dotProduct( dir ); //this is always positive, which is what we want...
+        float nRat;
+        Vector n = normal;
+
+        if (cosi < 0)
+        {
+            cosi = -cosi;
+            nRat = ni / nt;
+        }
+        else
+        {
+            nRat = nt / ni;
+            n = normal.scale( -1f );
+        }
+
+        // cosi = -(i dot n)
+        // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
+        Vector leftTerm = dir.scale( nRat );
+        float sqrtTerm = (float)(1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi)))); //this is sometimes negative...
+
+        if (sqrtTerm < 0) //transmission direction doesn't exist
+            return reflect2( dir, normal );
+
+        float rightScale = (float)((nRat * cosi) - Math.Sqrt( sqrtTerm ));  //getting NAN here
+        Vector rightTerm = n.scale( rightScale );
+
+        return leftTerm + rightTerm;
+    }
+
+    //FACEFORWARD method
+    // for cp6. Use negative normal for calculations
+    public static Vector faceForward( Vector normal, Vector traveling )
 	{
         //acute angle, use regular normal
         if (normal.dotProduct( traveling ) >= 0) return normal;
@@ -248,6 +311,88 @@ public class Vector
 	{
         return new Vector( this.v1, this.v2, this.v3, false );
 	}
+
+    //normal-space to space relative to normal functions...
+    // try using this once we get a random unit direction from is
+    //to convert back to camera space
+    //https://www.gamedev.net/blogs/entry/2261086-importance-sampling/
+    public static Vector findOrthoUnitVec( Vector normal )
+	{
+        if (normal.v1 == 0f) return LEFT_VEC;
+        else return UP_VEC.crossProduct(normal, false);
+	}
+
+    public static Vector findBitTangent( Vector normal )
+	{
+        Vector tangent = findOrthoUnitVec( normal );
+        return tangent.crossProduct( normal, false );
+	}
+
+    //convert from a local space back to the relative space of the current normal
+    //https://www.scratchapixel.com/lessons/3d-basic-rendering/global-illumination-path-tracing/global-illumination-path-tracing-practical-implementation ... scratch time
+    public static Vector normaltoSpace( Vector normal, Vector hemiUnitVec )
+	{
+
+        // raw math from Scratch a pixel
+        Vector tangent = (Math.Abs( normal.v1 ) > Math.Abs( normal.v2 )) ? new Vector( normal.v3, 0.0f, -normal.v1 ) : new Vector( 0.0f, -normal.v3, normal.v2 ); //oriented on y axis...also supported by Physically Based Rendering
+        Vector bitTangent = normal.crossProduct( tangent );
+
+        validateTBN( normal, tangent, bitTangent );
+
+        float xComp = (hemiUnitVec.v1 * bitTangent.v1) + (hemiUnitVec.v2 * normal.v1) + (hemiUnitVec.v3 * tangent.v1);
+        float yComp = (hemiUnitVec.v1 * bitTangent.v2) + (hemiUnitVec.v2 * normal.v2) + (hemiUnitVec.v3 * tangent.v2);
+        float zComp = (hemiUnitVec.v1 * bitTangent.v3) + (hemiUnitVec.v2 * normal.v3) + (hemiUnitVec.v3 * tangent.v3);
+
+        Vector scratchVec = new Vector( xComp, yComp, zComp );
+
+        float dpCheck = scratchVec.dotProduct( normal );
+
+        if (dpCheck <= 0) //check if we are aligned with the surface normal...
+            Console.WriteLine( "Transformed hemisphere vec opposite of normal" );
+
+        return scratchVec;
+	}
+
+    //https://computergraphics.stackexchange.com/questions/10622/path-tracing-how-to-ensure-we-are-sampling-a-direction-vector-within-the-visibl
+    // calculating direction wrt hemisphere around normal...
+    public static Vector dirAroundNormalHemisphere( Vector normal, float theta, float phi )
+	{
+       Vector tangent = (normal.v1 > normal.v3) ? new Vector( -normal.v2, normal.v1, 0.0f, false ) : new Vector( 0.0f, -normal.v3, normal.v2, false ); //oriented on z axis...
+
+       // Vector tangent = ( Math.Abs(normal.v1) > Math.Abs(normal.v2) ) ? new Vector( normal.v3, 0.0f, -normal.v1 ) : new Vector( 0.0f, -normal.v3, normal.v2); //oriented on y axis
+        Vector bitTangent = normal.crossProduct( tangent );
+        
+        validateTBN( normal, tangent, bitTangent );
+
+        float sinTheta = (float)Math.Sin( theta );
+        return (tangent * sinTheta * (float)Math.Cos( phi )) + (bitTangent * (float)Math.Sin( phi ) * sinTheta) + (normal * (float)Math.Cos( theta )); //I've seen that bittangent and tangent change depending on which axis is UP
+    }
+
+    //this validates if 3 vectors calculated from a hemisphere are orthogonal to each other
+    private static void validateTBN( Vector normal, Vector tangent, Vector bitTangent )
+	{
+        float tnDP = tangent.dotProduct( normal );
+        float tbDP = tangent.dotProduct( bitTangent );
+        float nbDP = normal.dotProduct( bitTangent );
+
+        if ((tnDP <= -1e-6f && tnDP >= 1e-6f) || (tbDP <= -1e-6f && tbDP >= 1e-6f) || (nbDP <= -1e-6f && nbDP >= 1e-6f))
+            Console.WriteLine( "Generated orthogonal vectors not orthogonal..." );
+    }
+
+    public static Vector4 toHmgVec( Vector vec )
+    {
+        return new Vector4( vec.v1, vec.v2, vec.v3, 1f ); //tested that this works fine
+    }
+
+    // reconvert to 3d coords after making transformations with toHmgCoords
+    public static Vector fromHmgVec( Vector4 hmgMat )
+    {
+        //convert from row-major hmg mat back to a new Point
+        return new Vector( hmgMat.X, hmgMat.Y, hmgMat.Z );
+        // / hmgMat.W; //the w may not be 1 here, do we still divide by it?
+        // / hmgMat.W; //the w may not be 1 here, do we still divide by it?
+        /// hmgMat.W;
+    }
 }
 
 ////// scratch REFLECT METHOD https://en.wikipedia.org/wiki/Phong_reflection_model
@@ -268,38 +413,21 @@ public class Vector
 // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
 // https://www.scratchapixel.com/code.php?id=3&origin=/lessons/3d-basic-rendering/introduction-to-ray-tracing
 
-//public static Vector sTransmit( Vector dir, Vector normal, float ni, float nt )
-//   {
-//       //same direction if indices of refraction are the same
-//       if (ni == nt)
-//           return dir;
+/* TBN MATRIX 
+ *         //Vector tangent = findOrthoUnitVec( normal );
+        //Vector bitTangent = findBitTangent( normal );
+        // Vector camSpaceVec = tangent.scale(hemiUnitVec.v1) + normal.scale( hemiUnitVec.v2 ) + bitTangent.scale(hemiUnitVec.v3);
 
-//       // t = (n1/n2)i + ( (n1/n2) *cosi -  sqrt( 1- sin^2t) * n
-//       float cosi = normal.dotProduct( dir ); //this is always positive, which is what we want...
-//       float nRat;
-//       Vector n = normal;
+        //tbn way
+        //Matrix4x4 tbnMAT = new Matrix4x4
+        //                    ( tangent.v1, tangent.v2, tangent.v3, 0,
+        //                    bitTangent.v1, bitTangent.v2, bitTangent.v3, 0,
+        //                    normal.v1, normal.v2, normal.v3, 0,
+        //                    0, 0, 0, 1 );
+        ////Matrix4x4.Invert( tbnMAT, out tbnMAT );
+        //Vector4 hmgVec = toHmgVec( hemiUnitVec );
+        //Vector4 convVec = Vector4.Transform( hmgVec, tbnMAT );
+        // Vector camSpaceVec2 = fromHmgVec( convVec );
+*/
 
-//       if (cosi < 0)
-//       {
-//           cosi = -cosi;
-//           nRat = ni / nt;
-//	}
-//	else 
-//       { 
-//           nRat = nt / ni;
-//           n = normal.scale( -1f );
-//       }
 
-//       // cosi = -(i dot n)
-//       // sin^2t = (n1/n2)^2 * ( 1- cos^2 i).. TIR  when n1 > n2
-//       Vector leftTerm = dir.scale( nRat );
-//       float sqrtTerm = (float)(1.0f - ((nRat * nRat) * (1.0f - (cosi * cosi)))); //this is sometimes negative...
-
-//       if (sqrtTerm < 0)
-//           return Vector.ZERO_VEC;
-
-//       float rightScale = (float)((nRat * cosi) - Math.Sqrt( sqrtTerm ));  //getting NAN here
-//       Vector rightTerm = n.scale( rightScale );
-
-//       return leftTerm + rightTerm;
-//   }

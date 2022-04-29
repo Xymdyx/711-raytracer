@@ -29,24 +29,31 @@ namespace RayTracer_App.Scene_Objects
 		}
 
 // parameter constructor
-		public Polygon( List<Point> vertices ) 
+		public Polygon( List<Point> vertices, IlluminationModel lightModel = null ) 
 		{
 			this._vertices = vertices;
 			this._normal = null; //TODO calculate normal
 			this._diffuse = Color.floorColor;
 			this._specular = Color.whiteSpecular;
-			this._lightModel = PhongBlinn.floorPhongBlinn; //change this to change lighting
+			this._lightModel = Phong.floorPhong; //change this to change lighting
+
+			if (lightModel != null)
+				this._lightModel = lightModel;
 
 		}
 
-		public Polygon( List<Point> vertices, Color diffuse, Color specular )
+		public Polygon( List<Point> vertices, Color diffuse, IlluminationModel lightModel = null, Color specular = null )
 		{
 			this._vertices = vertices;
 			this._normal = null; //TODO calculate normal
 			this._diffuse = diffuse;
-			this._specular = specular;
-			this._lightModel = PhongBlinn.floorPhongBlinn;
+			this._specular = Color.whiteSpecular;
+			this._lightModel = Phong.floorPhong;
 
+			if (specular != null)
+				this._specular = specular;
+			if (lightModel != null)
+				this._lightModel = lightModel;
 		}
 
 
@@ -236,6 +243,8 @@ namespace RayTracer_App.Scene_Objects
 
 			return minPt;
 		}
+
+		//helper for cp4 to see if we need to apply a texture
 		public override bool hasTexCoord()
 		{
 			foreach( Point vertex in this.vertices)
@@ -244,6 +253,17 @@ namespace RayTracer_App.Scene_Objects
 					return false;
 			}
 			return true;
+		}
+
+		//method for getting a random point on this sphere
+		public override Point randomPointOn( Photon_Mapping.PhotonRNG pMapper = null )
+		{
+			Point randPt = null;
+			if (pMapper == null)
+				return randPt; //need photonMapper for now
+			
+			//need to make via barycentric coords TODO
+			return randPt;
 		}
 		public override string ToString()
 		{

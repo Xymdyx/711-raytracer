@@ -6,26 +6,30 @@ using RayTracer_App.Camera;
 using RayTracer_App.Scene_Objects;
 using System.Collections.Generic;
 using RayTracer_App.aux_classes;
+using RayTracer_App.Illumination_Models;
 //DOUBLE -> FLOAT
 
+//Booksmarks... Ctrl + K, Ctrl K to toogle...
+// Ctrl + K + N for next..
+// Ctrl + N + K for previous
 //https://matrix.reshish.com/multiplication.php 
+//https://antongerdelan.net/colour/
 public class RayTracerMain
 {
 	static int imageWidth;
 	static int imageHeight;
-	static IntPtr colsPtr;
+	static IntPtr colsPtr = default;
 	//static GCHandle colsHandle;
 	static bool[] valid = new bool[1];
 	static float[] rat = new float[4];
-
 	public static Camera setupWhitted( World world, bool includeBunny = false )
 	{
 		//transparent middle sphere
 		float s1Depth = 8.75f; //+z into the scene... I am IN LHS
 		float s1Height = .75f; //1.75f.. 45 is good for lots of sky
-		float s1Trans = .75f;
+		float s1Trans = .85f;
 		float s1Refl = 0f;
-		float s1RefIdx = .98f; // ni > nt for TIR
+		float s1RefIdx = .955f; // ni > nt for TIR
 
 		//reflective right sphere
 		float s2Depth = s1Depth + 1.75f; //1.85.. like Whitted... 2.75 for far apart
@@ -69,7 +73,7 @@ public class RayTracerMain
 		//adv cp 1... parse Bunny
 		if (includeBunny)
 		{
-			Point bunnyOrigin = new Point( 1.25f, 0f, bunnyDepth );
+			Point bunnyOrigin = new Point( -.5f, 0f, bunnyDepth );
 			List<Polygon> bunnyTris = PlyParser.parseEdgePly( bunnyOrigin.toVec() );
 
 			//bunny loop
@@ -84,7 +88,7 @@ public class RayTracerMain
 		Color mainLightColor = Color.whiteSpecular;
 		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );
 
-		//mandatory Whitted stuff
+		//mandatory whitted box
 		world.addLight( mainLight );
 		world.addObject( triangle1 );
 		world.addObject( triangle2 );
@@ -99,23 +103,176 @@ public class RayTracerMain
 		return cam;
 	}
 
+	//Cornell scene for Photon Mapping
+	public static Camera setupCornell( World world, bool includeBunny = false )
+	{
+		// THESE WEREN'T BEING DRAWN PAST THE FILM PLANE
+		float cbXLim = 1.5f; //3
+		float cbYLim = 1.5f; //3
+		float cbZLim = 1.5f; //3
+
+		//floor border param. 2 triangles.. draw along xz plane as in Whitted.. only difference between top and bottom is the y value
+		Point botTL = new Point( -cbXLim, cbYLim, cbZLim );
+		Point botTR = new Point( cbXLim, cbYLim, cbZLim );
+		Point botBL = new Point( -cbXLim, cbYLim, -cbZLim );
+		Point botBR = new Point( cbXLim, cbYLim, -cbZLim );
+
+		List<Point> botVerts1 = new List<Point> { botTL, botBL, botTR };
+		List<Point> botVerts2 = new List<Point> { botBR.copy(), botTR.copy(), botBL.copy() };
+
+		Polygon botTri1 = new Polygon( botVerts1, Color.cbGrey, Phong.cornellPhong );
+		Polygon botTri2 = new Polygon( botVerts2, Color.cbGrey, Phong.cornellPhong );
+
+		//top border param. 2 triangles.. Color is pale grey. Shared w bot and rear
+		Point topTL = new Point( -cbXLim, -cbYLim, cbZLim );
+		Point topTR = new Point( cbXLim, -cbYLim, cbZLim );
+		Point topBL = new Point( -cbXLim, -cbYLim, -cbZLim );
+		Point topBR = new Point( cbXLim, -cbYLim, -cbZLim );
+
+		//draw opposite of bottom to make normals face down!
+		List<Point> topVerts1 = new List<Point> { topTR, topBL, topTL, };
+		List<Point> topVerts2 = new List<Point> { topBL.copy(), topTR.copy(), topBR.copy() };
+
+		Polygon topTri1 = new Polygon( topVerts1, Color.cbGrey, Phong.cornellPhong );
+		Polygon topTri2 = new Polygon( topVerts2, Color.cbGrey, Phong.cornellPhong );
+
+		//right border param. 2 triangles.. draw along the yz plane... only difference will be the x value. Color is red
+		Point rightTL = new Point( cbXLim, -cbYLim, cbZLim );
+		Point rightTR = new Point( cbXLim, cbYLim, cbZLim );
+		Point rightBL = new Point( cbXLim, -cbYLim, -cbZLim );
+		Point rightBR = new Point( cbXLim, cbYLim, -cbZLim );
+
+		List<Point> rightVerts1 = new List<Point> { rightTR, rightBL, rightTL };
+		List<Point> rightVerts2 = new List<Point> { rightBL.copy(), rightTR.copy(), rightBR.copy() };
+		Polygon rightTri1 = new Polygon( rightVerts1, Color.cbBlue, Phong.cornellPhong );
+		Polygon rightTri2 = new Polygon( rightVerts2, Color.cbBlue, Phong.cornellPhong );
+
+		//left border param. 2 triangles... Color is blue
+		Point leftTL = new Point( -cbXLim, -cbYLim, -cbZLim );
+		Point leftTR = new Point( -cbXLim, -cbYLim, cbZLim );
+		Point leftBL = new Point( -cbXLim, cbYLim, -cbZLim );
+		Point leftBR = new Point( -cbXLim, cbYLim, cbZLim );
+
+		List<Point> leftVerts1 = new List<Point> { leftTL, leftBL, leftTR };
+		List<Point> leftVerts2 = new List<Point> { leftBR.copy(), leftTR.copy(), leftBL.copy() };
+		Polygon leftTri1 = new Polygon( leftVerts1, Color.cbRed, Phong.cornellPhong );
+		Polygon leftTri2 = new Polygon( leftVerts2, Color.cbRed, Phong.cornellPhong );
+
+		//rear wall border param. 2 triangles... intersection of left&top, right&top, left&bot, right&bot at higher z
+		//left border param. 2 triangles... Color is blue
+		Point rearTL = new Point( -cbXLim, -cbYLim, cbZLim );
+		Point rearTR = new Point( cbXLim, -cbYLim, cbZLim );
+		Point rearBL = new Point( -cbXLim, cbYLim, cbZLim );
+		Point rearBR = new Point( cbXLim, cbYLim, cbZLim );
+
+
+		List<Point> rearVerts1 = new List<Point> { rearTL, rearBL, rearTR };
+		List<Point> rearVerts2 = new List<Point> { rearBR.copy(), rearTR.copy(), rearBL.copy() };
+		Polygon rearTri1 = new Polygon( rearVerts1, Color.cbGrey, Phong.cornellPhong );
+		Polygon rearTri2 = new Polygon( rearVerts2, Color.cbGrey, Phong.cornellPhong );
+
+		//front wall border param. 2 triangles... intersection of left&top, right&top, left&bot, right&bot at higher z
+		//left border param. 2 triangles... Color is blue
+		Point frontTL = new Point( -cbXLim, -cbYLim, -cbZLim );
+		Point frontTR = new Point( cbXLim, -cbYLim, -cbZLim );
+		Point frontBL = new Point( -cbXLim, cbYLim, -cbZLim );
+		Point frontBR = new Point( cbXLim, cbYLim, -cbZLim );
+
+		List<Point> frontVerts1 = new List<Point> { frontTR, frontBL, frontTL };
+		List<Point> frontVerts2 = new List<Point> { frontBL.copy(), frontTR.copy(), frontBR.copy() };
+		Polygon frontTri1 = new Polygon( frontVerts1, Color.cbGrey, Phong.cornellPhong );
+		Polygon frontTri2 = new Polygon( frontVerts2, Color.cbGrey, Phong.cornellPhong );
+		// finally make spheres
+		//left sphere params
+		float sphereRad = .5f; //1f
+
+		float s1X = cbXLim - (sphereRad * 1.25f);
+		float s1Depth = 0f; //cbZLim - sphereRad; //+z into the scene... I am IN LHS
+		float s1Height = cbYLim - sphereRad; //1.75f.. 45 is good for lots of sky
+		float s1Trans = .35f;
+		float s1Refl = 1 - s1Trans;
+		float s1RefIdx = .995f; // ni > nt for TIRGives random direction
+
+		//right sphere param
+		float s2X = -cbXLim + (sphereRad * 1.65f);
+		float s2Depth = s1Depth - .75f; //1.85.. like Whitted... 2.75 for far apart
+		float s2Height = s1Height;
+		float s2Refl = .65f;
+		float s2Trans = 1f - s2Refl;
+		float s2RefIdx = 1.33f; //.955f;
+
+		Sphere sphere1 = new Sphere( new Point( s1X, s1Height, s1Depth ), sphereRad, Color.cbChrome, s1Refl, s1Trans, s1RefIdx, Phong.cornellBallPhong );
+		Sphere sphere2 = new Sphere( new Point( s2X, s2Height, s2Depth ), sphereRad, Color.cbChrome, s2Refl, s2Trans, s2RefIdx, Phong.cornellBallPhong );
+
+		if (includeBunny)
+		{
+			float bunnyDepth = 0f; //s1Depth - 4f;
+			Point bunnyOrigin = new Point( -.5f, 0f, bunnyDepth );
+			List<Polygon> bunnyTris = PlyParser.parseEdgePly( bunnyOrigin.toVec() );
+
+			//bunny loop
+			foreach (Polygon p in bunnyTris)
+				world.addObject( p );
+		}
+
+		//place mainLight on top wall near its center
+		Point ceilLightPos = new Point( 0f, 0f, s1Depth ); ; // 0f, -cbYLim + .5f, 0f ... 0f, -2f, s1Depth - 1f... Top left -.5f, -cbXLim + .25f, s1Depth 
+		Color ceilLightColor = Color.whiteSpecular;
+		LightSource ceilLight = new LightSource( ceilLightPos, ceilLightColor );
+
+		//add world stuff
+		world.addLight( ceilLight );
+		world.addObject( botTri1 );
+		world.addObject( botTri2 );
+		world.addObject( topTri1 );
+		world.addObject( topTri2 );
+		world.addObject( rightTri1 );
+		world.addObject( rightTri2 );
+		world.addObject( leftTri1 );
+		world.addObject( leftTri2 );
+		world.addObject( rearTri1 );
+		world.addObject( rearTri2 );
+		world.addObject( frontTri1 );
+		world.addObject( frontTri2 );
+		world.addObject( sphere1 );
+		world.addObject( sphere2 );
+
+		Vector up = new Vector( 0f, 1f, 0f );
+		Point eyePos = new Point( 0f, .75f / 2f, -2.75f / 2f ); //0f, .5f, -2.75f... facing rear // facing frontBound 0f, .5f, -.75f
+		Point lookAt = new Point( 0f, -1.5f / 2f, cbZLim ); //0f, -1.5f, cbZLim...-cbZlim for rear
+		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
+
+		return cam;
+	}
+
 	//OPENGL DRAW CCW order matters. We are in LHS system. +y is down. +x is right. +z into screen. Row major. Postmultiply.
 	//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
 	public static void doRayTracing()
 	{
-		//initialize objects
-		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25
+		/* PHOTON MAPPING TODO LIST (page 47 onwards in Jensen's 2008 notes) :
+		* * figure out how to shoot photons ( the points where photons land will be sent into the kdTree as splitting criterion)  //confident this works
+		* * figure out how to balance photons in kdTree as we go (implement Jensen's method)
+		* * photon tracing
+		* * * collect the k nearest photons and make calculation for global and caustic PMs
+		* figure out caustics and indirect illumination
+		*/
+
+		/*
+		* Current behavior: indirect and & caustics are visualized at the point of intersection in pass2. Bottleneck is caustics firing at spheres if on.
+		 */
+		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25, -1.25
 
 		World world = new World();
 
 		// initialize camera and render world
-		imageWidth = 1600;
+		imageWidth = 1000;
 		imageHeight = imageWidth;
 
-		Camera cam = setupWhitted( world, false );
+		//Camera cam = setupWhitted( world, false );
+		Camera cam = setupCornell( world);
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
-		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen );
+		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen, false, true, true ); //last 3 bools control... kdTree (buggy), globalPM, causticsPM
 
 		unsafe //this is how to work with pointers in C#
 		{
@@ -158,6 +315,12 @@ public class RayTracerMain
 		//	//floor - cube location:[ -2.0, -6.5, -0.5]
 
 		doRayTracing();
+		
+		if (colsPtr == default)
+		{
+			Console.WriteLine( "Did not receive information to draw OpenGL pixels. Stopping now" );
+			return -1;
+		}
 
 		//begin OpenGl
 		int[] argc = new int[1]; argc[0] = 0; string[] argv = null;

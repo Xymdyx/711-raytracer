@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Numerics;
 using System.Diagnostics;
+using RayTracer_App.Photon_Mapping;
 using RayTracer_App.World;
 
 //MATRIX 4D -> MATRIX4X4
@@ -22,8 +23,6 @@ namespace RayTracer_App.Camera
 		public Point eyePoint { get => this._eyePoint; set => this._eyePoint = value; }
 		public Point lookAt { get => this._lookAt; set => this._lookAt = value; }
 		public Matrix4x4 camTransformMat { get => this._camTransformMat; set => this._camTransformMat = value; }
-
-
 
 		//default constructor... TODO define world origin as default
 		public Camera()
@@ -134,16 +133,41 @@ namespace RayTracer_App.Camera
 			return trColor;
 		}
 
+		//helper for photon visualizing
+		public Color renderPhotons(Color orig, LightRay fire, World.World world, bool blackout = false)
+		{
+			Color photonColor = world.overlayPhotons( fire, true ); //22 minutes w raw intersection for 1000 photons... 46 caustics. 139 total
+			//23 with kd, 109 total
+			if (photonColor == Color.defaultBlack && !blackout) // if we aren't blacking out the scene...
+				return orig;
 
-//tried list of float[] and float[]...
-		public byte[] render( World.World world, int imageHeight, int imageWidth, float focalLen )
+			return photonColor;
+		}
+
+		//tried list of float[] and float[]...
+		public byte[] render( World.World world, int imageHeight, int imageWidth, float focalLen, bool makeKd = false, bool doPM = false, bool doCaustics = false )
 		{
 			// this converts everything to camera coords
 			makeCamMat();
 			world.transformAll( this.camTransformMat );
 
-			world.findBB(); //advanced cp 1
-			world.buildKd();
+			if (makeKd)
+			{
+				world.findBB(); //advanced cp 1
+				world.buildKd();
+			}
+
+			if(doPM)
+			{
+				if( world.sceneBB == null)
+					world.findBB(); 
+
+				world.beginpmPassOne( doCaustics ); //phton trace
+				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
+				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
+				world.beginpmPassTwo(); // mark to gather phtons
+				//photonOverlay = true;
+			}
 
 			//time the render here...
 			Stopwatch renderTimer = new Stopwatch();
@@ -163,28 +187,58 @@ namespace RayTracer_App.Camera
 
 			// originally had (-fpHeight/2 + pixHeight/2.. was positive y upward...
 			//focalLen + eyePoint.z if I want to move relative to my z
-			Point fpPoint = new Point ( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen); //gldrawPixels starts drawing lower-left corner at raster positions
+			Point fpPoint = new Point ( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen + this.eyePoint.z); //gldrawPixels starts drawing lower-left corner at raster positions
+			//Point fpPoint = new Point( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen); //gldrawPixels starts drawing lower-left corner at raster positions
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;
 			byte[] hitColorArr = null;
+
+			//modes
 			bool isSuperSampling = false;
+			bool photonOverlay = false;
+			bool justPhotons = false;
+			bool pathTrace = false;
 
 			int hits = 0;
 			for ( int y = 0; y < imageHeight; y++) // positive x ->, positive y V
 			{
 				for ( int x = 0; x < imageWidth; x++)
 				{
+					fire.direction = fpPoint - this.eyePoint;
 					//supersample branch here... have an array of hitcolors... average them then pass to TR below
-					if (!isSuperSampling)
+					if( doPM)
 					{
-						fire.direction = fpPoint - this.eyePoint;
-						hitColor = world.spawnRay( fire, 1 ); //this will be irradiance.... CP5	
+						hitColor = Color.defaultBlack;
+						hitColor += world.spawnRayPM( fire, 1 );	
 					}
+					else if(pathTrace) //my not so very good pathtracing implementation.
+					{
+						int samples = 1;
+						hitColor = Color.defaultBlack;
+						for (int sk = 0; sk < samples; sk++)
+						{
+							float randomX = world.photonMapper.randomRange( -pixWidth / 2f, pixWidth / 2f );
+							float randomY = world.photonMapper.randomRange( -pixHeight / 2f, pixHeight / 2f );
+							Vector randOffset = new Vector( randomX, randomY, 0f, false );
+							fire.direction = (fpPoint + randOffset) - this.eyePoint;
+							hitColor += world.spawnRayPath( fire, 1 );
+						}
+						hitColor = hitColor.scale( (float)1f / samples );
+						if (hitColor.whiteOrHigher())
+							Console.WriteLine( "Pathtrace sample output white or higher" );
+					}
+					else if (!isSuperSampling && !justPhotons)
+						hitColor = world.spawnRay( fire, 1 ); //this will be irradiance.... CP5	
+					else if (!isSuperSampling && justPhotons) //quick PM debug
+						hitColor = renderPhotons( hitColor, fire, world, true );
 					else
 						hitColor = superSamplePixel( fpPoint, pixHeight, pixWidth, world );
 
 					if (hitColor != null)
 					{
+						if (photonOverlay && !justPhotons) //if we're visualizing the Photon Maps
+							hitColor = renderPhotons( hitColor, fire, world, false) ; 
+
 						//run tone reproduction function on hitColor and then do the following
 						hitColor = runTR( hitColor );
 						hitColorArr = hitColor.asByteArr();
@@ -193,7 +247,7 @@ namespace RayTracer_App.Camera
 						pixColors[pos + 1] = hitColorArr[1]; //try 0-1.0 floats instead of 255
 						pixColors[pos + 2] = hitColorArr[2]; //try 0-1.0 floats instead of 255
 
-						if( hitColor != Color.bgColor) hits++;
+						if( !hitColor.Equals(Color.bgColor) ) hits++;
 					}
 
 					fpPoint.x += pixWidth;
@@ -206,6 +260,26 @@ namespace RayTracer_App.Camera
 			renderTimer.Stop();
 			Console.WriteLine( "Rendering the scene took " + (renderTimer.ElapsedMilliseconds) + " milliseconds" );
 			Console.WriteLine( $" There are {hits} non-background colors/ {imageHeight * imageWidth} colors total" );
+
+			//pm debug
+			if (doPM)
+			{
+				world.photonMapper.rrStats();
+				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
+				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
+				Console.WriteLine( world.photonMapper.photonSearchStats() );
+				Console.WriteLine( "Global PM: " + world.photonMapper.globalPM.heapPrint() );
+				Console.WriteLine( $"Most photons gathered : {world.highestK}/ {world.allK}" );
+				int lightNum = 1;
+				foreach( LightSource l in world.lights) 
+				{ 
+					Console.WriteLine( $"Light {lightNum} @ {l.position} had {l.power} watts and shot {l.ne} photons" );
+					lightNum++;
+				}
+			}
+			if (photonOverlay || justPhotons)
+				Console.WriteLine( $"Lit caustics: {world.causticHits}\n Total hits {world.photoHits}" );
+
 			return pixColors ;
 		}
 

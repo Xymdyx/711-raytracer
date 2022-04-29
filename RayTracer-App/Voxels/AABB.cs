@@ -17,9 +17,14 @@ namespace RayTracer_App.Voxels
 		//need to compute after camera transform
 
 		private int _axis;
+		private float _tNear; // dist where ray enters box
+		private float _tFar; //dist where ray exits box
 		private Point _center;
 		private Vector _extents;
 		public int axis { get => this._axis; set => this._axis = value; }
+		public float tNear { get => this._tNear; set => this._tNear = value; }
+		public float tFar { get => this._tFar; set => this._tFar = value; }
+
 		public Point center { get => this._center; set => this._center = value; }
 		public Vector extents { get => this._extents; set => this._extents = value; }
 
@@ -36,6 +41,10 @@ namespace RayTracer_App.Voxels
 			if( center != null)
 			{
 				Vector extents = this.center.ptSub(this.min);
+				Vector extents2 = this.max.ptSub( this.center );
+
+				if (extents != extents2)
+					//Console.WriteLine( "Error in find extents" );
 
 				extents.v1 = Math.Abs( extents.v1 );
 				extents.v2 = Math.Abs( extents.v2 );
@@ -66,8 +75,6 @@ namespace RayTracer_App.Voxels
 		}
 
 
-
-		
 		// intersects with ray
 		public override bool intersect( LightRay ray )
 		{
@@ -119,8 +126,19 @@ namespace RayTracer_App.Voxels
 				maxT = maxZ;
 
 			//so the ray knows where it went for later
+			//if (minT > maxT)
+			//(minT, maxT) = (maxT, minT); // tuples let me swap variables w/o temps
+
+			if (minT > maxT)
+				return false;
+			this.tNear = minT;
+			this.tFar = maxT;
+
 			ray.entryPt = ray.findPtAlong( minT ) ;
 			ray.exitPt = ray.findPtAlong( maxT );
+
+		//	if( ray.origin.distance( ray.entryPt) > ray.origin.distance( ray.exitPt) )
+		//		(ray.entryPt, ray.exitPt) = (ray.exitPt, ray.entryPt); // tuples let me swap variables w/o temps
 
 			return true;
 		}
@@ -145,6 +163,8 @@ namespace RayTracer_App.Voxels
 				return true;
 		}
 
+		//from slide deck on kd-tree implementation
+		// try this one too: https://stackoverflow.com/questions/4578967/cube-sphere-intersection-test
 		public bool sphereIntersect( Point center, float radius )
 		{
 			float d = 0;
@@ -283,5 +303,59 @@ namespace RayTracer_App.Voxels
 			return true;
 		}
 
+		// create a box from a list of points by finding max and min extents
+		public static AABB boxAroundPoints( List<Point> points )
+		{
+			float[] max = new float[3];
+			float[] min = new float[3];
+
+			foreach (Point pt in points)
+			{
+				//compare point values to max and min so far
+				for (int axis = 0; axis < 3; axis++)
+				{
+					float axisVal = pt.getAxisCoord( axis );
+					//update scene min and max points if applicable
+					if (axisVal > max[axis])
+						max[axis] = axisVal;
+					if (axisVal < min[axis])
+						min[axis] = axisVal;
+				}
+
+			}
+
+			//make box around points
+			Point minPt = new Point( min[0], min[1], min[2] );
+			Point maxPt = new Point( max[0], max[1], max[2] );
+
+			return new AABB( minPt, maxPt, -1 );	
+		}
+
+		//sanity check
+		public bool ptInBox( Point pt )
+		{
+			if ((pt.x <= this.max.x && pt.x >= this.min.x)
+			&& (pt.y <= this.max.y && pt.y >= this.min.y)
+			&& (pt.z <= this.max.z && pt.z >= this.min.z))
+			{
+				return true;
+			}
+
+			Console.WriteLine( $"{pt} not inside box with max {this.max}, min {this.min} " );
+			return false;
+		}
 	}
 }
+
+/* to split an AABB ( the biggest points on the cube we find):
+keep min and max
+translate center point by the extents that aren't the axis we are splitting along
+for x split:
+axisVal = center.X
+new vox(minpt, center + [0, yExt, zExt]
+new vox( maxpt, center - [0, yExtm zExt]
+
+alternatively: translate the min and max pts along by the plane extent we're splitting along:
+i.e. new vox( minPt, maxPt - [xExt,0, ]
+	new vox( maxpt, minPt + [xExt,0, ])
+*/

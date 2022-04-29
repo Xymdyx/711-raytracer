@@ -5,6 +5,11 @@ using RayTracer_App.Illumination_Models;
 
 //MATRIX 4D -> MATRIX4X4
 
+/*https://en.wikipedia.org/wiki/Spherical_coordinate_system#In_astronomy
+ * Spherical -> Cart:
+ x = r cosazi sintheta
+y = r sinazi sintheta
+z = r costheta*/
 namespace RayTracer_App.Scene_Objects
 {
 	public class Sphere : SceneObject
@@ -24,30 +29,51 @@ namespace RayTracer_App.Scene_Objects
 			this._specular = Color.whiteSpecular;
 		}
 
-		public Sphere( Point center, float radius, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX )
+		public Sphere( Point center, float radius, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX, IlluminationModel lightModel = null )
 		{
 			this._center = center;
 			this._radius = radius;
 			this._normal = null;
 			this._diffuse = Color.sphereColor;
 			this._specular = Color.whiteSpecular;
-			this._lightModel = PhongBlinn.regularPhongBlinn; //change iullum model here for now
+			this._lightModel = Phong.regularPhong; //change iullum model here for now
 			this._kRefl = kRefl;
 			this._kTrans = kTrans;
 			this.refIndex = refIndex;
 
+			if (lightModel != null)
+				this._lightModel = lightModel;
 		}
 
-		public Sphere( Point center, float radius, Color diffuse, Color specular, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX )
+		public Sphere( Point center, float radius, Color diffuse, float kRefl = 0.0f, 
+			float kTrans = 0.0f, float refIndex = AIR_REF_INDEX ,IlluminationModel lightModel = null )
 		{
 			this._center = center;
 			this._radius = radius;
 			this._normal = null;
 			this._diffuse = diffuse;
-			this._specular = specular;
+			this._specular = Color.whiteSpecular;
 			this._kRefl = kRefl;
 			this._kTrans = kTrans;
 			this.refIndex = refIndex;
+			this.lightModel = lightModel;
+			if (lightModel == null)
+				this.lightModel = Phong.regularPhong;
+
+		}
+
+		//convert from spherical to cartesian
+		//x=ρsinφcosθ,y=ρsinφsinθ, and z=ρcosφ. where rho = radius.. z = up vector.
+		// https://www.scratchapixel.com/lessons/3d-basic-rendering/global-illumination-path-tracing/global-illumination-path-tracing-practical-implementation //also supported by wikipedia
+		public static Vector sphericalToCart( float theta, float azi )
+		{
+			float sinTheta = (float) Math.Sin( theta );
+			float cosTheta = (float)Math.Cos( theta );
+			float sinAzi = (float)Math.Sin( azi );
+			float cosAzi = (float)Math.Cos( azi );
+
+			//since y vector is up here, it gets cos azi
+			return new Vector( sinTheta * cosAzi, cosTheta, sinAzi * sinTheta ); //looked right... 4/24 sinAzi * cosTheta, sinAzi * sinTheta, cosAzi
 		}
 
 		// function for getting where along ray intersection happens with a sphere
@@ -194,10 +220,34 @@ namespace RayTracer_App.Scene_Objects
 			return this.center - minAxisDir;
 		}
 
+		//texture coord bool for cp4
 		public override bool hasTexCoord()
 		{
 			
 			return ( this.center.texCoord != null );
+		}
+
+		//method for getting a random point on this sphere
+		//https://stackoverflow.com/questions/5531827/random-point-on-a-given-sphere
+		public override Point randomPointOn( Photon_Mapping.PhotonRNG pMapper = null)
+		{
+			Point randPt = null;
+			if (pMapper == null)
+				return randPt; //need photonMapper for now
+
+			
+			float u = pMapper.randomRange(0f,1f);
+			float v = pMapper.randomRange(0f,1f);
+			float theta = (float) (2 * Math.PI * u);
+			float phi = (float) Math.Acos( 2 * v - 1 );
+			float x = (float) (center.x + (radius * Math.Sin( phi ) * Math.Cos( theta )) ); //swapped theta & phi from original sin(phi) cos(theta)
+			float y = (float)(center.y + (radius * Math.Sin( phi ) * Math.Sin( theta ))); //swapped z & y from original code.. z = rad ( cos(phI));
+			float z = (float)(center.z + (radius * Math.Cos( phi )));
+
+			randPt = new Point( x, y, z );
+			//if (x * x + y * y + z * z > radius)
+			//	Console.WriteLine( "Random point on sphere out of bounds!" );
+			return randPt;
 		}
 
 		//toString
