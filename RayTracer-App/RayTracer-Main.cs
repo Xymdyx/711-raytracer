@@ -502,7 +502,7 @@ public class RayTracerMain
 		world.addObject( sphere1 );
 
 		Vector up = new Vector( 0f, 1f, 0f );
-		Point eyePos = new Point( 0f, -1f, -5f ); //0f, -1f, -5f
+		Point eyePos = new Point( 0f, -.5f, 3f ); //0f, -1f, -5f
 		Point lookAt = new Point( .5f, .5f, s1Depth + 1f );
 		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
 
@@ -524,7 +524,7 @@ public class RayTracerMain
 		/*
 		* Current behavior: indirect and & caustics are visualized at the point of intersection in pass2. Bottleneck is caustics firing at spheres if on.
 		 */
-		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25, -1.25
+		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25 for pool and cornell -1.25 for whitted
 
 		World world = new World();
 
@@ -532,9 +532,9 @@ public class RayTracerMain
 		imageWidth = 1000;
 		imageHeight = imageWidth;
 
-		//Camera cam = setupWhitted( world, false );
+		Camera cam = setupWhitted( world, false );
 		//Camera cam = setupCornell( world);
-		Camera cam = setupFuturePool( world );
+		//Camera cam = setupFuturePool( world );
 
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
 		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen); //last 3 bools control... kdTree (buggy), globalPM, causticsPM

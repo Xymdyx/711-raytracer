@@ -121,6 +121,31 @@ namespace RayTracer_App.Camera
 			return averageHitColor;
 		}
 
+		//TODO CP7
+		// runs tone reproduction via Ward's formula
+		public Color runWardTR( Color irradiance )
+		{
+			Color trColor = new Color( 0, 0, 0 );
+			trColor.r = irradiance.r >= 1.0f ? trColor.r = 1.0f : trColor.r = irradiance.r;
+			trColor.g = irradiance.g >= 1.0f ? trColor.g = 1.0f : trColor.g = irradiance.g;
+			trColor.b = irradiance.b >= 1.0f ? trColor.b = 1.0f : trColor.b = irradiance.b;
+
+			return trColor;
+		}
+
+		//TODO CP7
+		// runs tone reproduction via Reinard's tone reproduction formula
+		// based on Ansel Adam's Zone System
+		public Color runReinhardTR( Color irradiance )
+		{
+			Color trColor = new Color( 0, 0, 0 );
+			trColor.r = irradiance.r >= 1.0f ? trColor.r = 1.0f : trColor.r = irradiance.r;
+			trColor.g = irradiance.g >= 1.0f ? trColor.g = 1.0f : trColor.g = irradiance.g;
+			trColor.b = irradiance.b >= 1.0f ? trColor.b = 1.0f : trColor.b = irradiance.b;
+
+			return trColor;
+		}
+
 		// runs tone reproduction on the irradiance triplet retrieved from an intersection
 		// just ternaries for now. If the sum of energy is >1, we max it at 1.
 		public Color runTR( Color irradiance ) 
