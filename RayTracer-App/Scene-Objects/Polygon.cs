@@ -29,7 +29,7 @@ namespace RayTracer_App.Scene_Objects
 		}
 
 // parameter constructor
-		public Polygon( List<Point> vertices, IlluminationModel lightModel = null ) 
+		public Polygon( List<Point> vertices, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX, IlluminationModel lightModel = null ) 
 		{
 			this._vertices = vertices;
 			this._normal = null; //TODO calculate normal
@@ -42,13 +42,17 @@ namespace RayTracer_App.Scene_Objects
 
 		}
 
-		public Polygon( List<Point> vertices, Color diffuse, IlluminationModel lightModel = null, Color specular = null )
+		public Polygon( List<Point> vertices, Color diffuse, IlluminationModel lightModel = null, float kRefl = 0.0f, float kTrans = 0.0f, float refIndex = AIR_REF_INDEX, Color specular = null )
 		{
 			this._vertices = vertices;
 			this._normal = null; //TODO calculate normal
 			this._diffuse = diffuse;
 			this._specular = Color.whiteSpecular;
 			this._lightModel = Phong.floorPhong;
+
+			this._kRefl = kRefl;
+			this._kTrans = kTrans;
+			this.refIndex = refIndex;
 
 			if (specular != null)
 				this._specular = specular;

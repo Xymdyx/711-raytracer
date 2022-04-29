@@ -13,6 +13,7 @@ public class Color
     //TODO DEFINE STATIC CONSTANTS FOR SPHERE COLOR, FLOOR COLOR, AND BACKGROUND COLOR
     const int COLOR_MAX = 255;
 
+    //whitted colors
     public static Color whiteSpecular = new Color( 1f, 1f , 1f);
     public static Color defaultBlack = new Color( 0f, 0f, 0f );
     public static Color bgColor = new Color( 0.148f, 0.661f, 0.740f ); //0, 1f, 0
@@ -20,11 +21,17 @@ public class Color
     public static Color floorColor = new Color( 1.0f, 0.0f, 0.0f );
     public static Color bunnyColor = new Color( 0.770f, 0.590f, 0.354f );
 
+    //cornell box
     public static Color cbBlue = new Color( 0.237f, 0.486f, 0.790f );
     public static Color cbRed = new Color( 0.760f, 0.0988f, 0.187f );
     public static Color cbGrey = new Color( 0.810f, 0.802f, 0.803f ); //0.810f, 0.802f, 0.803f
     public static Color cbGreen = new Color( 0.362f, 0.580f, 0.342f );
     public static Color cbChrome = new Color( 0.690f, 0.669f, 0.669f ); //chrome
+
+    //swimming pool
+    public static Color poolWater = new Color( 0.112f, 0.930f, 0.916f );
+    public static Color poolBorders = new Color( 0.540f, 0.270f, 0.270f );
+
     // 0.362, 0.580, 0.342
     // photon colors
     public static Color causticColor = new Color( 0.890f, 0.877f, 0.080f ); //yellow
