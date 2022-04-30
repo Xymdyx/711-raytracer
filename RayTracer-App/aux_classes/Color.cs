@@ -51,9 +51,9 @@ public class Color
     //default constructor.. THE BACKGROUND COLOR
     public Color() 
     {
-        this._r = 0;
-        this._g = 1;
-        this._b = 0;
+        this._r = Color.bgColor.r;
+        this._g = Color.bgColor.g;
+        this._b = Color.bgColor.b;
     }
 
     public Color( float r, float g, float b)

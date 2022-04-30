@@ -38,6 +38,7 @@ namespace RayTracer_App.Camera
 		public Point eyePoint { get => this._eyePoint; set => this._eyePoint = value; }
 		public Point lookAt { get => this._lookAt; set => this._lookAt = value; }
 		public Matrix4x4 camTransformMat { get => this._camTransformMat; set => this._camTransformMat = value; }
+		public TR_MODEL trOperator { get => this._trOperator; set => this._trOperator = value; }
 
 		public enum TR_MODEL
 		{
@@ -59,7 +60,7 @@ namespace RayTracer_App.Camera
 		}
 
 		// parameter constructor...
-		public Camera( Vector up, Point eyePoint, Point lookAt, TR_MODEL trOperator = TR_MODEL.LINEAR, float _ldMax = 80f ) // my monitor's max luminance is 270 nits
+		public Camera( Vector up, Point eyePoint, Point lookAt, TR_MODEL trOperator = TR_MODEL.LINEAR, float _ldMax = 100f ) // my monitor's max luminance is 270 nits
 		{
 			this._up = up;
 			this._eyePoint = eyePoint;
@@ -149,13 +150,51 @@ namespace RayTracer_App.Camera
 			return averageHitColor;
 		}
 
+////////////////////////////////////////////////////////// PHOTN MAPPING METHODS////////////////////////////////////////////////////////////////////
+		//helper for photon visualizing
+		public Color renderPhotons( Color orig, LightRay fire, World.World world, bool blackout = false )
+		{
+			Color photonColor = world.overlayPhotons( fire, true ); //22 minutes w raw intersection for 1000 photons... 46 caustics. 139 total
+																	//23 with kd, 109 total
+			if (photonColor == Color.defaultBlack && !blackout) // if we aren't blacking out the scene...
+				return orig;
 
-		//gets log average illuminance in base 10 of the whole scene.
-		// i.e... Lbar = base^( ( Sum logbase( delta + L(x,y) ) / pixels)
-		private float getIllumLogAvg( int x, int y, List<Color> illums, float based = 10f)
+			return photonColor;
+		}
+
+
+	//photon mapping debugging information
+		public void pmDebug(World.World world)
+		{
+			world.photonMapper.rrStats();
+			world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
+			world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
+			Console.WriteLine( world.photonMapper.photonSearchStats() );
+			Console.WriteLine( "Global PM: " + world.photonMapper.globalPM.heapPrint() );
+			Console.WriteLine( $"Most photons gathered : {world.highestK}/ {world.allK}" );
+			int lightNum = 1;
+			foreach (LightSource l in world.lights)
+			{
+				Console.WriteLine( $"Light {lightNum} @ {l.position} had {l.power} watts and shot {l.ne} photons" );
+
+			}
+		}
+
+		//photon overlay debugging information
+		public void photOverlayInfo( World.World world )
+		{
+			Console.WriteLine( $"Lit caustics: {world.causticHits}\n Total hits {world.photoHits}" );
+		}
+
+
+////////////////////////////////////////////////////////// TONE REPRODUCTION METHODS////////////////////////////////////////////////////////////////////
+
+			//gets log average illuminance in base 10 of the whole scene.
+			// i.e... Lbar = base^( ( Sum logbase( delta + L(x,y) ) / pixels)
+			private float getIllumLogAvg( int x, int y, List<Color> illums, float based = 10f)
 		{
 			float logAvg = 0f;
-			const float delta = .01f;
+			const float delta = 1e-6f;
 
 			for (int illum = 0; illum < illums.Count; illum++)
 			{
@@ -186,96 +225,120 @@ namespace RayTracer_App.Camera
 			float num = (float)( W_FLOAT + Math.Pow( (this._ldMax / 2f), W_INNER_POW ));
 			float denom = (float) (W_FLOAT + Math.Pow( lwa, W_INNER_POW ));
 	
-			return (float)Math.Pow( num / denom, W_OUTER_POW ); ;
+			return (float)Math.Pow( num / denom, W_OUTER_POW );
 		}
 
 		//TODO CP7
 		// runs tone reproduction via Ward's formula
-		public Color runWardTR( Color illuminance )
+		public List<Color> runWardTR( List<Color> illuminances, float logAvg )
 		{
-			Color trColor = new Color( 0, 0, 0 );
-			float logAverage = 0;
-			float sf = getWardSF( logAverage );
+			List<Color> wardCols = new List<Color>();
+			float sf = getWardSF( logAvg );
+			Color wardCol;
 
 			//for each pixel world illuminance, Ld = sf * Lw
+			foreach ( Color illuminance in illuminances)
+			{
+				wardCol = illuminance.scale( sf );
+				wardCols.Add( wardCol );
+			}
 
-			return trColor;
+			return wardCols;
 		}
 
 		//TODO CP7
 		// runs tone reproduction via Reinard's tone reproduction formula
 		// based on Ansel Adam's Zone System
 		// alpha = trnsparency, which is .18f for 50% reflectivity in grayscale (Zone V)
-		public Color runReinhardTR( Color illuminance, float keyVal, float alpha = .18f)
+		public List<Color> runReinhardTR( List<Color> illuminances, float keyVal, float alpha = .18f)
 		{
-			Color trColor = null;
+			List<Color> rhCols = new List<Color>();
+			Color rhCol;
+			foreach (Color illuminance in illuminances)
+			{
+				//step 1:  Create scaled luminance values Rs, Gs, Bs by mapping 
+				// the key value to Zone V(18 % gray)
+				//scale RGB illums by alpha/ keyVal
+				Color scaledIllum = illuminance.scale( alpha / keyVal ); 
 
-			//step 1:  Create scaled luminance values Rs, Gs, Bs by mapping 
-			// the key value to Zone V(18 % gray)
-			Color scaledIllum = illuminance.scale( alpha / keyVal ); //scale RGB illums by alpha/ keyVal
+				//step 2:  Find the reflectance for Rr, Gr, Br, based on film-like response
+				float reflR = scaledIllum.r / (1f + scaledIllum.r);
+				float reflG = scaledIllum.g / (1f + scaledIllum.g);
+				float reflB = scaledIllum.b / (1f + scaledIllum.b);
+				rhCol = new Color( reflR, reflG, reflB );
 
-			//step 2:  Find the reflectance for Rr, Gr, Br, based on film-like response
-			float reflR = scaledIllum.r / (1f + scaledIllum.r);
-			float reflG = scaledIllum.g / (1f + scaledIllum.g);
-			float reflB = scaledIllum.b / (1f + scaledIllum.b);
+				//step 3 is where we would multiply each RGB comp by LDmax and then divide by maxDisplay illuminance
+				// since our target and display devices are the same, LdMax/LdMax cancels out and we don't need this.
+				//trColor.scale( LdMax/ displayMax);
 
-			trColor = new Color( reflR, reflG, reflB );
+				rhCols.Add( rhCol );
+			}
 
-			//step 3 is where we would multiply each RGB comp by LDmax and then divide by maxDisplay illuminance
-			// since our target and display devices are the same, LdMax/LdMax cancels out and we don't need this.
-			//trColor.scale( LdMax/ displayMax);
-
-			return trColor;
+			return rhCols;
 		}
 
-		// runs linear tone reproduction on the irradiance triplet retrieved from an intersection
-		// just ternaries for now. If the sum of energy is >1, we max it at 1.
-		public Color runLinearTR( Color irradiance ) 
+		public List<Color> runLinearTRAll( List<Color> irradiances )
 		{
-			Color trColor = new Color( 0, 0, 0 );
-			trColor.r = irradiance.r >= 1.0f ? trColor.r = 1.0f : trColor.r = irradiance.r;
-			trColor.g = irradiance.g >= 1.0f ? trColor.g = 1.0f : trColor.g = irradiance.g;
-			trColor.b = irradiance.b >= 1.0f ? trColor.b = 1.0f : trColor.b = irradiance.b;
+			List<Color> linCols = new List<Color>();
 
-			return trColor;
+			foreach (Color irradiance in irradiances) 
+			{
+				Color trColor = new Color( 0, 0, 0 );
+				trColor.r = irradiance.r >= 1.0f ? trColor.r = 1.0f : trColor.r = irradiance.r;
+				trColor.g = irradiance.g >= 1.0f ? trColor.g = 1.0f : trColor.g = irradiance.g;
+				trColor.b = irradiance.b >= 1.0f ? trColor.b = 1.0f : trColor.b = irradiance.b;
+				linCols.Add( trColor );
+			}
+			return linCols;
 		}
 
 		// convenience method for running proper TR method based on camera trOperator field
 		// runs tone reproduction on the irradiance triplet retrieved from an intersection
-		// just ternaries for now. If the sum of energy is >1, we max it at 1.
-		public Color runTR( Color irradiance )
+		public List<Color> runTRAll( List<Color> irradiances, List<Color> illums, int x, int y )
 		{
-			Color trColor = new Color( 0, 0, 0 );
+			List<Color> trColors = new List<Color>();
 			float logAvg = 0f; //change to get logAvg
 
 			switch (this._trOperator)
 			{
 				case (TR_MODEL.LINEAR):
-					trColor = runLinearTR( irradiance );
+					trColors = runLinearTRAll( irradiances );
 					break;
 				case (TR_MODEL.WARD):
-					trColor = runWardTR( irradiance );
+					logAvg = getIllumLogAvg( x, y, illums );
+					trColors = runWardTR( illums, logAvg );
 					break;
 				case (TR_MODEL.REINHARD):
-					trColor = runReinhardTR( irradiance, logAvg );
+					logAvg = getIllumLogAvg( x, y, illums );
+					trColors = runReinhardTR( illums, logAvg );
 					break;
 				default:
-					trColor = Color.bgColor;
+					trColors = new List<Color> ( new Color[irradiances.Count]); //all background colors
 					break;
 			}
 
-			return trColor;
+			return trColors;
 		}
 
-		//helper for photon visualizing
-		public Color renderPhotons(Color orig, LightRay fire, World.World world, bool blackout = false)
-		{
-			Color photonColor = world.overlayPhotons( fire, true ); //22 minutes w raw intersection for 1000 photons... 46 caustics. 139 total
-			//23 with kd, 109 total
-			if (photonColor == Color.defaultBlack && !blackout) // if we aren't blacking out the scene...
-				return orig;
+////////////////////////////////////////////////////////// RENDER METHODS////////////////////////////////////////////////////////////////////
 
-			return photonColor;
+		//helper method to convert a list of Colors to a byte[] that holds rgb triplets
+		// for openGL draw pixls to render...
+		public byte[] colsToBytes( List<Color> trCols, int imageWidth, int imageHeight )
+		{
+			byte[] pixCols = new byte[imageHeight * imageWidth * 3]; //openGL drawPixels byte[]
+			byte[] trCol; //the 255 byte array rep of a pixel
+
+			for ( int pixTriplet = 0; pixTriplet < trCols.Count; pixTriplet++)
+			{
+				trCol = trCols[pixTriplet].asByteArr();
+				int tripPos = pixTriplet * 3;
+				pixCols[tripPos] = trCol[0];
+				pixCols[tripPos+  1] = trCol[1];
+				pixCols[tripPos + 2] = trCol[2];
+			}
+
+			return pixCols;
 		}
 
 		//tried list of float[] and float[]...
@@ -316,7 +379,10 @@ namespace RayTracer_App.Camera
 			//initialize default background color at all pixels to begin with
 			byte[] pixColors = new byte[imageHeight * imageWidth * 3]; // this is what we return...
 
-			byte[] pixIllums = new byte[imageHeight * imageWidth * 3]; // this is the illuminance array....
+			//byte[] pixIllums = new byte[imageHeight * imageWidth * 3]; // this is the illuminance array....
+
+			List<Color> pixIrrads = new List<Color>();
+			List<Color> pixIllums = new List<Color>();
 
 			// originally had (-fpHeight/2 + pixHeight/2.. was positive y upward...
 			//focalLen + eyePoint.z if I want to move relative to my z
@@ -325,6 +391,7 @@ namespace RayTracer_App.Camera
 			//Point fpPoint = new Point( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen); //gldrawPixels starts drawing lower-left corner at raster positions
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;
+			Color hitIllum = null;
 
 			byte[] hitColorArr = null;
 
@@ -346,6 +413,7 @@ namespace RayTracer_App.Camera
 						hitColor = Color.defaultBlack;
 						hitColor += world.spawnRayPM( fire, 1 );	
 					}
+
 					else if(pathTrace) //my not so very good pathtracing implementation.
 					{
 						int samples = 1;
@@ -362,26 +430,25 @@ namespace RayTracer_App.Camera
 						if (hitColor.whiteOrHigher())
 							Console.WriteLine( "Pathtrace sample output white or higher" );
 					}
+
 					else if (!isSuperSampling && !justPhotons)
 						hitColor = world.spawnRay( fire, 1 ); //this will be irradiance.... CP5	
+
 					else if (!isSuperSampling && justPhotons) //quick PM debug
 						hitColor = renderPhotons( hitColor, fire, world, true );
+
 					else
 						hitColor = superSamplePixel( fpPoint, pixHeight, pixWidth, world );
 
 					if (hitColor != null)
 					{
 						if (photonOverlay && !justPhotons) //if we're visualizing the Photon Maps
-							hitColor = renderPhotons( hitColor, fire, world, false) ; 
+							hitColor = renderPhotons( hitColor, fire, world, false) ;
 
 						// TODO run tone reproduction as we go -> after we calculated irradiances
-						hitColor = runTR( hitColor );
-						hitColorArr = hitColor.asByteArr();
-
-						int pos = (x + (y * imageWidth) ) * 3;
-						pixColors[pos] = hitColorArr[0]; //try 0-1.0 floats instead of 255
-						pixColors[pos + 1] = hitColorArr[1]; //try 0-1.0 floats instead of 255
-						pixColors[pos + 2] = hitColorArr[2]; //try 0-1.0 floats instead of 255
+						hitIllum = toCRTIllum( hitColor );
+						pixIrrads.Add( hitColor );
+						pixIllums.Add( hitIllum );
 
 						if( !hitColor.Equals(Color.bgColor) ) hits++;
 					}
@@ -393,7 +460,10 @@ namespace RayTracer_App.Camera
 				fpPoint.y -= pixHeight; // positive y is down
 			}
 
-			//insert double for loop here to build scene output colors after tone reproduction..TODO
+			//do tone reproduction all at once here
+			List<Color> trCols = runTRAll( pixIrrads, pixIllums, imageHeight, imageWidth );
+
+			pixColors = colsToBytes( trCols, imageWidth,imageHeight );
 
 			renderTimer.Stop();
 			Console.WriteLine( "Rendering the scene took " + (renderTimer.ElapsedMilliseconds) + " milliseconds" );
@@ -401,22 +471,10 @@ namespace RayTracer_App.Camera
 
 			//pm debug
 			if (doPM)
-			{
-				world.photonMapper.rrStats();
-				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
-				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
-				Console.WriteLine( world.photonMapper.photonSearchStats() );
-				Console.WriteLine( "Global PM: " + world.photonMapper.globalPM.heapPrint() );
-				Console.WriteLine( $"Most photons gathered : {world.highestK}/ {world.allK}" );
-				int lightNum = 1;
-				foreach( LightSource l in world.lights) 
-				{ 
-					Console.WriteLine( $"Light {lightNum} @ {l.position} had {l.power} watts and shot {l.ne} photons" );
-					lightNum++;
-				}
-			}
+				pmDebug(world);
+
 			if (photonOverlay || justPhotons)
-				Console.WriteLine( $"Lit caustics: {world.causticHits}\n Total hits {world.photoHits}" );
+				photOverlayInfo(world);
 
 			return pixColors ;
 		}

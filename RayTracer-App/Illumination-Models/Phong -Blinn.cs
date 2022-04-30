@@ -111,8 +111,11 @@ namespace RayTracer_App.Illumination_Models
 					totalSpecRefl = (float )Math.Pow( specReflDp, ke );
 
 					specTerm = specTerm.scale( this.ks * totalSpecRefl );
-					//( this.ks * litObj.specular * light.lightColor * mirrorReflect.dotProduct( cameraRay ) );
-					lightIrradiance += (diffuseTerm + specTerm).scale( litPercent);
+				//( this.ks * litObj.specular * light.lightColor * mirrorReflect.dotProduct( cameraRay ) );
+
+				//cp7 updated to have color multiplied by light's power...4/30
+					Color output = (diffuseTerm + specTerm).scale( litPercent );
+					lightIrradiance += output.scale( light.power);
 				}
 
 			return lightIrradiance;

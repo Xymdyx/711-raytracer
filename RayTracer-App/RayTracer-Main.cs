@@ -23,6 +23,8 @@ public class RayTracerMain
 	static bool[] valid = new bool[1];
 	static float[] rat = new float[4];
 
+////////////////////////////////////////////////////////// SET-UP SCENES ////////////////////////////////////////////////////////////////////
+
 	//render the actual swimming pool compartment
 	public static void drawPoolCompartment( World world, float cbXLim, float poolX, float cbYLim, float poolZ, float botPoolZ )
 	{
@@ -504,10 +506,13 @@ public class RayTracerMain
 		Vector up = new Vector( 0f, 1f, 0f );
 		Point eyePos = new Point( 0f, -.5f, 3f ); //0f, -1f, -5f
 		Point lookAt = new Point( .5f, .5f, s1Depth + 1f );
-		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
+		Camera cam = new Camera( up, eyePos, lookAt, Camera.TR_MODEL.LINEAR ); //-z = backing up...
 
 		return cam;
 	}
+
+
+////////////////////////////////////////////////////////// RAYTRACING & DISPLAY METHODS ////////////////////////////////////////////////////////////////////
 
 	//OPENGL DRAW CCW order matters. We are in LHS system. +y is down. +x is right. +z into screen. Row major. Postmultiply.
 	//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
@@ -547,6 +552,9 @@ public class RayTracerMain
 		return;
 
 	}
+
+
+	//helper display method for this OpenGL C# Binding
 	public static void display()
 	{
 		//put in display function
@@ -564,6 +572,8 @@ public class RayTracerMain
 		FG.SwapBuffers();
 		return;
 	}
+
+////////////////////////////////////////////////////////// MAIN ////////////////////////////////////////////////////////////////////
 
 	static int Main( string [] args )
 	{
