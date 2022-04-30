@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Numerics;
+using System.Collections.Generic;
 using System.Diagnostics;
 using RayTracer_App.Photon_Mapping;
 using RayTracer_App.World;
@@ -10,6 +11,11 @@ namespace RayTracer_App.Camera
 {
 	public class Camera
 	{
+		//Ward's contrived constants
+		private const float W_FLOAT = 1.219f; //contrived number greg ward came up with
+		private const float W_INNER_POW = .4f; //contrived power to raise inside terms
+		private const float W_OUTER_POW = 2.5f; //contrived power to raise whole fraction that reps scale factor
+
 		//field-plane
 		private Vector _up;
 		//eyepoint
@@ -19,10 +25,27 @@ namespace RayTracer_App.Camera
 		//cameraTransform
 		private Matrix4x4 _camTransformMat;
 
+		//tone reproduction operator
+		private TR_MODEL _trOperator;
+
+		//the max luminance of the target device...
+		private float _ldMax; //typically 80 - 120 nits is acceptable range...
+
+		// the max luminance of the display device
+		// private float _displayMax;
+
 		public Vector up { get => this._up; set => this._up = value; } 
 		public Point eyePoint { get => this._eyePoint; set => this._eyePoint = value; }
 		public Point lookAt { get => this._lookAt; set => this._lookAt = value; }
 		public Matrix4x4 camTransformMat { get => this._camTransformMat; set => this._camTransformMat = value; }
+
+		public enum TR_MODEL
+		{
+			ERROR = -1,
+			LINEAR = 0,
+			WARD = 1,
+			REINHARD = 2,
+		}
 
 		//default constructor... TODO define world origin as default
 		public Camera()
@@ -31,15 +54,20 @@ namespace RayTracer_App.Camera
 			this._eyePoint = new Point( 0, 0, 0 ); // world origin is the default
 			this._lookAt = new Point( 0, 0, 10 ); // default lookat position
 			this.camTransformMat = Matrix4x4.Identity;
+			this._trOperator = TR_MODEL.LINEAR;
+			this._ldMax = 80f;
 		}
 
-// parameter constructor...
-		public Camera( Vector up, Point eyePoint, Point lookAt )
+		// parameter constructor...
+		public Camera( Vector up, Point eyePoint, Point lookAt, TR_MODEL trOperator = TR_MODEL.LINEAR, float _ldMax = 80f ) // my monitor's max luminance is 270 nits
 		{
 			this._up = up;
 			this._eyePoint = eyePoint;
 			this._lookAt = lookAt;
 			this.camTransformMat = Matrix4x4.Identity;
+			this._trOperator = trOperator;
+			this._ldMax = _ldMax;  //typically 80 - 120 nits is acceptable range for max luminances of computer monitors
+
 		}
 
 		//METHODS
@@ -121,14 +149,55 @@ namespace RayTracer_App.Camera
 			return averageHitColor;
 		}
 
+
+		//gets log average illuminance in base 10 of the whole scene.
+		// i.e... Lbar = base^( ( Sum logbase( delta + L(x,y) ) / pixels)
+		private float getIllumLogAvg( int x, int y, List<Color> illums, float based = 10f)
+		{
+			float logAvg = 0f;
+			const float delta = .01f;
+
+			for (int illum = 0; illum < illums.Count; illum++)
+			{
+				Color pixIllum = illums[illum];
+				logAvg += (float) Math.Log10( delta + pixIllum.r + pixIllum.g + pixIllum.b );
+			}
+
+			logAvg /= (x * y); //divide by total pixel number to get logAvg
+
+			return (float) Math.Pow( based, logAvg); // base^ logavg.... bases must match
+		}
+
+		// given an irradiance value for a pixel
+		// convert to CRT illuminance and store in a separate array called
+		// hitIlluminances. Needed for Ward and Reinhard to take log average
+		// of all illuminances in the scene
+		public Color toCRTIllum( Color irradiance )
+		{
+			// L(x,y) = .27Ri + .67Gi + .06b
+			return new Color( irradiance.r * .27f,
+				irradiance.g * .67f, irradiance.b * .06f );
+		}
+
+		//called by Ward tone reproduction method to get the scale factor to store the lumiannces by
+		// sf = [ (1.219 + (LdMax/2)^.4f)/ 1.219 + Lwa^.4)]^2.5
+		private float getWardSF( float lwa)
+		{
+			float num = (float)( W_FLOAT + Math.Pow( (this._ldMax / 2f), W_INNER_POW ));
+			float denom = (float) (W_FLOAT + Math.Pow( lwa, W_INNER_POW ));
+	
+			return (float)Math.Pow( num / denom, W_OUTER_POW ); ;
+		}
+
 		//TODO CP7
 		// runs tone reproduction via Ward's formula
-		public Color runWardTR( Color irradiance )
+		public Color runWardTR( Color illuminance )
 		{
 			Color trColor = new Color( 0, 0, 0 );
-			trColor.r = irradiance.r >= 1.0f ? trColor.r = 1.0f : trColor.r = irradiance.r;
-			trColor.g = irradiance.g >= 1.0f ? trColor.g = 1.0f : trColor.g = irradiance.g;
-			trColor.b = irradiance.b >= 1.0f ? trColor.b = 1.0f : trColor.b = irradiance.b;
+			float logAverage = 0;
+			float sf = getWardSF( logAverage );
+
+			//for each pixel world illuminance, Ld = sf * Lw
 
 			return trColor;
 		}
@@ -136,7 +205,32 @@ namespace RayTracer_App.Camera
 		//TODO CP7
 		// runs tone reproduction via Reinard's tone reproduction formula
 		// based on Ansel Adam's Zone System
-		public Color runReinhardTR( Color irradiance )
+		// alpha = trnsparency, which is .18f for 50% reflectivity in grayscale (Zone V)
+		public Color runReinhardTR( Color illuminance, float keyVal, float alpha = .18f)
+		{
+			Color trColor = null;
+
+			//step 1:  Create scaled luminance values Rs, Gs, Bs by mapping 
+			// the key value to Zone V(18 % gray)
+			Color scaledIllum = illuminance.scale( alpha / keyVal ); //scale RGB illums by alpha/ keyVal
+
+			//step 2:  Find the reflectance for Rr, Gr, Br, based on film-like response
+			float reflR = scaledIllum.r / (1f + scaledIllum.r);
+			float reflG = scaledIllum.g / (1f + scaledIllum.g);
+			float reflB = scaledIllum.b / (1f + scaledIllum.b);
+
+			trColor = new Color( reflR, reflG, reflB );
+
+			//step 3 is where we would multiply each RGB comp by LDmax and then divide by maxDisplay illuminance
+			// since our target and display devices are the same, LdMax/LdMax cancels out and we don't need this.
+			//trColor.scale( LdMax/ displayMax);
+
+			return trColor;
+		}
+
+		// runs linear tone reproduction on the irradiance triplet retrieved from an intersection
+		// just ternaries for now. If the sum of energy is >1, we max it at 1.
+		public Color runLinearTR( Color irradiance ) 
 		{
 			Color trColor = new Color( 0, 0, 0 );
 			trColor.r = irradiance.r >= 1.0f ? trColor.r = 1.0f : trColor.r = irradiance.r;
@@ -146,14 +240,29 @@ namespace RayTracer_App.Camera
 			return trColor;
 		}
 
+		// convenience method for running proper TR method based on camera trOperator field
 		// runs tone reproduction on the irradiance triplet retrieved from an intersection
 		// just ternaries for now. If the sum of energy is >1, we max it at 1.
-		public Color runTR( Color irradiance ) 
+		public Color runTR( Color irradiance )
 		{
 			Color trColor = new Color( 0, 0, 0 );
-			trColor.r = irradiance.r >= 1.0f ? trColor.r = 1.0f : trColor.r = irradiance.r;
-			trColor.g = irradiance.g >= 1.0f ? trColor.g = 1.0f : trColor.g = irradiance.g;
-			trColor.b = irradiance.b >= 1.0f ? trColor.b = 1.0f : trColor.b = irradiance.b;
+			float logAvg = 0f; //change to get logAvg
+
+			switch (this._trOperator)
+			{
+				case (TR_MODEL.LINEAR):
+					trColor = runLinearTR( irradiance );
+					break;
+				case (TR_MODEL.WARD):
+					trColor = runWardTR( irradiance );
+					break;
+				case (TR_MODEL.REINHARD):
+					trColor = runReinhardTR( irradiance, logAvg );
+					break;
+				default:
+					trColor = Color.bgColor;
+					break;
+			}
 
 			return trColor;
 		}
@@ -191,7 +300,6 @@ namespace RayTracer_App.Camera
 				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.GLOBAL );
 				world.photonMapper.printPhotonsInScene( world.sceneBB, PhotonRNG.MAP_TYPE.CAUSTIC );
 				world.beginpmPassTwo(); // mark to gather phtons
-				//photonOverlay = true;
 			}
 
 			//time the render here...
@@ -206,16 +314,18 @@ namespace RayTracer_App.Camera
 			float pixWidth = fpWidth / imageWidth;
 
 			//initialize default background color at all pixels to begin with
-			Color bgColor = Color.bgColor;
-			byte[] bgArr = bgColor.asByteArr();
-			byte[] pixColors = new byte[imageHeight * imageWidth * 3];
+			byte[] pixColors = new byte[imageHeight * imageWidth * 3]; // this is what we return...
+
+			byte[] pixIllums = new byte[imageHeight * imageWidth * 3]; // this is the illuminance array....
 
 			// originally had (-fpHeight/2 + pixHeight/2.. was positive y upward...
 			//focalLen + eyePoint.z if I want to move relative to my z
 			Point fpPoint = new Point ( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen + this.eyePoint.z); //gldrawPixels starts drawing lower-left corner at raster positions
+
 			//Point fpPoint = new Point( (-fpWidth / 2) + (pixWidth / 2), (fpHeight / 2) - (pixHeight / 2), focalLen); //gldrawPixels starts drawing lower-left corner at raster positions
 			LightRay fire = new LightRay( fpPoint - this.eyePoint , this.eyePoint );
 			Color hitColor = null;
+
 			byte[] hitColorArr = null;
 
 			//modes
@@ -264,9 +374,10 @@ namespace RayTracer_App.Camera
 						if (photonOverlay && !justPhotons) //if we're visualizing the Photon Maps
 							hitColor = renderPhotons( hitColor, fire, world, false) ; 
 
-						//run tone reproduction function on hitColor and then do the following
+						// TODO run tone reproduction as we go -> after we calculated irradiances
 						hitColor = runTR( hitColor );
 						hitColorArr = hitColor.asByteArr();
+
 						int pos = (x + (y * imageWidth) ) * 3;
 						pixColors[pos] = hitColorArr[0]; //try 0-1.0 floats instead of 255
 						pixColors[pos + 1] = hitColorArr[1]; //try 0-1.0 floats instead of 255
@@ -281,6 +392,8 @@ namespace RayTracer_App.Camera
 				fpPoint.x = (-fpWidth / 2) + (pixWidth / 2);
 				fpPoint.y -= pixHeight; // positive y is down
 			}
+
+			//insert double for loop here to build scene output colors after tone reproduction..TODO
 
 			renderTimer.Stop();
 			Console.WriteLine( "Rendering the scene took " + (renderTimer.ElapsedMilliseconds) + " milliseconds" );
