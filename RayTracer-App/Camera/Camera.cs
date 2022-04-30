@@ -277,6 +277,7 @@ namespace RayTracer_App.Camera
 			return rhCols;
 		}
 
+		// linear operator that clamps to 1 right now
 		public List<Color> runLinearTRAll( List<Color> irradiances )
 		{
 			List<Color> linCols = new List<Color>();
@@ -309,13 +310,13 @@ namespace RayTracer_App.Camera
 					trColors = runWardTR( illums, logAvg );
 					break;
 				case (TR_MODEL.REINHARD):
-
 					if (rhKey == float.MinValue)
 					{
 						logAvg = getIllumLogAvg( x, y, illums );
 						trColors = runReinhardTR( illums, logAvg );
 					}
-					else trColors = runReinhardTR( illums, rhKey );
+					else 
+						trColors = runReinhardTR( illums, rhKey );
 					break;
 				default:
 					trColors = new List<Color> ( new Color[irradiances.Count]); //all background colors
