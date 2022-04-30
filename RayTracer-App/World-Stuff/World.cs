@@ -15,7 +15,7 @@ namespace RayTracer_App.World
 {
 	public class World
 	{
-		private static int MAX_DEPTH = 10; //cp6 max bounces
+		private static int MAX_DEPTH = 20; //cp6 max bounces
 
 		//fields
 		private List<SceneObject> _objects;

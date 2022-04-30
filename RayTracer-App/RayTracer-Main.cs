@@ -23,6 +23,8 @@ public class RayTracerMain
 	static bool[] valid = new bool[1];
 	static float[] rat = new float[4];
 
+////////////////////////////////////////////////////////// SET-UP SCENES ////////////////////////////////////////////////////////////////////
+
 	//render the actual swimming pool compartment
 	public static void drawPoolCompartment( World world, float cbXLim, float poolX, float cbYLim, float poolZ, float botPoolZ )
 	{
@@ -502,12 +504,15 @@ public class RayTracerMain
 		world.addObject( sphere1 );
 
 		Vector up = new Vector( 0f, 1f, 0f );
-		Point eyePos = new Point( 0f, -1f, -5f ); //0f, -1f, -5f
+		Point eyePos = new Point( 0f, -.5f, 3f ); //0f, -1f, -5f
 		Point lookAt = new Point( .5f, .5f, s1Depth + 1f );
-		Camera cam = new Camera( up, eyePos, lookAt ); //-z = backing up...
+		Camera cam = new Camera( up, eyePos, lookAt, Camera.TR_MODEL.LINEAR, 270 ); //-z = backing up...
 
 		return cam;
 	}
+
+
+////////////////////////////////////////////////////////// RAYTRACING & DISPLAY METHODS ////////////////////////////////////////////////////////////////////
 
 	//OPENGL DRAW CCW order matters. We are in LHS system. +y is down. +x is right. +z into screen. Row major. Postmultiply.
 	//list triangles in CCW ORDER from the point containing the largest angle/ opposite of the hypotenuse!
@@ -524,7 +529,7 @@ public class RayTracerMain
 		/*
 		* Current behavior: indirect and & caustics are visualized at the point of intersection in pass2. Bottleneck is caustics firing at spheres if on.
 		 */
-		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25, -1.25
+		float focalLen = 1.25f; //distance from camera to film plane center along N... //1.25 for pool and cornell -1.25 for whitted
 
 		World world = new World();
 
@@ -532,10 +537,11 @@ public class RayTracerMain
 		imageWidth = 1000;
 		imageHeight = imageWidth;
 
-		//Camera cam = setupWhitted( world, false );
+		Camera cam = setupWhitted( world, false );
 		//Camera cam = setupCornell( world);
-		Camera cam = setupFuturePool( world );
+		//Camera cam = setupFuturePool( world );
 
+		int rhPixel = (imageWidth * imageHeight)/4;
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
 		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen); //last 3 bools control... kdTree (buggy), globalPM, causticsPM
 
@@ -547,6 +553,9 @@ public class RayTracerMain
 		return;
 
 	}
+
+
+	//helper display method for this OpenGL C# Binding
 	public static void display()
 	{
 		//put in display function
@@ -564,6 +573,8 @@ public class RayTracerMain
 		FG.SwapBuffers();
 		return;
 	}
+
+////////////////////////////////////////////////////////// MAIN ////////////////////////////////////////////////////////////////////
 
 	static int Main( string [] args )
 	{
@@ -593,7 +604,7 @@ public class RayTracerMain
 		FG.InitDisplayMode( GLUT.GLUT_RGB | GLUT.GLUT_SINGLE | GLUT.GLUT_DEPTH );
 		FG.InitWindowSize( imageWidth, imageHeight );
 		FG.InitWindowPosition( 0, 0 );
-		FG.CreateWindow( "RayTracing KdTree" );
+		FG.CreateWindow( "RayTracing Checkpoint 7" );
 		GL.Init( true );            //I forgot to call this...
 
 		//fixed pixels being at a higher depth being in front of those with lower depth
