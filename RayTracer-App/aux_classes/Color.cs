@@ -109,6 +109,8 @@ public class Color
         return (c.r == this.r && c.g == this.g && c.b == this.b);
 	}
 
+//debug methods for photon mapping
+
     public bool whiteOrHigher( )
     {
 
@@ -120,6 +122,12 @@ public class Color
 
         return (this.r <= 0 && this.g <= 0 && this.b <= 0);
     }
+
+//cp7 tr methods
+    public float colVal()
+	{
+        return this.r + this.g + this.b;
+	}
 
     public override string ToString()
 	{

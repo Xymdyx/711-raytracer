@@ -506,7 +506,7 @@ public class RayTracerMain
 		Vector up = new Vector( 0f, 1f, 0f );
 		Point eyePos = new Point( 0f, -.5f, 3f ); //0f, -1f, -5f
 		Point lookAt = new Point( .5f, .5f, s1Depth + 1f );
-		Camera cam = new Camera( up, eyePos, lookAt, Camera.TR_MODEL.LINEAR ); //-z = backing up...
+		Camera cam = new Camera( up, eyePos, lookAt, Camera.TR_MODEL.REINHARD, 270 ); //-z = backing up...
 
 		return cam;
 	}
@@ -541,6 +541,7 @@ public class RayTracerMain
 		//Camera cam = setupCornell( world);
 		//Camera cam = setupFuturePool( world );
 
+		int rhPixel = (imageWidth * imageHeight)/4;
 		// ditto with floats from 0-1 and 0-255, uint, now try byte
 		byte[] pixColors = cam.render( world, imageHeight, imageWidth, focalLen); //last 3 bools control... kdTree (buggy), globalPM, causticsPM
 
@@ -603,7 +604,7 @@ public class RayTracerMain
 		FG.InitDisplayMode( GLUT.GLUT_RGB | GLUT.GLUT_SINGLE | GLUT.GLUT_DEPTH );
 		FG.InitWindowSize( imageWidth, imageHeight );
 		FG.InitWindowPosition( 0, 0 );
-		FG.CreateWindow( "RayTracing KdTree" );
+		FG.CreateWindow( "RayTracing Checkpoint 7" );
 		GL.Init( true );            //I forgot to call this...
 
 		//fixed pixels being at a higher depth being in front of those with lower depth

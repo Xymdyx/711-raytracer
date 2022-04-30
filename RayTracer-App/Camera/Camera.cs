@@ -191,15 +191,15 @@ namespace RayTracer_App.Camera
 
 			//gets log average illuminance in base 10 of the whole scene.
 			// i.e... Lbar = base^( ( Sum logbase( delta + L(x,y) ) / pixels)
-			private float getIllumLogAvg( int x, int y, List<Color> illums, float based = 10f)
+			private float getIllumLogAvg( int x, int y, List<Color> illums, double based = Math.E)
 		{
-			float logAvg = 0f;
+			double logAvg = 0f;
 			const float delta = 1e-6f;
 
 			for (int illum = 0; illum < illums.Count; illum++)
 			{
 				Color pixIllum = illums[illum];
-				logAvg += (float) Math.Log10( delta + pixIllum.r + pixIllum.g + pixIllum.b );
+				logAvg += (float) Math.Log( delta + pixIllum.colVal(), based );
 			}
 
 			logAvg /= (x * y); //divide by total pixel number to get logAvg
@@ -294,7 +294,7 @@ namespace RayTracer_App.Camera
 
 		// convenience method for running proper TR method based on camera trOperator field
 		// runs tone reproduction on the irradiance triplet retrieved from an intersection
-		public List<Color> runTRAll( List<Color> irradiances, List<Color> illums, int x, int y )
+		public List<Color> runTRAll( List<Color> irradiances, List<Color> illums, int x, int y, float rhKey = float.MinValue )
 		{
 			List<Color> trColors = new List<Color>();
 			float logAvg = 0f; //change to get logAvg
@@ -309,8 +309,13 @@ namespace RayTracer_App.Camera
 					trColors = runWardTR( illums, logAvg );
 					break;
 				case (TR_MODEL.REINHARD):
-					logAvg = getIllumLogAvg( x, y, illums );
-					trColors = runReinhardTR( illums, logAvg );
+
+					if (rhKey == float.MinValue)
+					{
+						logAvg = getIllumLogAvg( x, y, illums );
+						trColors = runReinhardTR( illums, logAvg );
+					}
+					else trColors = runReinhardTR( illums, rhKey );
 					break;
 				default:
 					trColors = new List<Color> ( new Color[irradiances.Count]); //all background colors
@@ -342,7 +347,7 @@ namespace RayTracer_App.Camera
 		}
 
 		//tried list of float[] and float[]...
-		public byte[] render( World.World world, int imageHeight, int imageWidth, float focalLen, bool makeKd = false, bool doPM = false, bool doCaustics = false )
+		public byte[] render( World.World world, int imageHeight, int imageWidth, float focalLen, int rhPixVal = -1, bool makeKd = false, bool doPM = false, bool doCaustics = false )
 		{
 			// this converts everything to camera coords
 			makeCamMat();
@@ -460,9 +465,14 @@ namespace RayTracer_App.Camera
 				fpPoint.y -= pixHeight; // positive y is down
 			}
 
-			//do tone reproduction all at once here
-			List<Color> trCols = runTRAll( pixIrrads, pixIllums, imageHeight, imageWidth );
+			float rhKeyVal = float.MinValue;
 
+			//Only set the passed rhPixel value if it's in a valid rangge of pixels to prevent Index out of bound error
+			if (rhPixVal >= 0 && rhPixVal < (imageHeight * imageWidth))
+				rhKeyVal = pixIllums[rhPixVal].colVal();
+
+			//do tone reproduction all at once here.
+			List<Color> trCols = runTRAll( pixIrrads, pixIllums, imageHeight, imageWidth, rhKeyVal );
 			pixColors = colsToBytes( trCols, imageWidth,imageHeight );
 
 			renderTimer.Stop();
