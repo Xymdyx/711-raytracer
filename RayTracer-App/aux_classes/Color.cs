@@ -126,7 +126,7 @@ public class Color
 //cp7 tr methods
     public float colVal()
 	{
-        return this.r + this.g + this.b;
+        return  this.r + this.g + this.b;
 	}
 
     public override string ToString()
