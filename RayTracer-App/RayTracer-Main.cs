@@ -494,7 +494,7 @@ public class RayTracerMain
 		Point mainLightPos = new Point( .85f, -30.85f, s1Depth + .75f ); // .85f, -30.85f, s1Depth + .75f
 
 		Color mainLightColor = Color.whiteSpecular;
-		LightSource mainLight = new LightSource( mainLightPos, mainLightColor );
+		LightSource mainLight = new LightSource( mainLightPos, mainLightColor, 100f );
 
 		//mandatory whitted box
 		world.addLight( mainLight );
@@ -506,7 +506,7 @@ public class RayTracerMain
 		Vector up = new Vector( 0f, 1f, 0f );
 		Point eyePos = new Point( 0f, -.5f, 3f ); //0f, -1f, -5f
 		Point lookAt = new Point( .5f, .5f, s1Depth + 1f );
-		Camera cam = new Camera( up, eyePos, lookAt, Camera.TR_MODEL.WARD, 1 ); //-z = backing up...
+		Camera cam = new Camera( up, eyePos, lookAt, Camera.TR_MODEL.REINHARD, 270 ); //-z = backing up...
 
 		return cam;
 	}

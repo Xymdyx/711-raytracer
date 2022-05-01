@@ -204,7 +204,7 @@ namespace RayTracer_App.Camera
 
 			logAvg /=  illums.Count; //divide by total pixel number to get logAvg
 
-			return (float) Math.Pow( Math.E, logAvg); // base^ logavg.... bases must match
+			return (float) Math.Pow( based, logAvg); // base^ logavg.... bases must match
 		}
 
 		// given an irradiance value for a pixel
@@ -239,7 +239,7 @@ namespace RayTracer_App.Camera
 			//for each pixel world illuminance, Ld = sf * Lw
 			foreach ( Color illuminance in illuminances)
 			{
-				wardCol = illuminance.scale( sf/this._ldMax );
+				wardCol = illuminance.scale( sf/_ldMax);
 				wardCols.Add( wardCol );
 			}
 
@@ -295,7 +295,7 @@ namespace RayTracer_App.Camera
 
 		// convenience method for running proper TR method based on camera trOperator field
 		// runs tone reproduction on the irradiance triplet retrieved from an intersection
-		public List<Color> runTRAll( List<Color> irradiances, List<Color> illums, int x, int y, float rhKey = float.MinValue )
+		public List<Color> runTRAll( List<Color> irrads, List<Color> illums, int x, int y, float rhKey = float.MinValue )
 		{
 			List<Color> trColors = new List<Color>();
 			float logAvg = 0f; //change to get logAvg
@@ -303,7 +303,7 @@ namespace RayTracer_App.Camera
 			switch (this._trOperator)
 			{
 				case (TR_MODEL.LINEAR):
-					trColors = runLinearTRAll( irradiances );
+					trColors = runLinearTRAll( irrads );
 					break;
 				case (TR_MODEL.WARD):
 					logAvg = getIllumLogAvg( x, y, illums );
@@ -319,7 +319,7 @@ namespace RayTracer_App.Camera
 						trColors = runReinhardTR( illums, rhKey );
 					break;
 				default:
-					trColors = new List<Color> ( new Color[irradiances.Count]); //all background colors
+					trColors = new List<Color> ( new Color[irrads.Count]); //all background colors
 					break;
 			}
 

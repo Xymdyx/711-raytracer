@@ -126,7 +126,7 @@ public class Color
 //cp7 tr methods
     public float colVal()
 	{
-        return (float) (Math.Abs(this.r) + Math.Abs(this.g) + Math.Abs(this.b));
+        return  this.r + this.g + this.b;
 	}
 
     public override string ToString()
