@@ -190,11 +190,11 @@ namespace RayTracer_App.Camera
 ////////////////////////////////////////////////////////// TONE REPRODUCTION METHODS////////////////////////////////////////////////////////////////////
 
 			//gets log average illuminance in base 10 of the whole scene.
-			// i.e... Lbar = base^( ( Sum logbase( delta + L(x,y) ) / pixels)
+			// i.e... Lbar = base^( ( Sum (for all pixels) logbase( delta + L(x,y) ) / pixels)
 			private float getIllumLogAvg( int x, int y, List<Color> illums, double based = Math.E)
 		{
 			double logAvg = 0f;
-			const float delta = 1e-6f;
+			float delta = 1e-6f;
 
 			for (int illum = 0; illum < illums.Count; illum++)
 			{
@@ -202,9 +202,9 @@ namespace RayTracer_App.Camera
 				logAvg += (float) Math.Log( delta + pixIllum.colVal(), based );
 			}
 
-			logAvg /= (x * y); //divide by total pixel number to get logAvg
+			logAvg /=  illums.Count; //divide by total pixel number to get logAvg
 
-			return (float) Math.Pow( based, logAvg); // base^ logavg.... bases must match
+			return (float) Math.Pow( Math.E, logAvg); // base^ logavg.... bases must match
 		}
 
 		// given an irradiance value for a pixel
@@ -239,7 +239,7 @@ namespace RayTracer_App.Camera
 			//for each pixel world illuminance, Ld = sf * Lw
 			foreach ( Color illuminance in illuminances)
 			{
-				wardCol = illuminance.scale( sf );
+				wardCol = illuminance.scale( sf/this._ldMax );
 				wardCols.Add( wardCol );
 			}
 
